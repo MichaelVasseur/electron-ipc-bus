@@ -13,15 +13,15 @@
 </head>
 
 <body>
-    <div id="topicNameItem_template" topic-name="test" topic-process="renderer" style="display:none">
+    <div id="SubscriptionItem-template" topic-name="test" style="display:none">
         <b>Topic Name:</b>
         <spam class="topicName">Test</spam>
         <input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
-        <textarea class="topicReceived"></textarea>
+        <textarea rows="4" cols="50" class="topicReceived"></textarea>
         <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
     </div>
 
-    <fieldset class="master">
+    <fieldset id="ProcessItem-template"  style="display:none">
         <legend>Master</legend>
         <fieldset class="topicSubscribe">
             Topic Name :
@@ -37,55 +37,16 @@
             </br>
         </fieldset>
         <hr />
-        <h3>Subscriptions</h3>
+        <h4>Subscriptions</h4>
         <div class="SubscriptionsList"></div>
+        </br>
+        </br>
     </fieldset>
-    </br>
-    </br>
 
-    <fieldset class="renderer">
-        <legend>Renderer</legend>
-        <fieldset class="topicSubscribe">
-            Topic Name :
-            <input class="topicName" type="text" />
-            <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
-            </br>
-        </fieldset>
-        <fieldset class="topicSend">
-            Topic Name :
-            <input class="topicName" type="text" /> Message :
-            <input class="topicMsg" type="text" />
-            <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-        </fieldset>
-        <hr />
-        <h3>Subscriptions</h3>
-        <div class="SubscriptionsList"></div>
-    </fieldset>
-    </br>
-    </br>
+    <div id="ProcessesList">
+    </div>
 
-    <fieldset class="node">
-        <legend>Node</legend>
-        <fieldset class="topicSubscribe">
-            Topic Name :
-            <input class="topicName" type="text" />
-            <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
-            </br>
-        </fieldset>
-        <fieldset class="topicSend">
-            Topic Name :
-            <input class="topicName" type="text" /> Message :
-            <input class="topicMsg" type="text" />
-            <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-        </fieldset>
-        <hr />
-        <h3>Subscriptions</h3>
-        <div class="SubscriptionsList"></div>
-    </fieldset>
-    </br>
-    </br>
-
-    <input type="button" onclick="doQueryBrokerState()" value="Refresh IPC Status"></input>
+    <input type="button" onclick="doQueryBrokerState()" value="Request IPC Status"></input>
     <table id="brokerStatesList" border="1">
         <tr>
             <th>Topic</th>

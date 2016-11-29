@@ -27,7 +27,7 @@ function doSubscribeToTopic(event) {
     var topicNameElt = topicActionsElt.querySelector(".topicName");
     var topicName = topicNameElt.value;
 
-    var topicItemElt = document.getElementById("topicNameItem_template");
+    var topicItemElt = document.getElementById("SubscriptionItem-template");
     var topicItemElt = topicItemElt.cloneNode(true);
     topicItemElt.id = "";
     topicItemElt.classList.add("subscription-" + topicName);
@@ -183,3 +183,28 @@ ipcBus.subscribe("ipc-tests/master-received-topic", onIPC_master);
 ipcBus.subscribe("ipc-tests/node-received-topic", onIPC_node);
 
 
+window.onload=function()
+{
+    var processesList = 
+    [
+        {"class":"master", "title":"Master"},
+        {"class":"renderer", "title":"Renderer"},
+        {"class":"node", "title":"Node"}
+    ];
+
+    var processesListElt = document.getElementById("ProcessesList");
+    var processTemplateElt = document.getElementById("ProcessItem-template");
+
+    for (var i = 0; i < processesList.length; ++i)
+    {
+        var processItemElt = processTemplateElt.cloneNode(true);
+        processItemElt.id = "";
+        processItemElt.classList.add(processesList[i].class);
+
+        var processLegendElt = processItemElt.querySelector("Legend");
+        processLegendElt.textContent = processesList[i].title;
+
+        processesListElt.appendChild(processItemElt);
+        processItemElt.style.display = "block";
+    }
+}
