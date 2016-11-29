@@ -2,9 +2,10 @@
     "name": "electron-ipc-bus",
     "version": "1.0.0", 
     "description": "Safe IPC bus for Electron",
-    "homepage": "https://github.com/thomsonreuters/electron-ipc-bus",     
+	"license": "MIT",
+	"homepage": "https://github.com/MichaelVasseur/electron-ipc-bus",
     "repository": {
-        "url": "git+https://github.com/thomsonreuters/electron-ipc-bus.git", 
+        "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git", 
         "type": "git"
     }, 
     "dependencies": {
