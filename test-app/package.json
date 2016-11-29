@@ -1,0 +1,17 @@
+{
+  "name": "ipc-bus-tests",
+  "version": "1.0.0",
+  "description": "Test App for IPC subsystem",
+  "main": "Main.js",
+  "scripts": {
+    "start": "electron Main.js"
+  },
+  "author": "Thomson Reuters",
+  "homepage": "http://www.thomsonreuters.com",
+  "devDependencies": {
+    "browserify":"13.1.1",
+    "electron-ipc-bus":"1.0.0"
+  },
+  "dependencies": {
+  }
+}

@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+<script>
+
+    function sendIpcMessage() {
+
+        ipcClient.send("fromRendererTest")
+    }
+
+    function testOpener() {
+    
+        // Open a new window
+        var myWindow = window.open("", "myWindow", "width=200, height=100");
+
+        // Write some text in the new window
+        myWindow.document.write("<p>This is 'myWindow'</p>");     
+
+        // Write some text in the window that created the new window            
+        myWindow.opener.document.write("<p>This is the source window!</p>");
+    }
+
+    function getFeatureValue(featureValue) {
+
+        if (featureValue == 'true' || featureValue == 'yes' || featureValue == '1' || featureValue == undefined) {
+
+            return true;
+        }
+
+        if (featureValue == 'false' || featureValue == 'no' || featureValue == '0') {
+
+            return false;
+        }
+
+        var intVal = parseInt(featureValue, 10);
+        if (intVal !== intVal) { // is NaN ?
+
+            return featureValue;
+        }
+
+        return intVal;
+    }
+
+
+    function test() {
+
+        var options = {};
+        var additional_features = {};
+        var features = "posX-632, posY-450, width=656, height=300,frameless, ignoreToolbarLocation, display-none, workspace-false, UsePreviousSizeAndPosition-false, do_nothing_if_exist-true";
+        var ref1 = features.split(/,\s*/);
+        for (i = 0, len = ref1.length; i < len; i++) {
+            var feature = ref1[i];
+            var ref2 = feature.split(/\s*=/);
+            var featureName = ref2[0];
+            var featureValue = ref2[1];
+            featureValue = featureValue === 'yes' || featureValue === '1' ? true : featureValue === 'no' || featureValue === '0' ? false : featureValue;
+            if(featureValue == undefined) {
+                ref2 = feature.split(/\s*-/);
+                featureName = ref2[0];
+                featureValue = ref2[1];
+                featureValue = getFeatureValue(featureValue);
+                additional_features[featureName] = featureValue;
+            } else {
+                options[featureName] = featureValue;
+            }
+        }
+    }
+
+    function openPopup() {
+
+        window.open("http://www.google.com/", "GoogleWindow", "posX-632, posY-450, width=656, height=300,frameless, ignoreToolbarLocation, display-none, workspace-false, UsePreviousSizeAndPosition-false, do_nothing_if_exist-true");
+    }
+</script>
+    
+    <a href="javascript:test();">Test</a><br />
+    <a href="javascript:openPopup();">Open Popup</a><br />
+    <a href="javascript:testOpener();">Test Opener</a><br />
+    <a href="javascript:sendIpcMessage();">Send IPC Message</a><br />
+
+</body>
+</html>

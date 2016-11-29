@@ -1,0 +1,15 @@
+{
+    "name": "electron-ipc-bus",
+    "version": "1.0.0", 
+    "description": "Safe IPC bus for Electron",
+    "homepage": "https://github.com/thomsonreuters/electron-ipc-bus",     
+    "repository": {
+        "url": "git+https://github.com/thomsonreuters/electron-ipc-bus.git", 
+        "type": "git"
+    }, 
+    "dependencies": {
+        "easy-ipc":"0.2.2",
+        "uuid":"2.0.3"
+    }, 
+    "main": "main.js"
+}
