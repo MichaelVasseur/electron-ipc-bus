@@ -129,7 +129,7 @@ function onIPC_received(topicProcess, topicName, msgContent)
 {
     console.log(topicProcess + " msgTopic:" + topicName + " msgContent:" + msgContent)
 
-    var SubscriptionsListElt = document.querySelector("fieldset." + topicProcess + " > div");
+    var SubscriptionsListElt = document.querySelector("div[topic-process='" + topicProcess + "'] > div");
     var topicItemElt = SubscriptionsListElt.querySelector(".subscription-" + topicName);
     if (topicItemElt != null)
     {
