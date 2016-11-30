@@ -176,12 +176,11 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
     }
 }
 
-//var ipcRenderer = require('electron').ipcRenderer;
-
-ipcBus.subscribe('IPC_BUS_BROKER_STATUS_TOPIC', onIPC_BrokerStatusTopic);
-
-ipcBus.subscribe("ipc-tests/master-received-topic", onIPC_master);
-ipcBus.subscribe("ipc-tests/node-received-topic", onIPC_node);
+ipcBus.connect(function(){
+    ipcBus.subscribe('IPC_BUS_BROKER_STATUS_TOPIC', onIPC_BrokerStatusTopic);
+    ipcBus.subscribe("ipc-tests/master-received-topic", onIPC_master);
+    ipcBus.subscribe("ipc-tests/node-received-topic", onIPC_node);
+})
 
 
 window.onload=function()

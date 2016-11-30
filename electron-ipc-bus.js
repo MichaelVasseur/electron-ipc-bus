@@ -243,16 +243,16 @@ function IpcBusRendererClient(ipcObj) {
     // Set API
     this.connect = function(callback) {
         // connect can be called multiple times
-        self.connected = true
+        connected = true
         setTimeout(callback, 1)
     }
 
     this.close = function() {
-        self.connected = false
+        connected = false
     }
     
     this.send = function(topic, data) {
-        if (self.connected == false)
+        if (connected == false)
         {
             throw new Error("Please connect first")
         }
@@ -260,7 +260,7 @@ function IpcBusRendererClient(ipcObj) {
     }
 
     this.queryBrokerState = function() {
-        if (self.connected == false)
+        if (connected == false)
         {
             throw new Error("Please connect first")
         }
@@ -268,7 +268,7 @@ function IpcBusRendererClient(ipcObj) {
     }
 
     this.subscribe = function(topic, handler) {
-        if (self.connected == false)
+        if (connected == false)
         {
             throw new Error("Please connect first")
         }
@@ -277,7 +277,7 @@ function IpcBusRendererClient(ipcObj) {
     }
 
     this.unsubscribe = function(topic, handler) {
-        if (self.connected == false)
+        if (connected == false)
         {
             throw new Error("Please connect first")
         }
