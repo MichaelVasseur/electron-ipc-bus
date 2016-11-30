@@ -111,8 +111,8 @@ function doNodeSubscribeTopic(topic) {
 
     var msgJSON = 
     { 
-        "action":"subscribe",
-        "topic":topic
+        action:"subscribe",
+        topic:topic
     };
     nodeInstance.process.send(JSON.stringify(msgJSON));
 }
@@ -121,8 +121,8 @@ function doNodeUnsubscribeTopic(topic) {
     console.log("master - send to node unsubscribe:" + topic);
     var msgJSON = 
     { 
-        "action":"unsubscribe",
-        "topic":topic
+        action:"unsubscribe",
+        topic:topic
     };
     nodeInstance.process.send(JSON.stringify(msgJSON));
 }
@@ -131,8 +131,8 @@ function doNodeSendOnTopic(args) {
     console.log("master - send to node send:" + args);
     var msgJSON = 
     { 
-        "action":"send",
-        "args":args
+        action:"send",
+        args:args
     };
     nodeInstance.process.send(JSON.stringify(msgJSON));
 }

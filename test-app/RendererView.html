@@ -21,8 +21,9 @@
         <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
     </div>
 
-    <fieldset id="ProcessItem-template"  style="display:none">
-        <legend>Master</legend>
+    <div id="ProcessItem-template" topic-process="fake" style="display:none">
+        <h3>Master</h3>
+        <h4>Actions</h4>
         <fieldset class="topicSubscribe">
             Topic Name :
             <input class="topicName" type="text" />
@@ -38,10 +39,24 @@
         </fieldset>
         <hr />
         <h4>Subscriptions</h4>
-        <div class="SubscriptionsList"></div>
+        <div class="subscriptionsList"></div>
+        <!--table class="subscriptionsList" border="1">
+            <tr>
+                <th>Topic</th>
+                <th></th>
+                <th>Received</th>
+                <th></th>
+            </tr>
+            <tr topic-name="test">
+                <td class="topicName">Test</td>
+                <td><input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input></td>
+                <td><textarea class="topicReceived" rows="4" cols="50" class="topicReceived"></textarea></td>
+                <td><input type="button" onclick="doClearTopic(event)" value="Clear"></<input></td>
+            </tr>
+        </table-->
+        <hr>
         </br>
-        </br>
-    </fieldset>
+    </div>
 
     <div id="ProcessesList">
     </div>

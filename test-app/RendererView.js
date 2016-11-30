@@ -1,42 +1,41 @@
-function getProcessType(elt)
+function getProcessElt(elt)
 {
       if (elt != null)
       {
-          if (elt.classList.contains("renderer"))
+          if (elt.hasAttribute("topic-process"))
           {
-              return "renderer"
-          }
-          if (elt.classList.contains("master"))
-          {
-              return "master"
-          }
-          if (elt.classList.contains("node"))
-          {
-              return "node"
+              return elt;
           }
       }
-      return getProcessType(elt.parentElement);
+      return getProcessElt(elt.parentElement);
 }
 
 function doSubscribeToTopic(event) {
+    console.log("doSubscribeToTopic:" + event);
+
     var target = event.target;
+    var topicProcessElt = getProcessElt(target);
+    var topicProcess = topicProcessElt.getAttribute("topic-process");
+
     var topicActionsElt = target.parentElement;
-
-    var topicProcess = getProcessType(target);
-
     var topicNameElt = topicActionsElt.querySelector(".topicName");
     var topicName = topicNameElt.value;
 
-    var topicItemElt = document.getElementById("SubscriptionItem-template");
-    var topicItemElt = topicItemElt.cloneNode(true);
+    var topicItemTemplate = document.getElementById("SubscriptionItem-template");
+    var topicItemElt = topicItemTemplate.cloneNode(true);
     topicItemElt.id = "";
+
+//    var subscriptionsListElt = topicProcessElt.querySelector(".subscriptionsList > tbody");
+//    var topicItemElt = subscriptionsListElt.rows[1].cloneNode(true);
     topicItemElt.classList.add("subscription-" + topicName);
 
     var topicNameElt = topicItemElt.querySelector(".topicName");
     topicNameElt.textContent = topicName;
 
-    var SubscriptionsListElt = document.querySelector("fieldset." + topicProcess + " > div");
+    var SubscriptionsListElt = topicProcessElt.querySelector(".subscriptionsList");
     SubscriptionsListElt.appendChild(topicItemElt);
+
+//    subscriptionsListElt.appendChild(topicItemElt);
     topicItemElt.style.display = "block";
 
     if (topicProcess == "renderer")
@@ -60,10 +59,10 @@ function doSendMessageToTopic(event){
     console.log("doSendMessageToTopic:" + event);
 
     var target = event.target;
+    var topicProcessElt = getProcessElt(target);
+    var topicProcess = topicProcessElt.getAttribute("topic-process");
+
     var topicItemElt = target.parentElement;
-
-    var topicProcess = getProcessType(target);
-
     var topicNameElt = topicItemElt.querySelector(".topicName");
     var topicName = topicNameElt.value;
 
@@ -76,12 +75,12 @@ function doSendMessageToTopic(event){
     }
     if (topicProcess == "master")
     {
-        ipcBus.send("ipc-tests/master-send-topic", { "topic" : topicName, "msg" : topicMsg});
+        ipcBus.send("ipc-tests/master-send-topic", { topic : topicName, msg : topicMsg});
 //        ipcRenderer.send("ipc-tests/ipc-master-send", { "topic" : topicName, "msg" : target.value} );
     }
     if (topicProcess == "node")
     {
-        ipcBus.send("ipc-tests/node-send-topic", { "topic" : topicName, "msg" : topicMsg});
+        ipcBus.send("ipc-tests/node-send-topic", { topic : topicName, msg : topicMsg});
 //        ipcRenderer.send("ipc-tests/ipc-master-send", { "topic" : topicName, "msg" : target.value} );
     }
     console.log("topicName : " + topicName + " - send:" + topicMsg);
@@ -91,8 +90,10 @@ function doUnsubscribeFromTopic(event){
     console.log("doUnsubscribeFromTopic:" + event);
 
     var target = event.target;
+    var topicProcessElt = getProcessElt(target);
+    var topicProcess = topicProcessElt.getAttribute("topic-process");
+
     var topicItemElt = target.parentElement;
-    var topicProcess = getProcessType(target);
     var topicNameElt = topicItemElt.querySelector(".topicName");
     var topicName = topicNameElt.value;
 
@@ -187,9 +188,9 @@ window.onload=function()
 {
     var processesList = 
     [
-        {"class":"master", "title":"Master"},
-        {"class":"renderer", "title":"Renderer"},
-        {"class":"node", "title":"Node"}
+        {class:"master",    title:"Master"},
+        {class:"renderer",  title:"Renderer"},
+        {class:"node",      title:"Node"}
     ];
 
     var processesListElt = document.getElementById("ProcessesList");
@@ -199,9 +200,9 @@ window.onload=function()
     {
         var processItemElt = processTemplateElt.cloneNode(true);
         processItemElt.id = "";
-        processItemElt.classList.add(processesList[i].class);
+        processItemElt.setAttribute("topic-process", processesList[i].class);
 
-        var processLegendElt = processItemElt.querySelector("Legend");
+        var processLegendElt = processItemElt.querySelector("h3");
         processLegendElt.textContent = processesList[i].title;
 
         processesListElt.appendChild(processItemElt);

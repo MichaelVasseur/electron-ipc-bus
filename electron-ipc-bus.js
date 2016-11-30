@@ -232,6 +232,7 @@ function IpcBusRendererClient(ipcObj) {
     }
     
     const self = this
+    var connected = false
 
     ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function(topic, content) {
 
@@ -239,24 +240,47 @@ function IpcBusRendererClient(ipcObj) {
         EventEmitter.prototype.emit.call(self, topic, topic, content)
     })
 
-    this.send = function(topic, data) {
+    // Set API
+    this.connect = function(callback) {
+        // connect can be called multiple times
+        self.connected = true
+        setTimeout(callback, 1)
+    }
 
+    this.close = function() {
+        self.connected = false
+    }
+    
+    this.send = function(topic, data) {
+        if (self.connected == false)
+        {
+            throw new Error("Please connect first")
+        }
         ipcObj.send(IPC_BUS_RENDERER_SEND, topic, data)
     }
 
     this.queryBrokerState = function() {
-
+        if (self.connected == false)
+        {
+            throw new Error("Please connect first")
+        }
         ipcObj.send(IPC_BUS_RENDERER_QUERYSTATE)
     }
 
     this.subscribe = function(topic, handler) {
-
+        if (self.connected == false)
+        {
+            throw new Error("Please connect first")
+        }
         EventEmitter.prototype.addListener.call(this, topic, handler)
         ipcObj.send(IPC_BUS_RENDERER_SUBSCRIBE, topic)
     }
 
     this.unsubscribe = function(topic, handler) {
-
+        if (self.connected == false)
+        {
+            throw new Error("Please connect first")
+        }
         EventEmitter.prototype.removeListener.call(this, topic, handler)
         ipcObj.send(IPC_BUS_RENDERER_UNSUBSCRIBE, topic)
     }

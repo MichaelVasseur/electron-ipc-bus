@@ -65,6 +65,7 @@ var isConnected = false;
 var msgs = [];
 
 ipcBus.connect(function () {
+    console.log("node - connect");
     isConnected = true;
     for(var msg in msgs)
     {
