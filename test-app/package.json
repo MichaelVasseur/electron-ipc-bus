@@ -9,9 +9,10 @@
   "author": "Thomson Reuters",
   "homepage": "http://www.thomsonreuters.com",
   "devDependencies": {
-    "browserify":"13.1.1",
-    "electron-ipc-bus":"1.0.0"
+    "tr-electron": "^1.4.5"
   },
   "dependencies": {
+    "bootstrap": "^3.3.7",
+    "uuid": "2.0.3"
   }
 }

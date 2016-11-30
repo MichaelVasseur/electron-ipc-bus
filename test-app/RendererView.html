@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <title>IPC Test App</title>
+
+   <!-- Bootstrap -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="RendererView.js"></script>
+</head>
+
+<body>
+    <div id="SubscriptionItem-template" topic-name="test" style="display:none">
+        <b>Topic Name:</b>
+        <spam class="topicName">Test</spam>
+        <input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
+        <textarea rows="4" cols="50" class="topicReceived"></textarea>
+        <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
+    </div>
+
+    <fieldset id="ProcessItem-template"  style="display:none">
+        <legend>Master</legend>
+        <fieldset class="topicSubscribe">
+            Topic Name :
+            <input class="topicName" type="text" />
+            <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
+            </br>
+        </fieldset>
+        <fieldset class="topicSend">
+            Topic Name :
+            <input class="topicName" type="text" /> Message :
+            <input class="topicMsg" type="text" />
+            <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+            </br>
+        </fieldset>
+        <hr />
+        <h4>Subscriptions</h4>
+        <div class="SubscriptionsList"></div>
+        </br>
+        </br>
+    </fieldset>
+
+    <div id="ProcessesList">
+    </div>
+
+    <input type="button" onclick="doQueryBrokerState()" value="Request IPC Status"></input>
+    <table id="brokerStatesList" border="1">
+        <tr>
+            <th>Topic</th>
+            <th>Conn Count</th>
+            <th>Sub Count</th>
+        </tr>
+    </table>
+</body>
+
+</html>

@@ -19,11 +19,11 @@ electronApp.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1');
 
 // Misc
 const uuid = require("uuid");
-const busPath = '/electron-ipc-bus/' + uuid.v4();
+const busPath = '/tr-ipc-bus/' + uuid.v4();
 console.log("IPC Bus Path : " + busPath);
 
 // IPC Bus
-const ipcClient = require("../main")("main", require("../main")("bus-uuid"));
+const ipcBus = require("ipc-bus")("browser", busPath, ipcMain);
 
 // Helpers
 
@@ -65,9 +65,6 @@ function NodeInstance() {
     this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
     console.log("<MAIN> Node instance #" + this.process.pid + " started !")
 
-    this.window = new BrowserWindow({ width: 800, height: 600, webPreferences: { sandbox: true }, instancePid: this.process.pid })
-    this.window.loadURL("file://" + __dirname + "/NodeInstanceView.html");
-
     nodeInstances.push(this);
 
     this.term = function() {
@@ -79,12 +76,6 @@ function NodeInstance() {
 
 // Commands
 
-function doNewNodeInstance() {
-
-    console.log("<MAIN> Starting new Node instance ...")
-    const instance = new NodeInstance();
-}
-
 function doTermInstance(pid) {
 
     console.log("<MAIN> Killing instance #" + pid + " ...");
@@ -94,25 +85,69 @@ function doTermInstance(pid) {
     nodeInstance.term();
 }
 
-function onMainTopicMessage(topic, data) {
-
+function onTopicMessage(topic, data) {
+    console.log("master - topic:" + topic + " data:" + data);
+    ipcBus.send("ipc-tests/master-received-topic", { "topic" : topic, "msg" : data});
 }
 
-function doSubscribeMainTopic(topic) {
-
-    ipcClient.subscribe(topic, onMainTopicMessage);
+function doSubscribeTopic(topic) {
+    console.log("master - doSubscribeTopic:" + topic);
+    ipcBus.subscribe(topic, onTopicMessage);
 }
 
-function doUnsubscribeMainTopic(topic) {
-
-    ipcClient.unsubscribe(topic, onMainTopicMessage);
+function doUnsubscribeTopic(topic) {
+    console.log("master - doUnsubscribeTopic:" + topic);
+    ipcBus.unsubscribe(topic, onTopicMessage);
 }
+
+function doSendOnTopic(args) {
+    console.log("master - doSendOnTopic: topic:" + args["topic"] + " msg:" + args["msg"]);
+    ipcBus.send(args["topic"], args["msg"]);
+}
+
+
+function doNodeSubscribeTopic(topic) {
+    console.log("master - send to node subscribe:" + topic);
+
+    var msgJSON = 
+    { 
+        "action":"subscribe",
+        "topic":topic
+    };
+    nodeInstance.process.send(JSON.stringify(msgJSON));
+}
+
+function doNodeUnsubscribeTopic(topic) {
+    console.log("master - send to node unsubscribe:" + topic);
+    var msgJSON = 
+    { 
+        "action":"unsubscribe",
+        "topic":topic
+    };
+    nodeInstance.process.send(JSON.stringify(msgJSON));
+}
+
+function doNodeSendOnTopic(args) {
+    console.log("master - send to node send:" + args);
+    var msgJSON = 
+    { 
+        "action":"send",
+        "args":args
+    };
+    nodeInstance.process.send(JSON.stringify(msgJSON));
+}
+
 
 // Startup
 
 let ipcBrokerInstance = null
+var nodeInstance = null;
 
 electronApp.on("ready", function () {
+
+//    ipcMain.on("ipc-tests/ipc-master-unsubscribe", (event, topic) => doUnsubscribeMainTopic(topic));
+//    ipcMain.on("ipc-tests/ipc-master-subscribe", (event, topic) => doSubscribeTopic(topic));
+//    ipcMain.on("ipc-tests/ipc-master-send", (event, args) => doSendMainTopic(args));
 
     // Setup IPC Broker
     console.log("<MAIN> Starting IPC broker ...");
@@ -121,41 +156,32 @@ electronApp.on("ready", function () {
 
         console.log("<MAIN> IPC broker is ready !");
         // Setup IPC Client (and renderer bridge)
-        ipcClient.connect(function () {
-
-            console.log("<MAIN> Connected to IPC broker !");
-
-            ipcClient.subscribe("IPC_BUS_BROKER_STATUS_TOPIC", function(topic, brokerState) {
-                console.log(topic + " = " + util.inspect(brokerState));
-            });
+        ipcBus.connect(function () {
 
             // Command hanlers
-            ipcClient.subscribe("ipc-tests/new-node-instance", () => doNewNodeInstance());
-            //ipcClient.subscribe("ipc-tests/kill-node-instance", (event, pid) => doKillNodeInstance(pid));
-            //ipcClient.subscribe("ipc-tests/subscribe-main-topic", (event, topic) => doSubscribeMainTopic(topic));
-            //ipcClient.subscribe("ipc-tests/unsubscribe-main-topic", (event, topic) => doUnsubscribeMainTopic(topic));
+            ipcBus.subscribe("ipc-tests/new-node-instance", () => doNewNodeInstance());
+            ipcBus.subscribe("ipc-tests/new-htmlview-instance", (event, pid) => doNewHtmlViewInstance());
+            ipcBus.subscribe("ipc-tests/kill-node-instance", (event, pid) => doKillNodeInstance(pid));
+
+            ipcBus.subscribe("ipc-tests/master-subscribe-topic", (event, topic) => doSubscribeTopic(topic));
+            ipcBus.subscribe("ipc-tests/master-unsubscribe-topic", (event, topic) => doUnsubscribeTopic(topic));
+            ipcBus.subscribe("ipc-tests/master-send-topic", (event, args) => doSendOnTopic(args));
+
+            ipcBus.subscribe("ipc-tests/node-subscribe-topic", (event, topic) => doNodeSubscribeTopic(topic));
+            ipcBus.subscribe("ipc-tests/node-unsubscribe-topic", (event, topic) => doNodeUnsubscribeTopic(topic));
+            ipcBus.subscribe("ipc-tests/node-send-topic", (event, args) => doNodeSendOnTopic(args));
 
             // Open main window
-            const preloadPath = path.join(__dirname, "BundledBrowserWindowPreload.js")
-            console.log("Preload : " + preloadPath)
-            const mainWindow = new BrowserWindow({ width: 800, height: 600, webPreferences: { sandbox: false, preload: preloadPath } })
-            mainWindow.loadURL("file://" + path.join(__dirname, "Main.html"));
+            var preloadFile = path.join(__dirname, "BrowserWindowPreload.js");
+            const mainWindow = new BrowserWindow({ width: 800, height: 900, 
+                webPreferences: 
+                { 
+                    sandbox: true,
+                    preload: preloadFile 
+                } });
+            mainWindow.loadURL("file://" + path.join(__dirname, "RendererView.html"));
 
-            setTimeout(function(){
-                ipcClient.subscribe("ipc-tests-main", function(topic, content) {
-                    console.log("<MAIN> Received message on '" + topic + "' !");
-                });
-                console.log("There is " + ipcClient.listenerCount("ipc-tests-main") + " listeners on 'ipc-tests-main'");
-                ipcClient.send("ipc-tests-main");
-                //mainWindow.webContents.send("IPC_BUS_RENDERER_RECEIVE", "ipc-tests-main");
-
-                //console.log("<MAIN> Manual emit of 'ipc-tests-main'");
-                //ipcClient.emit("ipc-tests-main");
-
-                ipcClient.queryBrokerState();
-            }, 3000);
-
-
+            nodeInstance = new NodeInstance();
         })
     })
     ipcBrokerInstance.stdout.addListener("data", data => { console.log('<BROKER> ' + data.toString()); });
