@@ -11,21 +11,7 @@ const path = require("path");
 const child_process = require("child_process");
 const Module = require("module")
 
-// Override module loading
-const originalResolveFilename = Module._resolveFilename
-const newResolveFilename = function (request, parent, isMain) {
-
-    switch (request) {
-        case 'ipc-bus':
-            return originalResolveFilename(path.join(path.dirname(process.argv0), "resources", "electron.asar", "common", "api", "ipc-bus.js"), parent, isMain)
-        default:
-            return originalResolveFilename(request, parent, isMain)
-    }
-}
-
-Module._resolveFilename = newResolveFilename;
-
-const ipcBus = require("ipc-bus")()
+const ipcBus = require("../electron-ipc-bus")()
 
 function onTopicMessage(topic, data) {
     console.log("node - topic:" + topic + " data:" + data);

@@ -23,7 +23,7 @@ const busPath = '/tr-ipc-bus/' + uuid.v4();
 console.log("IPC Bus Path : " + busPath);
 
 // IPC Bus
-const ipcBus = require("ipc-bus")("browser", busPath, ipcMain);
+const ipcBus = require("../electron-ipc-bus")("browser", busPath, ipcMain);
 
 // Helpers
 
@@ -172,7 +172,7 @@ electronApp.on("ready", function () {
             ipcBus.subscribe("ipc-tests/node-send-topic", (event, args) => doNodeSendOnTopic(args));
 
             // Open main window
-            var preloadFile = path.join(__dirname, "BrowserWindowPreload.js");
+            var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
             const mainWindow = new BrowserWindow({ width: 800, height: 900, 
                 webPreferences: 
                 { 

@@ -3,4 +3,4 @@
 
 "use strict";
 
-window.ipcBus = require("electron-ipc-bus")("renderer")
+window.ipcBus = require("../electron-ipc-bus")("renderer")
