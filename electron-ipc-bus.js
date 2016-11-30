@@ -86,10 +86,10 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         // This connection has subscribed to this topic
                         const newConnRefCount = topicSubs.get(conn) - 1
                         if(newConnRefCount > 0) {
-                            ipcbus.topicSubs.set(conn, newConnRefCount)
+                            topicSubs.set(conn, newConnRefCount)
                         } else {
                             // The connection is no more referenced
-                            ipcbus.delete(conn)
+                            topicSubs.delete(conn)
                         }
                     }
                     if(topicSubs.length === 0) {

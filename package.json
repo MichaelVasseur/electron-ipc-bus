@@ -12,5 +12,5 @@
         "easy-ipc":"0.2.2",
         "uuid":"2.0.3"
     }, 
-    "main": "main.js"
+    "main": "electron-ipc-bus.js"
 }
