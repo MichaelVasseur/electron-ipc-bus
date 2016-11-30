@@ -172,7 +172,13 @@ electronApp.on("ready", function () {
             ipcBus.subscribe("ipc-tests/node-send-topic", (event, args) => doNodeSendOnTopic(args));
 
             // Open main window
-            const mainWindow = new BrowserWindow({ width: 800, height: 900, webPreferences: { sandbox: true } })
+            var preloadFile = path.join(__dirname, "BrowserWindowPreload.js");
+            const mainWindow = new BrowserWindow({ width: 800, height: 900, 
+                webPreferences: 
+                { 
+                    sandbox: true,
+                    preload: preloadFile 
+                } });
             mainWindow.loadURL("file://" + path.join(__dirname, "RendererView.html"));
 
             nodeInstance = new NodeInstance();
