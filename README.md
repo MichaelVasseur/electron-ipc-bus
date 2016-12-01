@@ -64,10 +64,11 @@ Ex:
 
     ipcBus.close()
 
-## Test applications
+## Test application
 
-The test-app folder contains all sources of a testing application.
-NOTE : It is not part of NPM package.
+The test-app folder contains all sources of the testing application.
+NOTE : This folder is not packaged by NPM.
+
 To build the application :
 
     npm install

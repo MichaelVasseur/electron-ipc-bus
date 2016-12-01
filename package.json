@@ -3,6 +3,12 @@
     "version": "1.0.0", 
     "description": "Safe IPC bus for Electron",
 	"license": "MIT",
+    "author": "Michael Vasseur (michael.vasseur@thomsonreuters.com)",
+    "contributors": [
+        "Emmanuel Kimmerlin (michael.vasseur@thomsonreuters.com)",
+        "Gregory Gatellier (gregory.gatellier@thomsonreuters.com)",
+        "Thomas Moutel (thomas.moutel@thomsonreuters.com)"
+    ],
 	"homepage": "https://github.com/MichaelVasseur/electron-ipc-bus",
     "repository": {
         "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git", 
