@@ -248,7 +248,10 @@ function IpcBusRendererClient(ipcObj) {
         }
         // connect can be called multiple times
         connected = true
-        setTimeout(callback, 1)
+        setTimeout(function()
+        {
+            callback('connect')
+        }, 1)
     }
 
     this.close = function() {
