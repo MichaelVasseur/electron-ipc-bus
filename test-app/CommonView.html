@@ -9,7 +9,8 @@
    <!-- Bootstrap -->
     <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <script src="RendererView.js"></script>
+    <script src="ProcessConnector.js"></script>
+    <script src="CommonView.js"></script>
 </head>
 
 <body>
@@ -21,7 +22,7 @@
         <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
     </div>
 
-    <div id="ProcessItem-template" topic-process="fake" style="display:none">
+    <div id="ProcessMonitor" topic-process="fake">
         <h3>Master</h3>
         <h4>Actions</h4>
         <fieldset class="topicSubscribe">
@@ -56,9 +57,6 @@
         </table-->
         <hr>
         </br>
-    </div>
-
-    <div id="ProcessesList">
     </div>
 
     <input type="button" onclick="doQueryBrokerState()" value="Request IPC Status"></input>
