@@ -180,7 +180,7 @@ ipcBus.connect(function(){
     ipcBus.subscribe('IPC_BUS_BROKER_STATUS_TOPIC', onIPC_BrokerStatusTopic);
     ipcBus.subscribe("ipc-tests/master-received-topic", onIPC_master);
     ipcBus.subscribe("ipc-tests/node-received-topic", onIPC_node);
-})
+});
 
 
 window.onload=function()

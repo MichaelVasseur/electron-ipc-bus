@@ -232,7 +232,7 @@ function IpcBusRendererClient(ipcObj) {
     }
     
     const self = this
-    var connected = false
+    let connected = null
 
     ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function(topic, content) {
 
@@ -242,6 +242,10 @@ function IpcBusRendererClient(ipcObj) {
 
     // Set API
     this.connect = function(callback) {
+        if (connected == false)
+        {
+            throw new Error("Connection is closed")
+        }
         // connect can be called multiple times
         connected = true
         setTimeout(callback, 1)
@@ -252,7 +256,7 @@ function IpcBusRendererClient(ipcObj) {
     }
     
     this.send = function(topic, data) {
-        if (connected == false)
+        if (connected != true)
         {
             throw new Error("Please connect first")
         }
@@ -260,7 +264,7 @@ function IpcBusRendererClient(ipcObj) {
     }
 
     this.queryBrokerState = function() {
-        if (connected == false)
+        if (connected != true)
         {
             throw new Error("Please connect first")
         }
@@ -268,7 +272,7 @@ function IpcBusRendererClient(ipcObj) {
     }
 
     this.subscribe = function(topic, handler) {
-        if (connected == false)
+        if (connected != true)
         {
             throw new Error("Please connect first")
         }
@@ -277,7 +281,7 @@ function IpcBusRendererClient(ipcObj) {
     }
 
     this.unsubscribe = function(topic, handler) {
-        if (connected == false)
+        if (connected != true)
         {
             throw new Error("Please connect first")
         }
@@ -327,7 +331,7 @@ function IpcBusNodeClient(busPath, ipcObj) {
 
     this.close = function() {
 
-        busConn.close()
+        busConn.end()
     }
     
     this.send = function(topic, data) {
