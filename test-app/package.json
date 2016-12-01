@@ -4,16 +4,17 @@
   "description": "Test App for IPC subsystem",
   "main": "Main.js",
   "scripts": {
-    "start": "electron Main.js",
-    "bundle_preload" : "browserify -o BundledBrowserWindowPreload.js -x electron BrowserWindowPreload.js"
+    "start": "electron .",
+    "start-sandboxed": "electron . --enable-sandbox",
+    "bundle-preload" : "browserify -o BundledBrowserWindowPreload.js -x electron BrowserWindowPreload.js"
   },
   "author": "Thomson Reuters",
   "homepage": "http://www.thomsonreuters.com",
   "devDependencies": {
+    "electron":"1.4.10",
     "browserify":"13.1.1"
   },
   "dependencies": {
-    "bootstrap": "^3.3.7",
-    "uuid": "2.0.3"
+    "bootstrap": "^3.3.7"
   }
 }

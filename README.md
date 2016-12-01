@@ -62,7 +62,27 @@ Ex:
 
 Ex:
 
-    ipcBus.close() 
+    ipcBus.close()
+
+## Test applications
+
+The test-app folder contains all sources of a testing application.
+NOTE : It is not part of NPM package.
+To build the application :
+
+    npm install
+    npm run bundle-preload
+
+To run the application :
+
+    npm run start
+
+To run the application in sandboxed mode :
+
+    npm run start-sandboxed
+
+
+ 
  
 
  
