@@ -28,3 +28,4 @@ node_modules/
 *.sln
 debug.log
 npm-debug.log
+test-app/BundledBrowserWindowPreload.js
