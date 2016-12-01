@@ -8,7 +8,7 @@ ProcessConnector = (function()
         var _ipc;
         switch(_type)
         {
-            case "master" : 
+            case "main" : 
                  _ipc = arguments[1];
                 break;
             case "renderer" : 
@@ -17,6 +17,7 @@ ProcessConnector = (function()
                 break;
             case "node" :
                  _id = arguments[1];
+                 _ipc = arguments[2];
                 break;
         };
         

@@ -160,8 +160,9 @@ ipcRenderer.on("initializeWindow", function (event, data) {
 
     var processTitleElt = processesMonitorElt.querySelector("h3");
 
-    if (args["type"] == "master") {
-        processToMonitor = new ProcessConnector("master", ipcRenderer);
+
+    if (args["type"] == "main") {
+        processToMonitor = new ProcessConnector("main", ipcRenderer);
         processToMonitor.onReceivedMessageNotify(onIPCElectron_ReceivedMessageNotify);
         processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
@@ -169,6 +170,13 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     }
     if (args["type"] == "renderer") {
         processToMonitor = new ProcessConnector("renderer", args["id"], ipcRenderer);
+        processTitleElt.textContent = args["title"] + " - " + args["id"];
+    }
+    if (args["type"] == "node") {
+        processToMonitor = new ProcessConnector("node", args["id"], ipcRenderer);
+        processToMonitor.onReceivedMessageNotify(onIPCElectron_ReceivedMessageNotify);
+        processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
+        processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
         processTitleElt.textContent = args["title"] + " - " + args["id"];
     }
 });

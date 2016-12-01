@@ -33,6 +33,10 @@ function doSendOnTopic(args) {
     ipcBus.send(args["topic"], args["msg"]);
 }
 
+function doInit(args) {
+    console.log("node - doInit: topic:" + args);
+}
+
 function dispatchMessage(msg)
 {
     console.log("node - receive message:" + msg);
@@ -56,6 +60,10 @@ function dispatchMessage(msg)
         if (msgJSON["action"] == "send")
         {
             doSendOnTopic(msgJSON["args"]);
+        }
+        if (msgJSON["action"] == "init")
+        {
+            doInit(msgJSON["args"]);
         }
     }
 }
