@@ -1,13 +1,16 @@
 /// <reference types="node" />
 import { EventEmitter } from 'events';
 
-export function IpcBus(processType: string) : IpcBusClient;
+export default function (... args: any[]) : IpcBusClient;
 
 export interface IpcBusClient extends EventEmitter {
 
-    function connect(callback: Function);
-    function subscribe(topic: string, handler: Function);
-    function send(msg: Object| string);
-    function unsubscribe(topic: string, handler: Function);
-    function close();
+    connect(callback: Function);
+    subscribe(topic: string, handler: Function);
+    send(msg: Object| string);
+    unsubscribe(topic: string, handler: Function);
+    close();
+
+    start();
+    stop();
 }
