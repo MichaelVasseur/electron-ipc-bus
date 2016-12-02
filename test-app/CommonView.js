@@ -44,7 +44,7 @@ function onIPCElectron_SubscribeNotify(topicName) {
     topicItemElt.classList.add("subscription-" + topicName);
 
     var topicNameElt = topicItemElt.querySelector(".topicName");
-    topicNameElt.value = topicName;
+    topicNameElt.textContent = topicName;
 
     var SubscriptionsListElt = topicProcessElt.querySelector(".subscriptionsList");
     SubscriptionsListElt.appendChild(topicItemElt);
@@ -61,7 +61,7 @@ function doUnsubscribeFromTopic(event) {
     var target = event.target;
     var topicItemElt = target.parentElement;
     var topicNameElt = topicItemElt.querySelector(".topicName");
-    var topicName = topicNameElt.value;
+    var topicName = topicNameElt.textContent;
 
     if (processToMonitor.Type() == "renderer") {
         ipcBus.connect(function () {
@@ -91,7 +91,7 @@ function doSendMessageToTopic(event) {
     var target = event.target;
     var topicItemElt = target.parentElement;
     var topicNameElt = topicItemElt.querySelector(".topicName");
-    var topicName = topicNameElt.value;
+    var topicName = topicNameElt.textContent;
 
     var topicMsgElt = topicItemElt.querySelector(".topicMsg");
     var topicMsg = topicMsgElt.value;

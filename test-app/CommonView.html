@@ -17,19 +17,15 @@
 </head>
 
 <body>
-    <div id="SubscriptionItem-template" style="display:none">
-        <form class="form-inline">
-            <div class="input-group">
-                <span class="input-group-addon">Topic</span>
-                <input class="topicName form-control" type="text" readonly></<input>
-            </div>
-            <input type="button" class="form-control" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
-        </form>
-        <form class="form-inline">
-            <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
-            <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
-        </form>
-        <hr>
+    <div id="SubscriptionItem-template" class="panel panel-default" style="display:none">
+        <div class="panel-heading">Topic <b class="topicName"></b></div>
+        <div class="panel-body">
+            <form class="form-inline">
+                <input type="button" class="form-control" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
+                <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
+                <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
+            </form>
+        </div>
     </div>
 
     <div id="ProcessToolbar" style="display:none">
@@ -62,8 +58,7 @@
             </div>
         </div>
         <div id="ProcessSubscriptions"  class="panel panel-default">
-            <div class="panel-heading">Subscriptions</div>
-            <div class="panel-body subscriptionsList"></div>
+            <div class="subscriptionsList"></div>
         </div>
         <div id="ProcessBrokerState" class="panel panel-default" style="display:none">
             <div class="panel-heading">Broker State
