@@ -25,24 +25,14 @@ console.log("IPC Bus Path : " + busPath);
 // IPC Bus
 const ipcBus = require("../electron-ipc-bus")("browser", busPath, ipcMain);
 
+
+// Load node-import without wrapping to variable. 
+require('node-import');
+imports("ProcessConnector");
+
 // Helpers
-
-function getCmdLineArgValue(argName) {
-    
-    for(let i = 0; i < process.argv.length; i++) {
-            
-        if(process.argv[i].startsWith("--" + argName))
-        {
-            const argValue = process.argv[i].split("=")[1];
-            return argValue;
-        }
-    }
-    return null;
-}
-
-function startNodeInstance(scriptPath) {
-
-    const args = [ path.join(__dirname, scriptPath), '--parent-pid=' + process.pid, '--bus-path=' + busPath]
+function spawnNodeInstance(scriptPath) {
+    const args = [path.join(__dirname, scriptPath), '--parent-pid=' + process.pid, '--bus-path=' + busPath]
 
     let options = { env: {} };
     for (let key of Object.keys(process.env)) {
@@ -54,134 +44,214 @@ function startNodeInstance(scriptPath) {
     return child_process.spawn(process.argv[0], args, options);
 }
 
-// Classes
+var MainProcess = (function () {
+    function MainProcess() {
+        var processId = 0;
 
-const nodeInstances = []
+        // Listen view messages
+        var processMainFromView = new ProcessConnector("main", ipcMain);
+        processMainFromView.onSendMessage(onIPCElectron_SendMessage);
+        processMainFromView.onSubscribe(onIPCElectron_Subscribe);
+        processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
+        processMainFromView.on("new-process", doNewProcess);
 
-function NodeInstance() {
+        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+        const mainWindow = new BrowserWindow({
+            width: 800, height: 600,
+            webPreferences:
+            {
+                preload: preloadFile
+            }
+        });
+        mainWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
 
-    this.process = startNodeInstance("NodeInstance.js");
-    this.process.stdout.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
-    this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
-    console.log("<MAIN> Node instance #" + this.process.pid + " started !")
+        var processMainToView = new ProcessConnector("main", mainWindow.webContents);
+        mainWindow.webContents.on('dom-ready', function () {
+            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main" });
+        });
 
-    nodeInstances.push(this);
+        function doNewProcess(processType) {
+            switch (processType) {
+                case "renderer":
+                    new RendererProcess(processId);
+                    break;
+                case "node":
+                    new NodeProcess(processId);
+                    break;
+            }
+            ++processId;
+        }
+        
+        function onIPCElectron_ReceivedMessage(topicName, topicMsg) {
+            console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
+            processMainToView.receivedMessageNotify(topicName, topicMsg);
+        }
 
-    this.term = function() {
+        function onIPCElectron_Subscribe(topicName) {
+            console.log("Master - onIPCElectron_Subscribe:" + topicName);
+            ipcBus.subscribe(topicName, onIPCElectron_ReceivedMessage);
+            processMainToView.sendSubscribeNotify(topicName);
+        }
 
-        this.process.kill();
-        this.window.close();
+        function onIPCElectron_Unsubscribe(topicName) {
+            console.log("Master - onIPCElectron_Subscribe:" + topicName);
+            ipcBus.unsubscribe(topicName, onIPCElectron_ReceivedMessage);
+            processMainToView.sendUnsubscribeNotify(topicName);
+        }
+
+        function onIPCElectron_SendMessage(topicName, topicMsg) {
+            console.log("Master - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
+            ipcBus.send(topicName, topicMsg);
+        }
+
     }
-}
+    return MainProcess;
+})();
 
-// Commands
+var RendererProcess = (function () {
+    function RendererProcess(processId) {
+        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+        const rendererWindow = new BrowserWindow({
+            width: 800, height: 600,
+            webPreferences:
+            {
+                preload: preloadFile
+            }
+        });
+        rendererWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
+        rendererWindow.webContents.on('dom-ready', function () {
+            rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId });
+        });
+    }
+    return RendererProcess;
+})();
 
-function doTermInstance(pid) {
+// Classes
+var NodeProcess = (function () {
 
-    console.log("<MAIN> Killing instance #" + pid + " ...");
-    const nodeInstance = nodeInstances.find((e) => e.process.pid == pid);
-    const instanceIdx = nodeInstances.indexOf(nodeInstance);
-    nodeInstances.splice(instanceIdx, 1);
-    nodeInstance.term();
-}
+    const nodeInstances = new Map;
 
-function onTopicMessage(topic, data) {
-    console.log("master - topic:" + topic + " data:" + data);
-    ipcBus.send("ipc-tests/master-received-topic", { "topic" : topic, "msg" : data});
-}
+    function NodeInstance() {
 
-function doSubscribeTopic(topic) {
-    console.log("master - doSubscribeTopic:" + topic);
-    ipcBus.subscribe(topic, onTopicMessage);
-}
+        this.process = spawnNodeInstance("NodeInstance.js");
+        this.process.stdout.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
+        this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
+        console.log("<MAIN> Node instance #" + this.process.pid + " started !")
+    }
 
-function doUnsubscribeTopic(topic) {
-    console.log("master - doUnsubscribeTopic:" + topic);
-    ipcBus.unsubscribe(topic, onTopicMessage);
-}
+    function NodeProcess(processId) {
+        var nodeInstance = new NodeInstance();
+        // Listen view messages
+        var processMainFromView = new ProcessConnector("node", processId, ipcMain);
+        processMainFromView.onSendMessage(onIPCElectron_SendMessage);
+        processMainFromView.onSubscribe(onIPCElectron_Subscribe);
+        processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
 
-function doSendOnTopic(args) {
-    console.log("master - doSendOnTopic: topic:" + args["topic"] + " msg:" + args["msg"]);
-    ipcBus.send(args["topic"], args["msg"]);
-}
+        // Listen node message
+        nodeInstance.process.on("message", onIPCProcess_Message);
 
+        nodeInstance.process.send(JSON.stringify({ action: "init", args: { title: "Node", type: "node", id: processId } }));
+        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+        const nodeWindow = new BrowserWindow({
+            width: 800, height: 600,
+            webPreferences:
+            {
+                preload: preloadFile
+            }
+        });
+        var processMainToView = new ProcessConnector("node", processId, nodeWindow.webContents);
+        nodeWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
+        nodeWindow.on("close", function()
+        {
+            nodeInstances.delete(processId);
+            nodeInstance.process.kill();
+        });
+        nodeWindow.webContents.on('dom-ready', function () 
+        {
+            nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId });
+        });
 
-function doNodeSubscribeTopic(topic) {
-    console.log("master - send to node subscribe:" + topic);
-
-    var msgJSON = 
-    { 
-        "action":"subscribe",
-        "topic":topic
-    };
-    nodeInstance.process.send(JSON.stringify(msgJSON));
-}
-
-function doNodeUnsubscribeTopic(topic) {
-    console.log("master - send to node unsubscribe:" + topic);
-    var msgJSON = 
-    { 
-        "action":"unsubscribe",
-        "topic":topic
-    };
-    nodeInstance.process.send(JSON.stringify(msgJSON));
-}
-
-function doNodeSendOnTopic(args) {
-    console.log("master - send to node send:" + args);
-    var msgJSON = 
-    { 
-        "action":"send",
-        "args":args
-    };
-    nodeInstance.process.send(JSON.stringify(msgJSON));
-}
+        nodeInstances.set(processId, nodeInstance);
 
 
+        function onIPCProcess_Message(data)
+        {
+            var msgJSON = JSON.parse(data);
+            if (msgJSON.hasOwnProperty("action"))
+            {
+                switch(msgJSON["action"])
+                {
+                    case "received" :
+                        processMainToView.receivedMessageNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"]);
+                        break;
+                    case "subscribe" :
+                        processMainToView.sendSubscribeNotify(msgJSON["topic"]);
+                        break;
+                    case "unsubscribe" :
+                        processMainToView.sendUnsubscribeNotify(msgJSON["topic"]);
+                        break;
+                }
+            }
+        }
+        
+        function onIPCElectron_Subscribe(topicName) {
+            console.log("Node - onIPCElectron_Subscribe:" + topicName);
+            var msgJSON =
+                {
+                    action: "subscribe",
+                    topic: topicName
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
+        }
+
+        function onIPCElectron_Unsubscribe(topicName) {
+            console.log("Node - onIPCElectron_Subscribe:" + topicName);
+            var msgJSON =
+                {
+                    action: "unsubscribe",
+                    topic: topicName
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
+            processMainToView.sendUnsubscribeNotify(topicName);
+        }
+
+        function onIPCElectron_SendMessage(topicName, topicMsg) {
+            console.log("Node - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
+            var msgJSON =
+                {
+                    action: "send",
+                    args: { topic : topicName, msg : topicMsg}
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
+        }
+    }
+
+    function doTermInstance(pid) {
+
+        console.log("<MAIN> Killing instance #" + pid + " ...");
+        const nodeInstance = nodeInstances.find((e) => e.process.pid == pid);
+        const instanceIdx = nodeInstances.indexOf(nodeInstance);
+        nodeInstances.splice(instanceIdx, 1);
+        nodeInstance.term();
+    }
+
+    return NodeProcess;
+
+})();
 // Startup
-
 let ipcBrokerInstance = null
-var nodeInstance = null;
 
 electronApp.on("ready", function () {
 
-//    ipcMain.on("ipc-tests/ipc-master-unsubscribe", (event, topic) => doUnsubscribeMainTopic(topic));
-//    ipcMain.on("ipc-tests/ipc-master-subscribe", (event, topic) => doSubscribeTopic(topic));
-//    ipcMain.on("ipc-tests/ipc-master-send", (event, args) => doSendMainTopic(args));
-
     // Setup IPC Broker
     console.log("<MAIN> Starting IPC broker ...");
-    ipcBrokerInstance = startNodeInstance("BrokerNodeInstance.js");
+    ipcBrokerInstance = spawnNodeInstance("BrokerNodeInstance.js");
     ipcBrokerInstance.on("message", function (msg) {
 
         console.log("<MAIN> IPC broker is ready !");
         // Setup IPC Client (and renderer bridge)
         ipcBus.connect(function () {
-
-            // Command hanlers
-            ipcBus.subscribe("ipc-tests/new-node-instance", () => doNewNodeInstance());
-            ipcBus.subscribe("ipc-tests/new-htmlview-instance", (event, pid) => doNewHtmlViewInstance());
-            ipcBus.subscribe("ipc-tests/kill-node-instance", (event, pid) => doKillNodeInstance(pid));
-
-            ipcBus.subscribe("ipc-tests/master-subscribe-topic", (event, topic) => doSubscribeTopic(topic));
-            ipcBus.subscribe("ipc-tests/master-unsubscribe-topic", (event, topic) => doUnsubscribeTopic(topic));
-            ipcBus.subscribe("ipc-tests/master-send-topic", (event, args) => doSendOnTopic(args));
-
-            ipcBus.subscribe("ipc-tests/node-subscribe-topic", (event, topic) => doNodeSubscribeTopic(topic));
-            ipcBus.subscribe("ipc-tests/node-unsubscribe-topic", (event, topic) => doNodeUnsubscribeTopic(topic));
-            ipcBus.subscribe("ipc-tests/node-send-topic", (event, args) => doNodeSendOnTopic(args));
-
-            // Open main window
-            var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
-            const mainWindow = new BrowserWindow({ width: 800, height: 900, 
-                webPreferences: 
-                { 
-                    sandbox: true,
-                    preload: preloadFile 
-                } });
-            mainWindow.loadURL("file://" + path.join(__dirname, "RendererView.html"));
-
-            nodeInstance = new NodeInstance();
+            new MainProcess();
         })
     })
     ipcBrokerInstance.stdout.addListener("data", data => { console.log('<BROKER> ' + data.toString()); });

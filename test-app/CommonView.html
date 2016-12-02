@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <title>IPC Test App</title>
+
+    <!-- Bootstrap -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="ProcessConnector.js"></script>
+    <script src="CommonView.js"></script>
+</head>
+
+<body>
+    <div id="SubscriptionItem-template" topic-name="test" style="display:none">
+        <b>Topic Name:</b>
+        <spam class="topicName">Test</spam>
+        <input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
+        <textarea rows="4" cols="50" class="topicReceived"></textarea>
+        <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
+    </div>
+
+    <div id="ProcessToolbar" style="display:none">
+        <input type="button" onclick="doNewNodeInstance(event)" value="New node process"></<input>
+        <input type="button" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
+        <input type="button" onclick="doQueryBrokerState()" value="Refresh IPC Status"></input>
+    </div>
+
+    <div id="ProcessMonitor" topic-process="fake">
+        <h3>Master</h3>
+        <hr />
+        <div id="ProcessActions">
+            <h4>Actions</h4>
+            <fieldset class="topicSubscribe">
+                Topic Name :
+                <input class="topicName" type="text" />
+                <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
+                </br>
+            </fieldset>
+            <fieldset class="topicSend">
+                Topic Name :
+                <input class="topicName" type="text" /> Message :
+                <input class="topicMsg" type="text" />
+                <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+                </br>
+            </fieldset>
+        </div>
+        <hr />
+        <div id="ProcessSubscriptions">
+            <h4>Subscriptions</h4>
+            <div class="subscriptionsList"></div>
+            <!--table class="subscriptionsList" border="1">
+            <tr>
+                <th>Topic</th>
+                <th></th>
+                <th>Received</th>
+                <th></th>
+            </tr>
+            <tr topic-name="test">
+                <td class="topicName">Test</td>
+                <td><input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input></td>
+                <td><textarea class="topicReceived" rows="4" cols="50" class="topicReceived"></textarea></td>
+                <td><input type="button" onclick="doClearTopic(event)" value="Clear"></<input></td>
+            </tr>
+        </table-->
+        </div>
+        <hr>
+        <div id="ProcessBrokerState" style="display:none">
+            <h4>Broker States</h4>
+            <table id="brokerStatesList" border="1" style="display:none">
+                <tr>
+                    <th>Topic</th>
+                    <th>Conn Count</th>
+                    <th>Sub Count</th>
+                </tr>
+            </table>
+        </div>
+</body>
+
+</html>

@@ -13,24 +13,40 @@ const Module = require("module")
 
 const ipcBus = require("../electron-ipc-bus")()
 
-function onTopicMessage(topic, data) {
-    console.log("node - topic:" + topic + " data:" + data);
-    ipcBus.send("ipc-tests/node-received-topic", { "topic" : topic, "msg" : data});
+function onTopicMessage(topicName, topicMsg) {
+    console.log("node - topic:" + topicName + " data:" + topicMsg);
+    var msgJSON =
+    {
+        action: "received",
+        args: { topic : topicName, msg : topicMsg}
+    };
+    process.send(JSON.stringify(msgJSON));
 }
 
-function doSubscribeTopic(topic) {
-    console.log("node - doSubscribeTopic:" + topic);
-    ipcBus.subscribe(topic, onTopicMessage);
+function doSubscribeTopic(msgJSON) {
+    var topicName = msgJSON["topic"];
+    console.log("node - doSubscribeTopic:" + topicName);
+    ipcBus.subscribe(topicName, onTopicMessage);
+    process.send(JSON.stringify(msgJSON));
 }
 
-function doUnsubscribeTopic(topic) {
-    console.log("node - doUnsubscribeTopic:" + topic);
-    ipcBus.unsubscribe(topic, onTopicMessage);
+function doUnsubscribeTopic(msgJSON) {
+    var topicName = msgJSON["topic"];
+    console.log("node - doUnsubscribeTopic:" + topicName);
+    ipcBus.unsubscribe(topicName, onTopicMessage);
+    process.send(JSON.stringify(msgJSON));
 }
 
-function doSendOnTopic(args) {
-    console.log("node - doSendOnTopic: topic:" + args["topic"] + " msg:" + args["msg"]);
+function doSendOnTopic(msgJSON) {
+    var args = msgJSON["args"];
+    console.log("node - doSendOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
     ipcBus.send(args["topic"], args["msg"]);
+    process.send(JSON.stringify(msgJSON));
+}
+
+function doInit(msgJSON) {
+    var args = msgJSON["args"];
+    console.log("node - doInit: topicName:" + args);
 }
 
 function dispatchMessage(msg)
@@ -43,19 +59,19 @@ function dispatchMessage(msg)
     }
     else
     {
+        var actionFcts =
+        {
+            subscribe : doSubscribeTopic,
+            unsubscribe : doUnsubscribeTopic,
+            send : doSendOnTopic,
+            init : doInit
+        };
+
         console.log("node - execute message:" + msg);
         var msgJSON = JSON.parse(msg);
-        if (msgJSON["action"] == "subscribe")
+        if (actionFcts.hasOwnProperty(msgJSON["action"]))
         {
-            doSubscribeTopic(msgJSON["topic"]);
-        }
-        if (msgJSON["action"] == "unsubscribe")
-        {
-            doUnsubscribeTopic(msgJSON["topic"]);
-        }
-        if (msgJSON["action"] == "send")
-        {
-            doSendOnTopic(msgJSON["args"]);
+            actionFcts[msgJSON["action"]](msgJSON);
         }
     }
 }
@@ -65,6 +81,7 @@ var isConnected = false;
 var msgs = [];
 
 ipcBus.connect(function () {
+    console.log("node - connect");
     isConnected = true;
     for(var msg in msgs)
     {
