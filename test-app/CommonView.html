@@ -32,8 +32,8 @@
         <input type="button" class="btn btn-primary" onclick="doNewNodeInstance(event)" value="New node process"></<input>
         <input type="button" class="btn btn-primary" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
     </div>
-    <div id="ProcessMonitor" topic-process="fake">
-        <h3>Master</h3>
+    <h3 id="ProcessTitle">Master</h3>
+    <div id="ProcessMonitor" class="panel-group" topic-process="fake">
         <div id="ProcessActions" class="panel panel-default">
             <div class="panel-heading">Actions</div>
             <div class="panel-body">
@@ -57,8 +57,7 @@
                 </form>
             </div>
         </div>
-        <div id="ProcessSubscriptions"  class="panel panel-default">
-            <div class="subscriptionsList"></div>
+        <div id="ProcessSubscriptions" class="panel panel-default">
         </div>
         <div id="ProcessBrokerState" class="panel panel-default" style="display:none">
             <div class="panel-heading">Broker State
