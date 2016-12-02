@@ -23,14 +23,13 @@ ProcessConnector = (function()
         
         function buildChannel(eventName)
         {
+            var channel = "ipcbus/" + _type;
             if (_id != undefined)
             {
-                return _type + "-" + _id + "/" + eventName;
+                channel += "-" + _id;
             }
-            else
-            {
-                return _type + "/" + eventName;
-            }
+            channel +=  "/" + eventName;
+            return channel;
         }
 
         this.Type = function _Type()
@@ -45,22 +44,22 @@ ProcessConnector = (function()
 
         this.sendSubscribe = function _sendSubscribe(topicName)
         {
-            _ipc.send(buildChannel("subscribe"), topicName);
+            this.send("subscribe", topicName);
         }
 
         this.sendSubscribeNotify = function _sendSubscribeNotify(topicName)
         {
-            _ipc.send(buildChannel("subscribe-notify"), topicName);
+            this.send("subscribe-notify", topicName);
         }
 
         this.sendUnsubscribe = function _sendUnsubscribe(topicName)
         {
-            _ipc.send(buildChannel("unsubscribe"), topicName);
+            this.send("unsubscribe", topicName);
         }
 
         this.sendUnsubscribeNotify = function _sendUnsubscribeNotify(topicName)
         {
-            _ipc.send(buildChannel("unsubscribe-notify"), topicName);
+            this.send("unsubscribe-notify", topicName);
         }
 
         this.sendMessage = function _sendMessage(topicName, topicMsg)
@@ -73,45 +72,29 @@ ProcessConnector = (function()
             _ipc.send(buildChannel("receivedMessage-notify"), { topic : topicName, msg : topicMsg } );
         }
 
-        this.send = function _send(topicName, topicMsg)
+        this.send = function _send(eventName, data)
         {
-            _ipc.send(buildChannel("topicName"), { topic : topicName, msg : topicMsg } );
+            _ipc.send(buildChannel(eventName), data );
         }
 
         this.onSubscribe = function _onSubscribe(callback)
         {
-            _ipc.on(buildChannel("subscribe"), function (event, data)
-            {
-                const response = (data !== undefined)? data: event;
-                callback(response);
-            });
+            this.on("subscribe", callback);
         }
 
         this.onSubscribeNotify = function _onSubscribeNotify(callback)
         {
-            _ipc.on(buildChannel("subscribe-notify"), function (event, data)
-            {
-                const response = (data !== undefined)? data: event;
-                callback(response);
-            });
+            this.on("subscribe-notify", callback);
         }
 
         this.onUnsubscribe = function _onUnsubscribe(callback)
         {
-            _ipc.on(buildChannel("unsubscribe"), function (event, data)
-            {
-                const response = (data !== undefined)? data: event;
-                callback(response);
-            });
+            this.on("unsubscribe", callback);
         }
 
         this.onUnsubscribeNotify = function _onUnsubscribeNotify(callback)
         {
-            _ipc.on(buildChannel("unsubscribe-notify"), function (event, data)
-            {
-                const response = (data !== undefined)? data: event;
-                callback(response);
-            });
+            this.on("unsubscribe-notify", callback);
         }
 
         this.onSendMessage = function _onSendMessage(callback)
@@ -131,7 +114,6 @@ ProcessConnector = (function()
                 callback(response["topic"], response["msg"]);
             });
         }
-
 
         this.on = function _on(eventName, callback)
         {

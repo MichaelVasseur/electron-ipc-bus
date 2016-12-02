@@ -45,166 +45,199 @@ function spawnNodeInstance(scriptPath) {
     return child_process.spawn(process.argv[0], args, options);
 }
 
+var MainProcess = (function () {
+    function MainProcess() {
+        var processId = 0;
 
-var processId = 0;
+        // Listen view messages
+        var processMainFromView = new ProcessConnector("main", ipcMain);
+        processMainFromView.onSendMessage(onIPCElectron_SendMessage);
+        processMainFromView.onSubscribe(onIPCElectron_Subscribe);
+        processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
+        processMainFromView.on("new-process", doNewProcess);
 
-function startMainInstance() {
-    var processMainFromView = new ProcessConnector("main", ipcMain);
-    processMainFromView.onSendMessage(onIPCElectron_SendMessage);
-    processMainFromView.onSubscribe(onIPCElectron_Subscribe);
-    processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
+        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+        const mainWindow = new BrowserWindow({
+            width: 800, height: 600,
+            webPreferences:
+            {
+                preload: preloadFile
+            }
+        });
+        mainWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
 
-    var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
-    const mainWindow = new BrowserWindow({
-        width: 800, height: 600,
-        webPreferences:
-        {
-            preload: preloadFile
+        var processMainToView = new ProcessConnector("main", mainWindow.webContents);
+        mainWindow.webContents.on('dom-ready', function () {
+            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main" });
+        });
+
+        function doNewProcess(processType) {
+            switch (processType) {
+                case "renderer":
+                    new RendererProcess(processId);
+                    break;
+                case "node":
+                    new NodeProcess(processId);
+                    break;
+            }
+            ++processId;
         }
-    });
-    mainWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
-
-    var processMainToView = new ProcessConnector("main", mainWindow.webContents);
-    mainWindow.webContents.on('dom-ready',  function () {
-        mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main" });
-    });
-
-    function onIPCElectron_ReceivedMessage(topicName, topicMsg) {
-        console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
-        processMainToView.receivedMessageNotify(topicName, topicMsg);
-    }
-
-    function onIPCElectron_Subscribe(topicName) {
-        console.log("Master - onIPCElectron_Subscribe:" + topicName);
-        ipcBus.subscribe(topicName, onIPCElectron_ReceivedMessage);
-        processMainToView.sendSubscribeNotify(topicName);
-    }
-
-    function onIPCElectron_Unsubscribe(topicName) {
-        console.log("Master - onIPCElectron_Subscribe:" + topicName);
-        ipcBus.unsubscribe(topicName, onIPCElectron_ReceivedMessage);
-        processMainToView.sendUnsubscribeNotify(topicName);
-    }
-
-    function onIPCElectron_SendMessage(topicName, topicMsg) {
-        console.log("Master - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
-        ipcBus.send(topicName, topicMsg);
-    }
-}
-
-function startRendererInstance() {
-    var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
-    const rendererWindow = new BrowserWindow({
-        width: 800, height: 600,
-        webPreferences:
-        {
-            preload: preloadFile
+        
+        function onIPCElectron_ReceivedMessage(topicName, topicMsg) {
+            console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
+            processMainToView.receivedMessageNotify(topicName, topicMsg);
         }
-    });
-    rendererWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
-    (function (processId) {
+
+        function onIPCElectron_Subscribe(topicName) {
+            console.log("Master - onIPCElectron_Subscribe:" + topicName);
+            ipcBus.subscribe(topicName, onIPCElectron_ReceivedMessage);
+            processMainToView.sendSubscribeNotify(topicName);
+        }
+
+        function onIPCElectron_Unsubscribe(topicName) {
+            console.log("Master - onIPCElectron_Subscribe:" + topicName);
+            ipcBus.unsubscribe(topicName, onIPCElectron_ReceivedMessage);
+            processMainToView.sendUnsubscribeNotify(topicName);
+        }
+
+        function onIPCElectron_SendMessage(topicName, topicMsg) {
+            console.log("Master - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
+            ipcBus.send(topicName, topicMsg);
+        }
+
+    }
+    return MainProcess;
+})();
+
+var RendererProcess = (function () {
+    function RendererProcess(processId) {
+        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+        const rendererWindow = new BrowserWindow({
+            width: 800, height: 600,
+            webPreferences:
+            {
+                preload: preloadFile
+            }
+        });
+        rendererWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
         rendererWindow.webContents.on('dom-ready', function () {
             rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId });
         });
-    })(processId);
-    ++processId;
-}
-
-const nodeInstances = new Map;
+    }
+    return RendererProcess;
+})();
 
 // Classes
+var NodeProcess = (function () {
 
-function NodeInstance() {
+    const nodeInstances = new Map;
 
-    this.process = spawnNodeInstance("NodeInstance.js");
-    this.process.stdout.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
-    this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
-    console.log("<MAIN> Node instance #" + this.process.pid + " started !")
+    function NodeInstance() {
 
-    this.term = function () {
+        this.process = spawnNodeInstance("NodeInstance.js");
+        this.process.stdout.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
+        this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
+        console.log("<MAIN> Node instance #" + this.process.pid + " started !")
 
-        this.process.kill();
-        this.window.close();
-    }
-}
+        this.term = function () {
 
-function startNodeInstance() {
-    var processMainFromView = new ProcessConnector("node", processId, ipcMain);
-    processMainFromView.onSendMessage(onIPCElectron_SendMessage);
-    processMainFromView.onSubscribe(onIPCElectron_Subscribe);
-    processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
-
-    var nodeInstance = new NodeInstance();
-    nodeInstance.process.send(JSON.stringify({ action: "init", args: { title: "Node", type: "node", id: processId } }));
-    var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
-    const nodeWindow = new BrowserWindow({
-        width: 800, height: 600,
-        webPreferences:
-        {
-            preload: preloadFile
+            this.process.kill();
+            this.window.close();
         }
-    });
-    var processMainToView = new ProcessConnector("node", processId, nodeWindow.webContents);
-    nodeWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
-    (function (processId) {
+    }
+
+    function NodeProcess(processId) {
+        var nodeInstance = new NodeInstance();
+        // Listen view messages
+        var processMainFromView = new ProcessConnector("node", processId, ipcMain);
+        processMainFromView.onSendMessage(onIPCElectron_SendMessage);
+        processMainFromView.onSubscribe(onIPCElectron_Subscribe);
+        processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
+
+        // Listen node message
+        nodeInstance.process.on("message", onIPCProcess_Message);
+
+        nodeInstance.process.send(JSON.stringify({ action: "init", args: { title: "Node", type: "node", id: processId } }));
+        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+        const nodeWindow = new BrowserWindow({
+            width: 800, height: 600,
+            webPreferences:
+            {
+                preload: preloadFile
+            }
+        });
+        var processMainToView = new ProcessConnector("node", processId, nodeWindow.webContents);
+        nodeWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
         nodeWindow.webContents.on('dom-ready', function () {
             nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId });
         });
-    })(processId);
 
-    nodeInstances.set(processId, nodeInstance);
-    ++processId;
+        nodeInstances.set(processId, nodeInstance);
 
-    function onIPCElectron_ReceivedMessage(topicName, topicMsg) {
-        console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
-        processMainToView.receivedMessageNotify(topicName, topicMsg);
-    }
-
-    function onIPCElectron_Subscribe(topicName) {
-        console.log("Node - onIPCElectron_Subscribe:" + topicName);
-        var msgJSON =
+        function onIPCProcess_Message(data)
+        {
+            var msgJSON = JSON.parse(data);
+            if (msgJSON.hasOwnProperty("action"))
             {
-                action: "subscribe",
-                topic: topicName
-            };
-        nodeInstance.process.send(JSON.stringify(msgJSON));
-        processMainToView.sendSubscribeNotify(topicName);
+                switch(msgJSON["action"])
+                {
+                    case "received" :
+                        processMainToView.receivedMessageNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"]);
+                        break;
+                    case "subscribe" :
+                        processMainToView.sendSubscribeNotify(msgJSON["topic"]);
+                        break;
+                    case "unsubscribe" :
+                        processMainToView.sendUnsubscribeNotify(msgJSON["topic"]);
+                        break;
+                }
+            }
+        }
+        
+        function onIPCElectron_Subscribe(topicName) {
+            console.log("Node - onIPCElectron_Subscribe:" + topicName);
+            var msgJSON =
+                {
+                    action: "subscribe",
+                    topic: topicName
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
+        }
+
+        function onIPCElectron_Unsubscribe(topicName) {
+            console.log("Node - onIPCElectron_Subscribe:" + topicName);
+            var msgJSON =
+                {
+                    action: "unsubscribe",
+                    topic: topicName
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
+            processMainToView.sendUnsubscribeNotify(topicName);
+        }
+
+        function onIPCElectron_SendMessage(topicName, topicMsg) {
+            console.log("Node - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
+            var msgJSON =
+                {
+                    action: "send",
+                    args: { topic : topicName, msg : topicMsg}
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
+        }
     }
 
-    function onIPCElectron_Unsubscribe(topicName) {
-        console.log("Node - onIPCElectron_Subscribe:" + topicName);
-        var msgJSON =
-            {
-                action: "unsubscribe",
-                topic: topicName
-            };
-        nodeInstance.process.send(JSON.stringify(msgJSON));
-        processMainToView.sendUnsubscribeNotify(topicName);
+    function doTermInstance(pid) {
+
+        console.log("<MAIN> Killing instance #" + pid + " ...");
+        const nodeInstance = nodeInstances.find((e) => e.process.pid == pid);
+        const instanceIdx = nodeInstances.indexOf(nodeInstance);
+        nodeInstances.splice(instanceIdx, 1);
+        nodeInstance.term();
     }
 
-    function onIPCElectron_SendMessage(topicName, topicMsg) {
-        console.log("Node - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
-        var msgJSON =
-            {
-                action: "send",
-                args: args
-            };
-        nodeInstance.process.send(JSON.stringify(msgJSON));
-    }
-}
+    return NodeProcess;
 
-
-// Commands
-
-function doTermInstance(pid) {
-
-    console.log("<MAIN> Killing instance #" + pid + " ...");
-    const nodeInstance = nodeInstances.find((e) => e.process.pid == pid);
-    const instanceIdx = nodeInstances.indexOf(nodeInstance);
-    nodeInstances.splice(instanceIdx, 1);
-    nodeInstance.term();
-}
-
+})();
 // Startup
 let ipcBrokerInstance = null
 
@@ -218,14 +251,7 @@ electronApp.on("ready", function () {
         console.log("<MAIN> IPC broker is ready !");
         // Setup IPC Client (and renderer bridge)
         ipcBus.connect(function () {
-
-            // Command hanlers
-            ipcBus.subscribe("ipc-tests/new-node-instance", () => doNewNodeInstance());
-            ipcBus.subscribe("ipc-tests/new-htmlview-instance", (event, pid) => doNewHtmlViewInstance());
-
-            startMainInstance();
-            startRendererInstance();
-            startNodeInstance();
+            new MainProcess();
         })
     })
     ipcBrokerInstance.stdout.addListener("data", data => { console.log('<BROKER> ' + data.toString()); });

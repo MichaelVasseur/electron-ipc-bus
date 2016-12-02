@@ -22,6 +22,13 @@
         <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
     </div>
 
+    <div id="ProcessToolbar" style="display:none">
+        <input type="button" onclick="doNewNodeInstance(event)" value="New node process"></<input>
+        <input type="button" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
+        <input type="button" onclick="doQueryBrokerState()" value="Request IPC Status"></input>
+    </div>
+
+
     <div id="ProcessMonitor" topic-process="fake">
         <h3>Master</h3>
         <h4>Actions</h4>
@@ -59,8 +66,7 @@
         </br>
     </div>
 
-    <input type="button" onclick="doQueryBrokerState()" value="Request IPC Status"></input>
-    <table id="brokerStatesList" border="1">
+    <table id="brokerStatesList" border="1" style="display:none">
         <tr>
             <th>Topic</th>
             <th>Conn Count</th>
