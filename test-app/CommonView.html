@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <title>IPC Test App</title>
 
-   <!-- Bootstrap -->
+    <!-- Bootstrap -->
     <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <script src="ProcessConnector.js"></script>
@@ -25,30 +25,33 @@
     <div id="ProcessToolbar" style="display:none">
         <input type="button" onclick="doNewNodeInstance(event)" value="New node process"></<input>
         <input type="button" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
-        <input type="button" onclick="doQueryBrokerState()" value="Request IPC Status"></input>
+        <input type="button" onclick="doQueryBrokerState()" value="Refresh IPC Status"></input>
     </div>
-
 
     <div id="ProcessMonitor" topic-process="fake">
         <h3>Master</h3>
-        <h4>Actions</h4>
-        <fieldset class="topicSubscribe">
-            Topic Name :
-            <input class="topicName" type="text" />
-            <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
-            </br>
-        </fieldset>
-        <fieldset class="topicSend">
-            Topic Name :
-            <input class="topicName" type="text" /> Message :
-            <input class="topicMsg" type="text" />
-            <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-            </br>
-        </fieldset>
         <hr />
-        <h4>Subscriptions</h4>
-        <div class="subscriptionsList"></div>
-        <!--table class="subscriptionsList" border="1">
+        <div id="ProcessActions">
+            <h4>Actions</h4>
+            <fieldset class="topicSubscribe">
+                Topic Name :
+                <input class="topicName" type="text" />
+                <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
+                </br>
+            </fieldset>
+            <fieldset class="topicSend">
+                Topic Name :
+                <input class="topicName" type="text" /> Message :
+                <input class="topicMsg" type="text" />
+                <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+                </br>
+            </fieldset>
+        </div>
+        <hr />
+        <div id="ProcessSubscriptions">
+            <h4>Subscriptions</h4>
+            <div class="subscriptionsList"></div>
+            <!--table class="subscriptionsList" border="1">
             <tr>
                 <th>Topic</th>
                 <th></th>
@@ -62,17 +65,18 @@
                 <td><input type="button" onclick="doClearTopic(event)" value="Clear"></<input></td>
             </tr>
         </table-->
+        </div>
         <hr>
-        </br>
-    </div>
-
-    <table id="brokerStatesList" border="1" style="display:none">
-        <tr>
-            <th>Topic</th>
-            <th>Conn Count</th>
-            <th>Sub Count</th>
-        </tr>
-    </table>
+        <div id="ProcessBrokerState" style="display:none">
+            <h4>Broker States</h4>
+            <table id="brokerStatesList" border="1" style="display:none">
+                <tr>
+                    <th>Topic</th>
+                    <th>Conn Count</th>
+                    <th>Sub Count</th>
+                </tr>
+            </table>
+        </div>
 </body>
 
 </html>

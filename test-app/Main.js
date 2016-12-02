@@ -32,7 +32,6 @@ imports("ProcessConnector");
 
 // Helpers
 function spawnNodeInstance(scriptPath) {
-
     const args = [path.join(__dirname, scriptPath), '--parent-pid=' + process.pid, '--bus-path=' + busPath]
 
     let options = { env: {} };
@@ -138,12 +137,6 @@ var NodeProcess = (function () {
         this.process.stdout.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
         this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
         console.log("<MAIN> Node instance #" + this.process.pid + " started !")
-
-        this.term = function () {
-
-            this.process.kill();
-            this.window.close();
-        }
     }
 
     function NodeProcess(processId) {
@@ -168,11 +161,18 @@ var NodeProcess = (function () {
         });
         var processMainToView = new ProcessConnector("node", processId, nodeWindow.webContents);
         nodeWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
-        nodeWindow.webContents.on('dom-ready', function () {
+        nodeWindow.on("close", function()
+        {
+            nodeInstances.delete(processId);
+            nodeInstance.process.kill();
+        });
+        nodeWindow.webContents.on('dom-ready', function () 
+        {
             nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId });
         });
 
         nodeInstances.set(processId, nodeInstance);
+
 
         function onIPCProcess_Message(data)
         {

@@ -133,13 +133,14 @@ function onIPCElectron_ReceivedMessageNotify(msgTopic, msgContent) {
 }
 
 function doQueryBrokerState() {
-    ipcBus.queryBrokerState();
+    ipcBus.queryBrokerState("brokerStateResults");
 }
 
 function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
     console.log("queryBrokerState - msgTopic:" + msgTopic + " msgContent:" + msgContent)
 
     var brokerStatesListElt = document.getElementById("brokerStatesList");
+    brokerStatesListElt.style.display = "block";
     // Keep the header
     while (brokerStatesListElt.rows.length > 1) {
         brokerStatesListElt.deleteRow(1);
@@ -155,11 +156,11 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
         var cell = row.insertCell(2);
         cell.innerHTML = msgContent[i]["subCount"];
     }
-    brokerStatesListElt.style.display = "block";
 }
 
 ipcBus.connect(function () {
-    ipcBus.subscribe('IPC_BUS_BROKER_STATUS_TOPIC', onIPC_BrokerStatusTopic);
+    ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
+    doQueryBrokerState();
 });
 
 var processToMonitor = null;
@@ -167,10 +168,10 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     const args = (data !== undefined)? data: event;
     console.log("initializeWindow" + args);
 
-    var processesMonitorElt = document.getElementById("ProcessMonitor");
-    processesMonitorElt.setAttribute("topic-process", args["type"]);
+    var processMonitorElt = document.getElementById("ProcessMonitor");
+    processMonitorElt.setAttribute("topic-process", args["type"]);
 
-    var processTitleElt = processesMonitorElt.querySelector("h3");
+    var processTitleElt = processMonitorElt.querySelector("h3");
 
     if (args["type"] == "main") {
         processToMonitor = new ProcessConnector("main", ipcRenderer);
@@ -179,8 +180,11 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
         processTitleElt.textContent = args["title"];
 
-        var processesToolbarElt = document.getElementById("ProcessToolbar");
-        processesToolbarElt.style.display = "block";
+        var processToolbarElt = document.getElementById("ProcessToolbar");
+        processToolbarElt.style.display = "block";
+
+        var processBrokerStateElt = document.getElementById("ProcessBrokerState");
+        processBrokerStateElt.style.display = "block";
     }
     if (args["type"] == "renderer") {
         processToMonitor = new ProcessConnector("renderer", args["id"], ipcRenderer);
