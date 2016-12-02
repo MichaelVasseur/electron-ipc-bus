@@ -62,28 +62,34 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                 case IPC_BUS_COMMAND_SUBSCRIBETOPIC:
                     {
                         const subTopic = data.args[0]
-                        if (ipcbus._subscriptions.has(subTopic) === false) {
+                        let topicSubs = ipcbus._subscriptions.get(subTopic)
+                        if (topicSubs === undefined) {
+                            topicSubs = new Map()
                             // This topic has NOT been subscribed yet, add it to the map
-                            ipcbus._subscriptions.set(subTopic, new Map())
+                            ipcbus._subscriptions.set(subTopic, topicSubs)
                             console.log("[IPCBus:Broker] New subscribed topic : " + subTopic)
                         }
-                        if (ipcbus._subscriptions.get(subTopic).has(conn) === false) {
+                        if (topicSubs.has(conn) === false) {
                             // This topic has NOT been already subcribed by this connection
-                            ipcbus._subscriptions.get(subTopic).set(conn, 0)
+                            topicSubs.set(conn, 0)
                             console.log("[IPCBus:Broker] Added subscription to '" + subTopic + "'")
                         }
 
                         // Add a reference on this connection
-                        ipcbus._subscriptions.get(subTopic).set(conn, ipcbus._subscriptions.get(subTopic).get(conn) + 1)
+                        topicSubs.set(conn, topicSubs.get(conn) + 1)
                         console.log("[IPCBus:Broker] Client #" + conn.id + " subscribed to '" + subTopic + "'")
                         break
                     }
                 case IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
                     {
                         const unsubTopic = data.args[0];
-                        if (ipcbus._subscriptions.has(unsubTopic) === true) {
+                        let topicSubs = ipcbus._subscriptions.get(unsubTopic)
+                        if (topicSubs == undefined) {
+                            console.log("[IPCBus:Broker] unsubscribe : Topic is unknown '" + unsubTopic + "'")
+                        }
+                        else {
+                            console.log("[IPCBus:Broker] unsubscribe '" + unsubTopic + "'")
                             // This topic is subscribed
-                            const topicSubs = ipcbus._subscriptions.get(unsubTopic)
                             if (topicSubs.has(conn) === true) {
                                 // This connection has subscribed to this topic
                                 const newConnRefCount = topicSubs.get(conn) - 1
@@ -94,7 +100,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                                     topicSubs.delete(conn)
                                 }
                             }
-                            if (topicSubs.length === 0) {
+                            if (topicSubs.size === 0) {
                                 ipcbus._subscriptions.delete(unsubTopic)
                                 console.log("[IPCBus:Broker] Topic is no more subscribed : " + unsubTopic)
                             }
@@ -240,10 +246,16 @@ function IpcBusRendererClient(ipcObj) {
     const self = this
     let connected = null
 
-    ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function (topic, content) {
-
-        console.log("[IPCBus:Client] Received message on '" + topic + "'")
-        EventEmitter.prototype.emit.call(self, topic, topic, content)
+    ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function (eventOrTopic, topicOrContent, contentOrUndefined) {
+        // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
+        if (contentOrUndefined === undefined) {
+            console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'")
+            EventEmitter.prototype.emit.call(self, eventOrTopic, eventOrTopic, topicOrContent)
+        }
+        else {
+            console.log("[IPCBus:Client] Received message on '" + topicOrContent + "'")
+            EventEmitter.prototype.emit.call(self, topicOrContent, topicOrContent, contentOrUndefined)
+        }
     })
 
     // Set API

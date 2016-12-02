@@ -35,8 +35,6 @@ function doSubscribeToTopic(event) {
 function onIPCElectron_SubscribeNotify(topicName) {
     console.log("onIPCElectron_SubscribeNotify:" + topicName);
 
-    var topicProcessElt = getProcessElt();
-
     var topicItemTemplate = document.getElementById("SubscriptionItem-template");
     var topicItemElt = topicItemTemplate.cloneNode(true);
     topicItemElt.id = "";
@@ -46,7 +44,10 @@ function onIPCElectron_SubscribeNotify(topicName) {
     var topicNameElt = topicItemElt.querySelector(".topicName");
     topicNameElt.textContent = topicName;
 
-    var SubscriptionsListElt = topicProcessElt.querySelector(".subscriptionsList");
+    var topicFormElt = topicItemElt.querySelector(".form-inline");
+    topicFormElt.setAttribute("topic-name", topicName);
+
+    var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
     SubscriptionsListElt.appendChild(topicItemElt);
 
     //    subscriptionsListElt.appendChild(topicItemElt);
@@ -60,8 +61,7 @@ function doUnsubscribeFromTopic(event) {
 
     var target = event.target;
     var topicItemElt = target.parentElement;
-    var topicNameElt = topicItemElt.querySelector(".topicName");
-    var topicName = topicNameElt.textContent;
+    var topicName = topicItemElt.getAttribute("topic-name");
 
     if (processToMonitor.Type() == "renderer") {
         ipcBus.connect(function () {
@@ -77,8 +77,7 @@ function doUnsubscribeFromTopic(event) {
 function onIPCElectron_UnsubscribeNotify(topicName) {
     console.log("doUnsubscribeFromTopic:" + topicName);
 
-    var topicProcessElt = getProcessElt();
-    var SubscriptionsListElt = topicProcessElt.querySelector(".subscriptionsList");
+    var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
     var topicItemElt = SubscriptionsListElt.querySelector(".subscription-" + topicName);
 
     SubscriptionsListElt.removeChild(topicItemElt);
@@ -90,8 +89,7 @@ function doSendMessageToTopic(event) {
 
     var target = event.target;
     var topicItemElt = target.parentElement;
-    var topicNameElt = topicItemElt.querySelector(".topicName");
-    var topicName = topicNameElt.value;
+    var topicName = topicItemElt.getAttribute("topic-name");
 
     var topicMsgElt = topicItemElt.querySelector(".topicMsg");
     var topicMsg = topicMsgElt.value;
@@ -115,8 +113,7 @@ function doClearTopic(event) {
 function onIPC_Received(topicName, msgContent) {
     console.log("onIPCBus_received : msgTopic:" + topicName + " msgContent:" + msgContent)
 
-    var topicProcessElt = getProcessElt();
-    var SubscriptionsListElt = topicProcessElt.querySelector(".subscriptionsList");
+    var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
     var topicItemElt = SubscriptionsListElt.querySelector(".subscription-" + topicName);
     if (topicItemElt != null) {
         var topicReceivedElt = topicItemElt.querySelector(".topicReceived");
@@ -171,7 +168,7 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     var processMonitorElt = document.getElementById("ProcessMonitor");
     processMonitorElt.setAttribute("topic-process", args["type"]);
 
-    var processTitleElt = processMonitorElt.querySelector("h3");
+    var processTitleElt = document.getElementById("ProcessTitle");
 
     if (args["type"] == "main") {
         processToMonitor = new ProcessConnector("main", ipcRenderer);
