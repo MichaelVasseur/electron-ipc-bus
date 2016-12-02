@@ -9,6 +9,9 @@
     <!-- Bootstrap -->
     <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"-->
+    <!--script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script-->
+  
     <script src="ProcessConnector.js"></script>
     <script src="CommonView.js"></script>
 </head>
@@ -23,65 +26,50 @@
             <input type="button" class="form-control" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
         </form>
         <form class="form-inline">
-            <textarea rows="4" cols="50" class="form-control topicReceived"></textarea>
+            <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
             <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
         </form>
         <hr>
     </div>
 
-    <div id="ProcessToolbar" class="btn-group" style="display:none">
+    <div id="ProcessToolbar" style="display:none">
         <input type="button" class="btn btn-primary" onclick="doNewNodeInstance(event)" value="New node process"></<input>
         <input type="button" class="btn btn-primary" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
-        <input type="button" class="btn btn-primary" onclick="doQueryBrokerState()" value="Refresh IPC Status"></input>
     </div>
-    <br/>
-
     <div id="ProcessMonitor" topic-process="fake">
         <h3>Master</h3>
-        <hr />
-        <div id="ProcessActions">
-            <h4>Actions</h4>
-            <form class="form-inline topicSubscribe">
-                <div class="input-group">
-                    <span class="input-group-addon">Topic</span>
-                    <input class="topicName" class="form-control" type="text" />
-                </div>
-                <input type="button" class="btn btn-primary" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
-            </form>
-            <form class="form-inline topicSend">
-                <div class="input-group">
-                    <span class="input-group-addon">Topic</span>
-                    <input class="topicName" class="form-control" type="text" />
-                </div>
-                <div class="input-group">
-                    <span class="input-group-addon">Message</span>
-                    <input class="topicMsg" class="form-control" type="text" />
-                </div>
-                <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-            </form>
+        <div id="ProcessActions" class="panel panel-default">
+            <div class="panel-heading">Actions</div>
+            <div class="panel-body">
+                <form class="form-inline topicSubscribe">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicName" class="form-control" type="text" />
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
+                </form>
+                <form class="form-inline topicSend">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicName" class="form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Message</span>
+                        <input class="topicMsg" class="form-control" type="text" />
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+                </form>
+            </div>
         </div>
-        <hr />
-        <div id="ProcessSubscriptions">
-            <h4>Subscriptions</h4>
-            <div class="subscriptionsList"></div>
-            <!--table class="subscriptionsList" border="1">
-            <tr>
-                <th>Topic</th>
-                <th></th>
-                <th>Received</th>
-                <th></th>
-            </tr>
-            <tr topic-name="test">
-                <td class="topicName">Test</td>
-                <td><input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input></td>
-                <td><textarea class="topicReceived" rows="4" cols="50" class="topicReceived"></textarea></td>
-                <td><input type="button" onclick="doClearTopic(event)" value="Clear"></<input></td>
-            </tr>
-        </table-->
+        <div id="ProcessSubscriptions"  class="panel panel-default">
+            <div class="panel-heading">Subscriptions</div>
+            <div class="panel-body subscriptionsList"></div>
         </div>
-        <hr>
-        <div id="ProcessBrokerState" style="display:none">
-            <h4>Broker States</h4>
+        <div id="ProcessBrokerState" class="panel panel-default" style="display:none">
+            <div class="panel-heading">Broker State
+                <input type="button" class="btn btn-primary" onclick="doQueryBrokerState()" value="Refresh"></input>
+            </div>
+            <div class="panel-body">
             <table id="brokerStatesList" class="table" border="1">
                 <tr>
                     <th>Topic</th>
@@ -89,6 +77,7 @@
                     <th>Sub Count</th>
                 </tr>
             </table>
+        </div>
         </div>
 </body>
 

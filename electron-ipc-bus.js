@@ -240,10 +240,18 @@ function IpcBusRendererClient(ipcObj) {
     const self = this
     let connected = null
 
-    ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function (topic, content) {
-
-        console.log("[IPCBus:Client] Received message on '" + topic + "'")
-        EventEmitter.prototype.emit.call(self, topic, topic, content)
+    ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function (eventOrTopic, topicOrContent, contentOrUndefined) {
+        // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
+        if (contentOrUndefined === undefined)
+        {
+            console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'")
+            EventEmitter.prototype.emit.call(self, eventOrTopic, eventOrTopic, topicOrContent)
+        }
+        else
+        {
+            console.log("[IPCBus:Client] Received message on '" + topicOrContent + "'")
+            EventEmitter.prototype.emit.call(self, topicOrContent, topicOrContent, contentOrUndefined)
+        }
     })
 
     // Set API

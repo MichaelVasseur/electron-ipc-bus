@@ -47,7 +47,7 @@ function spawnNodeInstance(scriptPath) {
 var MainProcess = (function () {
     function MainProcess() {
         var processId = 0;
-        var instances = [];
+        var instances = new Map;
 
         // Listen view messages
         var processMainFromView = new ProcessConnector("main", ipcMain);
@@ -66,11 +66,10 @@ var MainProcess = (function () {
         });
         mainWindow.on("close", function()
         {
-            for(var i = 0; i < instances.length; ++i)
-            {
-                instances[i].term();
-            }
-            instances = [];
+            instances.forEach(function(value, key, map){
+                value.term();
+            });
+            instances.clear();
         });
 
         mainWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
@@ -81,15 +80,24 @@ var MainProcess = (function () {
         });
 
         function doNewProcess(processType) {
+            var newProcess = null;
             switch (processType) {
                 case "renderer":
-                    instances.push(new RendererProcess(processId));
+                    newProcess = new RendererProcess(processId);
                     break;
                 case "node":
-                    instances.push(new NodeProcess(processId));
+                    newProcess = new NodeProcess(processId);
                     break;
             }
-            ++processId;
+            if (newProcess != null)
+            {
+                instances.set(processId, newProcess);
+                newProcess.onClose(function(processId)
+                {
+                    instances.delete(processId);
+                });
+                ++processId;
+            }
         }
         
         function onIPCElectron_ReceivedMessage(topicName, topicMsg) {
@@ -133,6 +141,14 @@ var RendererProcess = (function () {
             rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId });
         });
 
+        this.onClose = function _onClose(callback)
+        {
+            rendererWindow.on("close", function()
+            {
+                callback(processId);
+            });
+        }
+
         this.term = function _term()
         {
             rendererWindow.close();
@@ -144,10 +160,7 @@ var RendererProcess = (function () {
 // Classes
 var NodeProcess = (function () {
 
-    const nodeInstances = new Map;
-
     function NodeInstance() {
-
         this.process = spawnNodeInstance("NodeInstance.js");
         this.process.stdout.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
         this.process.stderr.addListener("data", data => { console.log('<NODE> ' + data.toString()); });
@@ -186,11 +199,17 @@ var NodeProcess = (function () {
             nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId });
         });
 
-        nodeInstances.set(processId, nodeInstance);
-
         this.term = function _term()
         {
             nodeWindow.close();
+        }
+
+        this.onClose = function _onClose(callback)
+        {
+            nodeWindow.on("close", function()
+            {
+                callback(processId);
+            });
         }
 
         function onIPCProcess_Message(data)
@@ -243,15 +262,6 @@ var NodeProcess = (function () {
                 };
             nodeInstance.process.send(JSON.stringify(msgJSON));
         }
-    }
-
-    function doTermInstance(pid) {
-
-        console.log("<MAIN> Killing instance #" + pid + " ...");
-        const nodeInstance = nodeInstances.find((e) => e.process.pid == pid);
-        const instanceIdx = nodeInstances.indexOf(nodeInstance);
-        nodeInstances.splice(instanceIdx, 1);
-        nodeInstance.term();
     }
 
     return NodeProcess;
