@@ -47,6 +47,7 @@ function spawnNodeInstance(scriptPath) {
 var MainProcess = (function () {
     function MainProcess() {
         var processId = 0;
+        var instances = [];
 
         // Listen view messages
         var processMainFromView = new ProcessConnector("main", ipcMain);
@@ -63,6 +64,15 @@ var MainProcess = (function () {
                 preload: preloadFile
             }
         });
+        mainWindow.on("close", function()
+        {
+            for(var i = 0; i < instances.length; ++i)
+            {
+                instances[i].term();
+            }
+            instances = [];
+        });
+
         mainWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
 
         var processMainToView = new ProcessConnector("main", mainWindow.webContents);
@@ -73,10 +83,10 @@ var MainProcess = (function () {
         function doNewProcess(processType) {
             switch (processType) {
                 case "renderer":
-                    new RendererProcess(processId);
+                    instances.push(new RendererProcess(processId));
                     break;
                 case "node":
-                    new NodeProcess(processId);
+                    instances.push(new NodeProcess(processId));
                     break;
             }
             ++processId;
@@ -122,6 +132,11 @@ var RendererProcess = (function () {
         rendererWindow.webContents.on('dom-ready', function () {
             rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId });
         });
+
+        this.term = function _term()
+        {
+            rendererWindow.close();
+        }
     }
     return RendererProcess;
 })();
@@ -173,6 +188,10 @@ var NodeProcess = (function () {
 
         nodeInstances.set(processId, nodeInstance);
 
+        this.term = function _term()
+        {
+            nodeWindow.close();
+        }
 
         function onIPCProcess_Message(data)
         {

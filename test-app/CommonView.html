@@ -14,38 +14,51 @@
 </head>
 
 <body>
-    <div id="SubscriptionItem-template" topic-name="test" style="display:none">
-        <b>Topic Name:</b>
-        <spam class="topicName">Test</spam>
-        <input type="button" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
-        <textarea rows="4" cols="50" class="topicReceived"></textarea>
-        <input type="button" onclick="doClearTopic(event)" value="Clear"></<input>
+    <div id="SubscriptionItem-template" style="display:none">
+        <form class="form-inline">
+            <div class="input-group">
+                <span class="input-group-addon">Topic</span>
+                <input class="topicName form-control" type="text" readonly></<input>
+            </div>
+            <input type="button" class="form-control" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
+        </form>
+        <form class="form-inline">
+            <textarea rows="4" cols="50" class="form-control topicReceived"></textarea>
+            <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
+        </form>
+        <hr>
     </div>
 
-    <div id="ProcessToolbar" style="display:none">
-        <input type="button" onclick="doNewNodeInstance(event)" value="New node process"></<input>
-        <input type="button" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
-        <input type="button" onclick="doQueryBrokerState()" value="Refresh IPC Status"></input>
+    <div id="ProcessToolbar" class="btn-group" style="display:none">
+        <input type="button" class="btn btn-primary" onclick="doNewNodeInstance(event)" value="New node process"></<input>
+        <input type="button" class="btn btn-primary" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
+        <input type="button" class="btn btn-primary" onclick="doQueryBrokerState()" value="Refresh IPC Status"></input>
     </div>
+    <br/>
 
     <div id="ProcessMonitor" topic-process="fake">
         <h3>Master</h3>
         <hr />
         <div id="ProcessActions">
             <h4>Actions</h4>
-            <fieldset class="topicSubscribe">
-                Topic Name :
-                <input class="topicName" type="text" />
-                <input type="button" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
-                </br>
-            </fieldset>
-            <fieldset class="topicSend">
-                Topic Name :
-                <input class="topicName" type="text" /> Message :
-                <input class="topicMsg" type="text" />
-                <input type="button" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-                </br>
-            </fieldset>
+            <form class="form-inline topicSubscribe">
+                <div class="input-group">
+                    <span class="input-group-addon">Topic</span>
+                    <input class="topicName" class="form-control" type="text" />
+                </div>
+                <input type="button" class="btn btn-primary" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
+            </form>
+            <form class="form-inline topicSend">
+                <div class="input-group">
+                    <span class="input-group-addon">Topic</span>
+                    <input class="topicName" class="form-control" type="text" />
+                </div>
+                <div class="input-group">
+                    <span class="input-group-addon">Message</span>
+                    <input class="topicMsg" class="form-control" type="text" />
+                </div>
+                <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+            </form>
         </div>
         <hr />
         <div id="ProcessSubscriptions">
@@ -69,7 +82,7 @@
         <hr>
         <div id="ProcessBrokerState" style="display:none">
             <h4>Broker States</h4>
-            <table id="brokerStatesList" border="1" style="display:none">
+            <table id="brokerStatesList" class="table" border="1">
                 <tr>
                     <th>Topic</th>
                     <th>Conn Count</th>
