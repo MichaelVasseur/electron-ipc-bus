@@ -3,11 +3,11 @@
     "version": "1.0.0", 
     "description": "Safe IPC bus for Electron",
 	"license": "MIT",
-    "author": "Michael Vasseur (michael.vasseur@thomsonreuters.com)",
+    "author": "Michael Vasseur <michael.vasseur@thomsonreuters.com>",
     "contributors": [
-        "Emmanuel Kimmerlin (emmanuel.kimmerlin@thomsonreuters.com)",
-        "Gregory Gatellier (gregory.gatellier@thomsonreuters.com)",
-        "Thomas Moutel (thomas.moutel@thomsonreuters.com)"
+        "Emmanuel Kimmerlin <emmanuel.kimmerlin@thomsonreuters.com>",
+        "Gregory Gatellier <gregory.gatellier@thomsonreuters.com>",
+        "Thomas Moutel <thomas.moutel@thomsonreuters.com>"
     ],
 	"homepage": "https://github.com/MichaelVasseur/electron-ipc-bus",
     "repository": {
@@ -18,5 +18,6 @@
         "easy-ipc":"0.2.2",
         "uuid":"2.0.3"
     }, 
-    "main": "electron-ipc-bus.js"
+    "main": "electron-ipc-bus.js",
+	"types": "electron-ipc-bus.d.ts"
 }
