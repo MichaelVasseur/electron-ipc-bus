@@ -6,7 +6,7 @@ const path = require('path')
 const util = require('util')
 const EventEmitter = require('events').EventEmitter
 const Module = require('module')
-const uuid = require("uuid");
+const uuid = require("uuid")
 
 // Constants
 const IPC_BUS_TOPIC_SUBSCRIBE = 'IPC_BUS_TOPIC_SUBSCRIBE'
@@ -18,6 +18,7 @@ const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND'
 const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE'
 const IPC_BUS_RENDERER_RECEIVE = 'IPC_BUS_RENDERER_RECEIVE'
 const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE'
+const IPC_BUS_MASTER_QUERYSTATE = 'IPC_BUS_MASTER_QUERYSTATE'
 
 const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeTopic'
 const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeTopic'
@@ -27,106 +28,121 @@ const IPC_BUS_EVENT_TOPICMESSAGE = 'onTopicMessage'
 
 const BASE_IPC_MODULE = 'easy-ipc'
 
-// function MapRefCount(cbAddRef, cbRelease, cbForEach)
-// {
-//     let refCountMap = new Map
-//     this.AddRef(key, value)
-//     {
-//         console.log("[MapRefCount] Add key : " + util.inspect(key) + "  : value " + util.inspect(value))
+function MapRefCount() {
+    let keyValueCountMap = new Map
 
-//         let refCount = refCountMap.get(key)
-//         if (refCount === undefined) {
-//             refCount = new Map()
-//             // This topic has NOT been subscribed yet, add it to the map
-//             refCountMap.set(key, refCount)
-//             console.log("[IPCBus:Broker] Subscribe : New topic '" + key + "'")
-//         }
-//         let counter = refCount.get(value)
-//         if (counter === undefined) {
-//             // This topic has NOT been already subcribed by this connection, by default 1
-//             counter = 1
-//             console.log("[IPCBus:Broker] Subscribe : Create subscription to '" + key + "'")
-//         }
-//         else {
-//             ++counter
-//         }
-//         // Add a reference on this connection
-//         refCount.set(value, counter)
-//         if ((cbAddRef !== undefined) && (counter == 1))
-//         {
-//             cbAddRef(key, value)
-//         }
-//         console.log("[IPCBus:Broker] State : Client #" + value.id + " (" + counter + ") subscribed to '" + key + "'")
-//     }
-//                 case IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
-//                     {
-//                         const key = data.args[0];
-//                         console.log("[IPCBus:Broker] Unsubscribe : Client #" + value.id + " from '" + key + "'")
+    this.AddRef = function _AddRef(key, value, callback) {
+        console.log("[MapRefCount] AddRef : " + key + "  : value " + value)
 
-//                         let refCount = refCountMap.get(key)
-//                         if (refCount == undefined) {
-//                             console.warn("[IPCBus:Broker] Unsubscribe : Topic is unknown")
-//                         }
-//                         else {
-//                             // This topic is subscribed
-//                             let counter = refCount.get(value);
-//                             if (counter === undefined) {
-//                                 console.warn("[IPCBus:Broker] Unsubscribe : Client has no more subscriptions already")
-//                             }
-//                             else {
-//                                 // This connection has subscribed to this topic
-//                                 --counter
-//                                 if (counter > 0) {
-//                                     refCount.set(value, counter)
-//                                 } else {
-//                                     // The connection is no more referenced
-//                                     refCount.delete(value)
-//                                     if (refCount.size === 0) {
-//                                         refCountMap.delete(key)
-//                                         console.log("[IPCBus:Broker] Unsubscribe : Topic is no more subscribed : " + key)
-//                                     }
-//                                 }
-//                                 console.log("[IPCBus:Broker] State : Client #" + value.id + " (" + counter + ") subscribed to '" + key + "'")
-//                             }
-//                         }
-//                         break
-//                     }
-//                 case IPC_BUS_COMMAND_SENDTOPICMESSAGE:
-//                     {
-//                         const key = data.args[0];
-//                         const msgContent = data.args[1];
-//                         console.log("[IPCBus:Broker] Received message : Client #" + value.id + " from '" + key + "'")
+        let valueCountMap = keyValueCountMap.get(key)
+        if (valueCountMap === undefined) {
+            valueCountMap = new Map()
+            // This topic has NOT been subscribed yet, add it to the map
+            keyValueCountMap.set(key, valueCountMap)
+            console.log("[MapRefCount] AddRef : key is added")
+        }
+        let count = valueCountMap.get(value)
+        if (count === undefined) {
+            // This topic has NOT been already subcribed by this connection, by default 1
+            count = 1
+        }
+        else {
+            ++count
+        }
+        valueCountMap.set(value, count)
+        console.log("[MapRefCount] AddRef : count = " + count)
+        if (callback !== null) {
+            callback(key, value, count)
+        }
+    }
 
-//                         let refCount = refCountMap.get(key)
-//                         if (refCount == undefined) {
-//                             console.warn("[IPCBus:Broker] Received message : No subscription on '" + key + "' !")
-//                         }
-//                         else {
-//                             // Send data to subscribed connections
-//                             refCount.forEach(function (counter, connKey) {
-//                                 BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, key, msgContent, connKey)
-//                                 console.log("[IPCBus:Broker] Received message : Forwarded to Client#" + connKey.id)
-//                             });
-//                         }
-//                         break
-//                     }
-//                 case IPC_BUS_COMMAND_QUERYSTATE:
-//                     {
-//                         const key = data.args[0];
-//                         console.log("[IPCBus:Broker] QueryState message reply on topic : " + key)
-//                         const brokerState = []
-//                         refCountMap.forEach(function (connectionMap, key) {
-//                             const topicInfo = { topic: key, connCount: connectionMap.size, subCount: 0 }
-//                             connectionMap.forEach(function (subCount) {
-//                                 topicInfo.subCount += subCount
-//                             })
-//                             brokerState.push(topicInfo)
-//                         })
-//                         BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, key, brokerState, value)
-//                         break
-//                     }
+    this.Release = function _Release(key, value, callback) {
+        console.log("[MapRefCount] Release : " + key + " value " + value)
 
+        let valueCountMap = keyValueCountMap.get(key)
+        if (valueCountMap == undefined) {
+            console.warn("[MapRefCount] Release : key '" + key + "' is unknown")
+        }
+        else {
+            // This topic is subscribed
+            let count = valueCountMap.get(value);
+            if (count === undefined) {
+                console.warn("[MapRefCount] Release : value is undefined")
+            }
+            else {
+                // This connection has subscribed to this topic
+                --count
+                if (count > 0) {
+                    valueCountMap.set(value, count)
+                } else {
+                    // The connection is no more referenced
+                    valueCountMap.delete(value)
+                    if (valueCountMap.size === 0) {
+                        keyValueCountMap.delete(key)
+                        console.log("[MapRefCount] Release : key '" + key + "' is released")
+                    }
+                }
+                console.log("[MapRefCount] Release : count = " + count)
+                if (callback !== null) {
+                    callback(key, value, count)
+                }
+            }
+        }
+    }
 
+    this.ForEach = function _ForEach(callback) {
+        console.log("[MapRefCount] ForEach : " + key)
+
+        if (callback === null) {
+            console.warn("[MapRefCount] ForEach : No callback provided !")
+            return;
+        }
+
+        // Send data to subscribed connections
+        keyValueCountMap.forEach(function (valuesMap, key) {
+            //            console.warn("[MapRefCount] ForEachValue : '" + key + "' = " + valuesMap + " (" + count + ")")
+            callback(valuesMap, key)
+        });
+    }
+
+    this.ForEachKey = function _ForEachKey(key, callback) {
+        console.log("[MapRefCount] ForEachKey : " + key)
+
+        if (callback === null) {
+            console.warn("[MapRefCount] ForEachKey : No callback provided !")
+            return;
+        }
+
+        let valueCountMap = keyValueCountMap.get(key)
+        if (valueCountMap == undefined) {
+            console.warn("[MapRefCount] ForEachKey : No key '" + key + "' !")
+        }
+        else {
+            valueCountMap.forEach(function (count, value) {
+                console.warn("[MapRefCount] ForEachKey : '" + key + "' = " + value + " (" + count + ")")
+                callback(count, value, key)
+            });
+        }
+    }
+
+    this.QueryState = function _QueryState(callback) {
+        console.log("[MapRefCount] QueryState")
+        if (callback === null) {
+            console.warn("[MapRefCount] QueryState : No callback provided !")
+            return;
+        }
+
+        const queryStateResult = []
+        keyValueCountMap.forEach(function (valueCountMap, key) {
+            const keyValueInfo = { key: key, valueCount: valueCountMap.size, subCount: 0 }
+            valueCountMap.forEach(function (subCount) {
+                keyValueInfo.subCount += subCount
+            })
+            queryStateResult.push(keyValueInfo)
+        })
+        callback(queryStateResult)
+    }
+}
 
 
 function _cleanUpConn(ipcbus, conn) {
@@ -163,59 +179,18 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                     {
                         const msgTopic = data.args[0]
                         console.log("[IPCBus:Broker] Subscribe : Client #" + conn.id + " to '" + msgTopic + "'")
-
-                        let topicSubs = ipcbus._subscriptions.get(msgTopic)
-                        if (topicSubs === undefined) {
-                            topicSubs = new Map()
-                            // This topic has NOT been subscribed yet, add it to the map
-                            ipcbus._subscriptions.set(msgTopic, topicSubs)
-                            console.log("[IPCBus:Broker] Subscribe : New topic '" + msgTopic + "'")
-                        }
-                        let connRefsCounter = topicSubs.get(conn)
-                        if (connRefsCounter === undefined) {
-                            // This topic has NOT been already subcribed by this connection, by default 1
-                            connRefsCounter = 1
-                            console.log("[IPCBus:Broker] Subscribe : Create subscription to '" + msgTopic + "'")
-                        }
-                        else {
-                            ++connRefsCounter
-                        }
-                        // Add a reference on this connection
-                        topicSubs.set(conn, connRefsCounter)
-                        console.log("[IPCBus:Broker] State : Client #" + conn.id + " (" + connRefsCounter + ") subscribed to '" + msgTopic + "'")
+                        ipcbus._subscriptions.AddRef(msgTopic, conn, function (keyTopic, valueConn, count) {
+                            console.log("[IPCBus:Broker] State : Client #" + valueConn + " (" + count + ") subscribed to '" + keyTopic + "'")
+                        })
                         break
                     }
                 case IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
                     {
-                        const msgTopic = data.args[0];
+                        const msgTopic = data.args[0]
                         console.log("[IPCBus:Broker] Unsubscribe : Client #" + conn.id + " from '" + msgTopic + "'")
-
-                        let topicSubs = ipcbus._subscriptions.get(msgTopic)
-                        if (topicSubs == undefined) {
-                            console.warn("[IPCBus:Broker] Unsubscribe : Topic is unknown")
-                        }
-                        else {
-                            // This topic is subscribed
-                            let connRefsCounter = topicSubs.get(conn);
-                            if (connRefsCounter === undefined) {
-                                console.warn("[IPCBus:Broker] Unsubscribe : Client has no more subscriptions already")
-                            }
-                            else {
-                                // This connection has subscribed to this topic
-                                --connRefsCounter
-                                if (connRefsCounter > 0) {
-                                    topicSubs.set(conn, connRefsCounter)
-                                } else {
-                                    // The connection is no more referenced
-                                    topicSubs.delete(conn)
-                                    if (topicSubs.size === 0) {
-                                        ipcbus._subscriptions.delete(msgTopic)
-                                        console.log("[IPCBus:Broker] Unsubscribe : Topic is no more subscribed : " + msgTopic)
-                                    }
-                                }
-                                console.log("[IPCBus:Broker] State : Client #" + conn.id + " (" + connRefsCounter + ") subscribed to '" + msgTopic + "'")
-                            }
-                        }
+                        ipcbus._subscriptions.Release(msgTopic, conn, function (keyTopic, valueConn, count) {
+                            console.log("[IPCBus:Broker] State : Client #" + valueConn.id + " (" + count + ") subscribed to '" + keyTopic + "'")
+                        })
                         break
                     }
                 case IPC_BUS_COMMAND_SENDTOPICMESSAGE:
@@ -224,33 +199,21 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         const msgContent = data.args[1];
                         console.log("[IPCBus:Broker] Received message : Client #" + conn.id + " from '" + msgTopic + "'")
 
-                        let topicSubs = ipcbus._subscriptions.get(msgTopic)
-                        if (topicSubs == undefined) {
-                            console.warn("[IPCBus:Broker] Received message : No subscription on '" + msgTopic + "' !")
-                        }
-                        else {
+                        ipcbus._subscriptions.ForEachKey(msgTopic, function (count, valueConn, keyTopic) {
                             // Send data to subscribed connections
-                            topicSubs.forEach(function (connRefsCounter, connKey) {
-                                BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, msgContent, connKey)
-                                console.log("[IPCBus:Broker] Received message : Forwarded to Client#" + connKey.id)
-                            });
-                        }
+                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, keyTopic, msgContent, valueConn)
+                            console.log("[IPCBus:Broker] Received message : Forwarded to Client#" + keyTopic + ":" + valueConn.id)
+                        })
                         break
                     }
                 case IPC_BUS_COMMAND_QUERYSTATE:
                     {
                         const msgTopic = data.args[0];
                         console.log("[IPCBus:Broker] QueryState message reply on topic : " + msgTopic)
-                        const brokerState = []
-                        ipcbus._subscriptions.forEach(function (connectionMap, msgTopic) {
-                            const topicInfo = { topic: msgTopic, connCount: connectionMap.size, subCount: 0 }
-                            connectionMap.forEach(function (subCount) {
-                                topicInfo.subCount += subCount
-                            })
-                            brokerState.push(topicInfo)
+
+                        ipcbus._subscriptions.QueryState(function (results) {
+                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, results, conn)
                         })
-                        BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, brokerState, conn)
-                        break
                     }
             }
         }
@@ -361,6 +324,13 @@ function IpcBusRendererClient(ipcObj) {
         ipcObj.send(IPC_BUS_RENDERER_QUERYSTATE, topic)
     }
 
+    this.queryMasterState = function (topic) {
+        if (connected != true) {
+            throw new Error("Please connect first")
+        }
+        ipcObj.send(IPC_BUS_MASTER_QUERYSTATE, topic)
+    }
+
     this.subscribe = function (topic, handler) {
         if (connected != true) {
             throw new Error("Please connect first")
@@ -384,10 +354,6 @@ util.inherits(IpcBusRendererClient, EventEmitter)
 function IpcBusNodeClient(busPath, ipcObj) {
     EventEmitter.call(this)
 
-    if (process.type === "browser" && (ipcObj === undefined || ipcObj === null)) {
-        ipcObj = require("electron").ipcMain
-    }
-
     // Setup
     const self = this
     if (busPath === undefined || busPath === null) {
@@ -400,86 +366,72 @@ function IpcBusNodeClient(busPath, ipcObj) {
     let busConn = null
     let ipcCmd = null
 
-    let topicRendererRefs = new Map
+    if (process.type === "browser" && (ipcObj === undefined || ipcObj === null)) {
+        const ipcObj = require("electron").ipcMain
+        const {webContents} = require("electron")
 
-    let rendererSubscribeHandler = function _rendererSubscribeHandler(msgTopic, msgContent) {
-         var topicRendererRef = topicRendererRefs.get(msgTopic)
-         if (topicRendererRef === undefined) {
-            console.warn("[IPCBus:Bridge] No subscription to topic '" + msgTopic + "'")
-         }
-         else {
-             topicRendererRef.forEach(function(rendererCount, renderer) {
-                 console.log("[IPCBus:Bridge] Forward message received on '" + msgTopic + "' to renderer ID=" + renderer.id)
-                 renderer.send(IPC_BUS_RENDERER_RECEIVE, msgTopic, msgContent)
-             })
-         }
-    }
+        let topicRendererRefs = new MapRefCount
 
-    let startRendererBridge = function _startRendererBridge(ipcbus, ipcMain) {
-        ipcMain.addListener(IPC_BUS_RENDERER_SUBSCRIBE, function (event, topic) {
-            console.log("[IPCBus:Bridge] Subscribe renderer ID=" + event.sender.id + " to topic '" + topic + "'")
-            var topicRendererRef = topicRendererRefs.get(topic)
-            if (topicRendererRef === undefined) {
-                topicRendererRef = new Map
-                topicRendererRef.set(event.sender, 1)
-                topicRendererRefs.set(topic, topicRendererRef)
-                console.log("[IPCBus:Bridge] Subscribe forward subscribe to IPC Broker")
-                ipcbus.subscribe(topic, rendererSubscribeHandler)
-            }
-            else {
-                var rendererRef = topicRendererRef.get(event.sender)
-                if (rendererRef === undefined) {
-                    rendererRef = 1;
+        let rendererSubscribeHandler = function _rendererSubscribeHandler(msgTopic, msgContent) {
+            topicRendererRefs.ForEachKey(msgTopic, function (count, valueId, keyTopic) {
+                console.log("[IPCBus:Bridge] Forward message received on '" + keyTopic + "' to renderer ID=" + valueId)
+                var webContent = webContents.fromId(valueId)
+                if (webContent != undefined) {
+                    webContent.send(IPC_BUS_RENDERER_RECEIVE, keyTopic, msgContent)
                 }
-                else {
-                    ++rendererRef
-                }
-                topicRendererRef.set(event.sender, rendererRef)
-            }
-            //            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " susbcribed to '" + topic + "' (" + ipcbus.listenerCount(topic) + " listeners)")
-        })
+            })
+        }
 
-        ipcMain.addListener(IPC_BUS_RENDERER_SEND, function (event, topic, data) {
-            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent message on '" + topic + "'")
-            ipcbus.send(topic, data)
-        })
-
-        ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
-            console.log("[IPCBus:Bridge] Unsubscribe renderer ID=" + event.sender.id + " from topic : '" + topic + "'")
-            var topicRendererRef = topicRendererRefs.get(topic)
-            if (topicRendererRef === undefined) {
-            }
-            else {
-                var rendererRef = topicRendererRef.get(event.sender)
-                if (rendererRef === undefined) {
-                }
-                else {
-                    --rendererRef
-                    if (rendererRef > 0) {
-                        topicRendererRef.set(event.sender, rendererRef)
+        let startRendererBridge = function _startRendererBridge(ipcbus, ipcMain) {
+            ipcMain.addListener(IPC_BUS_RENDERER_SUBSCRIBE, function (event, topic) {
+                console.log("[IPCBus:Bridge] Subscribe renderer ID=" + event.sender.id + " to topic '" + topic + "'")
+                topicRendererRefs.AddRef(topic, event.sender.id, function (keyTopic, valueId, count) {
+                    if (count == 1) {
+                        console.log("[IPCBus:Bridge] forward subscribe '" + keyTopic + "' to IPC Broker")
+                        ipcbus.subscribe(keyTopic, rendererSubscribeHandler)
                     }
-                    else {
-                        topicRendererRef.delete(event.sender)
-                    }
-                    if (topicRendererRef.size == 0) {
-                        topicRendererRefs.delete(topic)
-                        console.log("[IPCBus:Bridge] Unsubscribe forward unsubscribe to IPC Broker")
-                        ipcbus.unsubscribe(topic, rendererSubscribeHandler)
-                    }
-                }
-            }
-            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " unsusbcribed from '" + topic + "'")
-        })
+                })
+            })
 
-        ipcMain.addListener(IPC_BUS_RENDERER_QUERYSTATE, function (event, topic, data) {
-            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed broker's state")
-            ipcbus.queryBrokerState(topic)
-        })
-    }
+            ipcMain.addListener(IPC_BUS_RENDERER_SEND, function (event, topic, data) {
+                console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent message on '" + topic + "'")
+                ipcbus.send(topic, data)
+            })
 
-    if (ipcObj !== undefined && ipcObj !== null) {
+            ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
+                console.log("[IPCBus:Bridge] Unsubscribe renderer ID=" + event.sender.id + " from topic : '" + topic + "'")
+                topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
+                    if (count == 0) {
+                        console.log("[IPCBus:Bridge] forward unsubscribe '" + keyTopic + "' to IPC Broker")
+                        ipcbus.unsubscribe(keyTopic, rendererSubscribeHandler)
+                    }
+                })
+            })
+
+            ipcMain.addListener(IPC_BUS_RENDERER_QUERYSTATE, function (event, topic, data) {
+                console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed broker's state")
+                ipcbus.queryBrokerState(topic)
+            })
+
+            ipcMain.addListener(IPC_BUS_MASTER_QUERYSTATE, function (event, topic, data) {
+                console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed master's state")
+                topicRendererRefs.QueryState(function (queryStateResult) {
+                    ipcbus.send(topic, queryStateResult)
+                })
+            })
+        }
+
+        this.queryMasterState = function (topic) {
+            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed master's state")
+            topicRendererRefs.QueryState(function (queryStateResult) {
+                ipcbus.send(topic, queryStateResult)
+            })
+        }
+
         // We are in main process, need to run the renderer bridge
         startRendererBridge(self, ipcObj)
+
+
     }
 
     // Set API
@@ -544,7 +496,7 @@ function IpcBusBroker(busPath, brokerProc) {
     const self = this
     let ipcServer = null
 
-    this._subscriptions = new Map()
+    this._subscriptions = new MapRefCount()
 
     // Set API
     this.start = function () {
