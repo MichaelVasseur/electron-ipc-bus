@@ -89,7 +89,8 @@ function doSendMessageToTopic(event) {
 
     var target = event.target;
     var topicItemElt = target.parentElement;
-    var topicName = topicItemElt.getAttribute("topic-name");
+    var topicNameElt = topicItemElt.querySelector(".topicName");
+    var topicName = topicNameElt.value;
 
     var topicMsgElt = topicItemElt.querySelector(".topicMsg");
     var topicMsg = topicMsgElt.value;
