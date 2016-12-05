@@ -89,7 +89,8 @@ function doSendMessageToTopic(event) {
 
     var target = event.target;
     var topicItemElt = target.parentElement;
-    var topicName = topicItemElt.getAttribute("topic-name");
+    var topicNameElt = topicItemElt.querySelector(".topicName");
+    var topicName = topicNameElt.value;
 
     var topicMsgElt = topicItemElt.querySelector(".topicMsg");
     var topicMsg = topicMsgElt.value;
@@ -133,22 +134,41 @@ function doQueryBrokerState() {
     ipcBus.queryBrokerState("brokerStateResults");
 }
 
+function doQueryMasterState() {
+    ipcBus.queryMasterState("brokerStateResults");
+}
+
+
+function onIPC_MasterStatusTopic(msgTopic, msgContent) {
+    console.log("queryMastrState - msgTopic:" + msgTopic + " msgContent:" + msgContent)
+
+    var statesListElt = document.getElementById("brokerMastersList");
+    statesListElt.style.display = "block";
+
+    onIPC_StatusTopic(statesListElt, msgContent);
+}
+
 function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
     console.log("queryBrokerState - msgTopic:" + msgTopic + " msgContent:" + msgContent)
 
-    var brokerStatesListElt = document.getElementById("brokerStatesList");
-    brokerStatesListElt.style.display = "block";
+    var statesListElt = document.getElementById("brokerStatesList");
+    statesListElt.style.display = "block";
+
+    onIPC_StatusTopic(statesListElt, msgContent);
+}
+
+function onIPC_StatusTopic(statesListElt, msgContent) {
     // Keep the header
-    while (brokerStatesListElt.rows.length > 1) {
-        brokerStatesListElt.deleteRow(1);
+    while (statesListElt.rows.length > 1) {
+        statesListElt.deleteRow(1);
     }
     for (var i = 0; i < msgContent.length; ++i) {
-        var row = brokerStatesListElt.insertRow(-1);
+        var row = statesListElt.insertRow(-1);
         var cell = row.insertCell(0);
-        cell.innerHTML = msgContent[i]["topic"];
+        cell.innerHTML = msgContent[i]["key"];
 
         var cell = row.insertCell(1);
-        cell.innerHTML = msgContent[i]["connCount"];
+        cell.innerHTML = msgContent[i]["valueCount"];
 
         var cell = row.insertCell(2);
         cell.innerHTML = msgContent[i]["subCount"];
@@ -157,6 +177,7 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
 
 ipcBus.connect(function () {
     ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
+    ipcBus.subscribe("masterStateResults", onIPC_MasterStatusTopic);
     doQueryBrokerState();
 });
 
@@ -181,6 +202,9 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         processToolbarElt.style.display = "block";
 
         var processBrokerStateElt = document.getElementById("ProcessBrokerState");
+        processBrokerStateElt.style.display = "block";
+
+        var processBrokerStateElt = document.getElementById("ProcessMasterState");
         processBrokerStateElt.style.display = "block";
     }
     if (args["type"] == "renderer") {
