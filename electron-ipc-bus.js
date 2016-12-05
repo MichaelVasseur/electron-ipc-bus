@@ -91,7 +91,7 @@ function MapRefCount() {
     }
 
     this.ForEach = function _ForEach(callback) {
-        console.log("[MapRefCount] ForEach : " + key)
+        console.log("[MapRefCount] ForEach")
 
         if (callback === null) {
             console.warn("[MapRefCount] ForEach : No callback provided !")
@@ -125,22 +125,21 @@ function MapRefCount() {
         }
     }
 
-    this.QueryState = function _QueryState(callback) {
-        console.log("[MapRefCount] QueryState")
+    this.ForEachValue = function _ForEachValue(callback) {
+        console.log("[MapRefCount] ForEachValue")
         if (callback === null) {
-            console.warn("[MapRefCount] QueryState : No callback provided !")
+            console.warn("[MapRefCount] ForEachValue : No callback provided !")
             return;
         }
 
         const queryStateResult = []
-        keyValueCountMap.forEach(function (valueCountMap, key) {
-            const keyValueInfo = { key: key, valueCount: valueCountMap.size, subCount: 0 }
-            valueCountMap.forEach(function (subCount) {
-                keyValueInfo.subCount += subCount
+        keyValueCountMap.forEach(function (valueCountMap, key) 
+        {
+            valueCountMap.forEach(function (count, value) 
+            {
+                callback(count, value, key);
             })
-            queryStateResult.push(keyValueInfo)
         })
-        callback(queryStateResult)
     }
 }
 
@@ -210,10 +209,15 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                     {
                         const msgTopic = data.args[0];
                         console.log("[IPCBus:Broker] QueryState message reply on topic : " + msgTopic)
-
-                        ipcbus._subscriptions.QueryState(function (results) {
-                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, results, conn)
+                        var queryStateResult = [];
+                        ipcbus._subscriptions.ForEach(function (valueConnMap, keyTopic) {
+                            const keyValueInfo = { topic: keyTopic, valueCount: valueConnMap.size, totalCount: 0 }
+                            valueConnMap.forEach(function (subCount) {
+                                keyValueInfo.totalCount += subCount
+                            })
+                            queryStateResult.push(keyValueInfo)
                         })
+                        BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, queryStateResult, conn)
                     }
             }
         }
@@ -351,7 +355,7 @@ function IpcBusRendererClient(ipcObj) {
 util.inherits(IpcBusRendererClient, EventEmitter)
 
 // Implementation for Node process
-function IpcBusNodeClient(busPath, ipcObj) {
+function IpcBusNodeClient(busPath) {
     EventEmitter.call(this)
 
     // Setup
@@ -366,8 +370,8 @@ function IpcBusNodeClient(busPath, ipcObj) {
     let busConn = null
     let ipcCmd = null
 
-    if (process.type === "browser" && (ipcObj === undefined || ipcObj === null)) {
-        const ipcObj = require("electron").ipcMain
+    if (process.type === "browser") {
+        const ipcMain = require("electron").ipcMain
         const {webContents} = require("electron")
 
         let topicRendererRefs = new MapRefCount
@@ -382,56 +386,49 @@ function IpcBusNodeClient(busPath, ipcObj) {
             })
         }
 
-        let startRendererBridge = function _startRendererBridge(ipcbus, ipcMain) {
-            ipcMain.addListener(IPC_BUS_RENDERER_SUBSCRIBE, function (event, topic) {
-                console.log("[IPCBus:Bridge] Subscribe renderer ID=" + event.sender.id + " to topic '" + topic + "'")
-                topicRendererRefs.AddRef(topic, event.sender.id, function (keyTopic, valueId, count) {
-                    if (count == 1) {
-                        console.log("[IPCBus:Bridge] forward subscribe '" + keyTopic + "' to IPC Broker")
-                        ipcbus.subscribe(keyTopic, rendererSubscribeHandler)
-                    }
-                })
+        ipcMain.addListener(IPC_BUS_RENDERER_SUBSCRIBE, function (event, topic) {
+            console.log("[IPCBus:Bridge] Subscribe renderer ID=" + event.sender.id + " to topic '" + topic + "'")
+            topicRendererRefs.AddRef(topic, event.sender.id, function (keyTopic, valueId, count) {
+                if (count == 1) {
+                    console.log("[IPCBus:Bridge] forward subscribe '" + keyTopic + "' to IPC Broker")
+                    self.subscribe(keyTopic, rendererSubscribeHandler)
+                }
             })
+        })
 
-            ipcMain.addListener(IPC_BUS_RENDERER_SEND, function (event, topic, data) {
-                console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent message on '" + topic + "'")
-                ipcbus.send(topic, data)
-            })
+        ipcMain.addListener(IPC_BUS_RENDERER_SEND, function (event, topic, data) {
+            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent message on '" + topic + "'")
+            self.send(topic, data)
+        })
 
-            ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
-                console.log("[IPCBus:Bridge] Unsubscribe renderer ID=" + event.sender.id + " from topic : '" + topic + "'")
-                topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
-                    if (count == 0) {
-                        console.log("[IPCBus:Bridge] forward unsubscribe '" + keyTopic + "' to IPC Broker")
-                        ipcbus.unsubscribe(keyTopic, rendererSubscribeHandler)
-                    }
-                })
+        ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
+            console.log("[IPCBus:Bridge] Unsubscribe renderer ID=" + event.sender.id + " from topic : '" + topic + "'")
+            topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
+                if (count == 0) {
+                    console.log("[IPCBus:Bridge] forward unsubscribe '" + keyTopic + "' to IPC Broker")
+                    self.unsubscribe(keyTopic, rendererSubscribeHandler)
+                }
             })
+        })
 
-            ipcMain.addListener(IPC_BUS_RENDERER_QUERYSTATE, function (event, topic, data) {
-                console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed broker's state")
-                ipcbus.queryBrokerState(topic)
-            })
+        ipcMain.addListener(IPC_BUS_RENDERER_QUERYSTATE, function (event, topic, data) {
+            console.log("[IPCBus:Bridge] Query Broker state on topic : '" + topic + "'")
+            self.queryBrokerState(topic)
+        })
 
-            ipcMain.addListener(IPC_BUS_MASTER_QUERYSTATE, function (event, topic, data) {
-                console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed master's state")
-                topicRendererRefs.QueryState(function (queryStateResult) {
-                    ipcbus.send(topic, queryStateResult)
-                })
-            })
-        }
+        ipcMain.addListener(IPC_BUS_MASTER_QUERYSTATE, function (event, topic, data) {
+            self.queryMasterState(topic);
+        })
 
         this.queryMasterState = function (topic) {
-            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " queryed master's state")
-            topicRendererRefs.QueryState(function (queryStateResult) {
-                ipcbus.send(topic, queryStateResult)
+            console.log("[IPCBus:Bridge] Query Master state on topic : '" + topic + "'")
+            var queryStateResult = [];
+            topicRendererRefs.ForEachValue(function (count, valueId, keyTopic) {
+                 const keyValueInfo = { topic : keyTopic, renderer : valueId, count: count }
+                 queryStateResult.push(keyValueInfo)
             })
+            self.send(topic, queryStateResult)
         }
-
-        // We are in main process, need to run the renderer bridge
-        startRendererBridge(self, ipcObj)
-
-
     }
 
     // Set API
@@ -525,7 +522,7 @@ module.exports = function () {
             return new IpcBusRendererClient(arg1) // arg1 = ipcRenderer
 
         case 'main':
-            return new IpcBusNodeClient(arg1, arg2) // arg1 = busPath, arg2 = ipcMain
+            return new IpcBusNodeClient(arg1) // arg1 = busPath
 
         case 'broker':
             return new IpcBusBroker(arg1, arg2) // arg1 = busPath, arg2 = customBrokerProc

@@ -58,7 +58,7 @@ var MainProcess = (function () {
 
         var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
         const mainWindow = new BrowserWindow({
-            width: 800, height: 600,
+            width: 800, height: 800,
             webPreferences:
             {
                 preload: preloadFile
@@ -76,7 +76,7 @@ var MainProcess = (function () {
 
         var processMainToView = new ProcessConnector("main", mainWindow.webContents);
         mainWindow.webContents.on('dom-ready', function () {
-            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main" });
+            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main", webContentsId : mainWindow.webContents.id  });
         });
 
         function doNewProcess(processType) {
@@ -138,7 +138,7 @@ var RendererProcess = (function () {
         });
         rendererWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
         rendererWindow.webContents.on('dom-ready', function () {
-            rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId });
+            rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId, webContentsId : rendererWindow.webContents.id });
         });
 
         this.onClose = function _onClose(callback)
@@ -178,7 +178,7 @@ var NodeProcess = (function () {
         // Listen node message
         nodeInstance.process.on("message", onIPCProcess_Message);
 
-        nodeInstance.process.send(JSON.stringify({ action: "init", args: { title: "Node", type: "node", id: processId } }));
+        nodeInstance.process.send(JSON.stringify({ action: "init", args: { title: "Node", type: "node", id: processId} }));
         var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
         const nodeWindow = new BrowserWindow({
             width: 800, height: 600,
@@ -196,7 +196,7 @@ var NodeProcess = (function () {
         });
         nodeWindow.webContents.on('dom-ready', function () 
         {
-            nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId });
+            nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId, webContentsId : nodeWindow.webContents.id  });
         });
 
         this.term = function _term()
