@@ -51,6 +51,17 @@ Ex:
 
     ipcBus.send("Hello!", { name: "My Name !"})
 
+#### request(topic, content, callback [, timeoutDelay])
+Send a request message on specified topic. ***callback*** is called when the result is available.
+Ex:
+
+    function processRequestResult(result) {
+
+        ...
+    }        
+
+    ipcBus.request("compute", "2*PI*9", processRequestResult )
+
 #### unsubscribe(topic, handler)
 Unsubscribe from the specified topic. handler won't be called anymore when
 a message will be received on topic.

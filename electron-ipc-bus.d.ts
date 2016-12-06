@@ -7,7 +7,8 @@ export interface IpcBusClient extends EventEmitter {
 
     connect(callback: Function);
     subscribe(topic: string, handler: Function);
-    send(msg: Object| string);
+    send(topic: string, payload: Object| string);
+    request(topic: string, payload: Object| string, replyHandler: Function);
     unsubscribe(topic: string, handler: Function);
     close();
 

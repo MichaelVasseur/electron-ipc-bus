@@ -15,6 +15,7 @@ const IPC_BUS_TOPIC_UNSUBSCRIBE = 'IPC_BUS_TOPIC_UNSUBSCRIBE'
 
 const IPC_BUS_RENDERER_SUBSCRIBE = 'IPC_BUS_RENDERER_SUBSCRIBE'
 const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND'
+const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST'
 const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE'
 const IPC_BUS_RENDERER_RECEIVE = 'IPC_BUS_RENDERER_RECEIVE'
 const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE'
@@ -23,8 +24,10 @@ const IPC_BUS_MASTER_QUERYSTATE = 'IPC_BUS_MASTER_QUERYSTATE'
 const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeTopic'
 const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeTopic'
 const IPC_BUS_COMMAND_SENDTOPICMESSAGE = 'sendTopicMessage'
+const IPC_BUS_COMMAND_SENDREQUESTMESSAGE = 'sendRequestMessage'
 const IPC_BUS_COMMAND_QUERYSTATE = 'queryState'
 const IPC_BUS_EVENT_TOPICMESSAGE = 'onTopicMessage'
+const IPC_BUS_EVENT_REQUESTMESSAGE = 'onRequestMessage'
 
 const BASE_IPC_MODULE = 'easy-ipc'
 
@@ -143,7 +146,6 @@ function MapRefCount() {
     }
 }
 
-
 function _cleanUpConn(ipcbus, conn) {
 
     // Unsubscribe topics
@@ -205,6 +207,21 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         })
                         break
                     }
+                case IPC_BUS_COMMAND_SENDREQUESTMESSAGE:
+                    {
+                        const msgTopic = data.args[0];
+                        const msgContent = data.args[1];
+                        const replyTopic = data.args[2];
+                        console.log("[IPCBus:Broker] Received request on topic : " + msgTopic + " / reply : " + replyTopic)
+
+                        ipcbus._subscriptions.ForEachKey(msgTopic, function (count, valueConn, keyTopic) {
+                            // Send data to subscribed connections
+                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_REQUESTMESSAGE, keyTopic, msgContent, replyTopic, valueConn)
+                            console.log("[IPCBus:Broker] Received request : Forwarded to Client#" + keyTopic + ":" + valueConn.id)
+                        })
+                        break
+                    }
+
                 case IPC_BUS_COMMAND_QUERYSTATE:
                     {
                         const msgTopic = data.args[0];
@@ -251,14 +268,31 @@ function _clientConnectProc(ipcbus, baseIpc, cmd, busPath, conn, callback) {
             switch (data.name) {
 
                 case IPC_BUS_EVENT_TOPICMESSAGE:
+                {
                     const msgTopic = data.args[0]
                     const msgContent = data.args[1]
                     console.log("[IPCBus:Client] Emit message received on topic '" + msgTopic + "'")
                     EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent)
                     break
+                }
+
+                case IPC_BUS_EVENT_REQUESTMESSAGE:
+                {
+                    const msgTopic = data.args[0]
+                    const msgContent = data.args[1]
+                    const replyTopic = data.args[2]
+                    console.log("[IPCBus:Client] Emit request received on topic '" + msgTopic + "'")
+                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, replyTopic)
+                    break
+                }
             }
         }
     })
+}
+
+function _generateReplyTopic() {
+
+    return 'replyTopic/' + uuid.v4()
 }
 
 function _getCmdLineArgValue(argName) {
@@ -321,6 +355,23 @@ function IpcBusRendererClient(ipcObj) {
         ipcObj.send(IPC_BUS_RENDERER_SEND, topic, data)
     }
 
+    this.request = function (topic, data, replyCallback, timeoutDelay) {
+        if (connected != true) {
+            throw new Error("Please connect first")
+        }
+
+        const replyTopic = _generateReplyTopic()
+        EventEmitter.prototype.once.call(this, replyTopic, function(topic, data) {
+            
+            replyCallback(data)
+        })
+
+        if(timeoutDelay === undefined) {
+            timeoutDelay = 2000
+        }
+        ipcObj.send(IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic, timeoutDelay)
+    }
+
     this.queryBrokerState = function (topic) {
         if (connected != true) {
             throw new Error("Please connect first")
@@ -370,13 +421,14 @@ function IpcBusNodeClient(busPath) {
     let busConn = null
     let ipcCmd = null
 
-    if (process.type === "browser") {
+    if (process.type !== undefined && process.type === "browser") {
         const ipcMain = require("electron").ipcMain
         const {webContents} = require("electron")
 
         let topicRendererRefs = new MapRefCount
 
         let rendererSubscribeHandler = function _rendererSubscribeHandler(msgTopic, msgContent) {
+            console.log("[IPCBus:Bridge] message received on '" + msgTopic + "'")
             topicRendererRefs.ForEachKey(msgTopic, function (count, valueId, keyTopic) {
                 console.log("[IPCBus:Bridge] Forward message received on '" + keyTopic + "' to renderer ID=" + valueId)
                 var webContent = webContents.fromId(valueId)
@@ -401,6 +453,15 @@ function IpcBusNodeClient(busPath) {
             self.send(topic, data)
         })
 
+        ipcMain.addListener(IPC_BUS_RENDERER_REQUEST, function (event, topic, data, replyTopic, timeoutDelay) {
+            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent request on '" + topic + "'")
+            self.request(topic, data, function(replyContent) {
+
+                event.sender.send(IPC_BUS_RENDERER_RECEIVE, replyTopic, replyContent)
+
+            }, timeoutDelay);
+        })
+
         ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
             console.log("[IPCBus:Bridge] Unsubscribe renderer ID=" + event.sender.id + " from topic : '" + topic + "'")
             topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
@@ -419,6 +480,8 @@ function IpcBusNodeClient(busPath) {
         ipcMain.addListener(IPC_BUS_MASTER_QUERYSTATE, function (event, topic, data) {
             self.queryMasterState(topic);
         })
+
+        console.log("[IPCBus:Bridge] Installed")
 
         this.queryMasterState = function (topic) {
             console.log("[IPCBus:Bridge] Query Master state on topic : '" + topic + "'")
@@ -452,6 +515,32 @@ function IpcBusNodeClient(busPath) {
         BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, busConn)
     }
 
+    this.request = function (topic, data, replyCallback, timeoutDelay) {
+
+        if(timeoutDelay === undefined) {
+
+            timeoutDelay = 2000; // 2s by default
+        }
+
+        // Set reply's topic 
+        const replyTopic = _generateReplyTopic()
+
+        // Prepare reply's handler
+        const replyHandler = function(topic, content) {
+
+            console.log('Received request reply on ' + replyTopic + ' : ' + content)
+
+            self.unsubscribe(replyTopic, replyHandler)
+
+            replyCallback(content)
+        }
+
+        self.subscribe(replyTopic, replyHandler);
+
+        // Execute request
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, busConn)
+    }
+
     this.queryBrokerState = function (topic) {
 
         BaseIpc.Cmd.exec(IPC_BUS_COMMAND_QUERYSTATE, topic, busConn)
@@ -468,8 +557,6 @@ function IpcBusNodeClient(busPath) {
         EventEmitter.prototype.removeListener.call(this, topic, handler)
         BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, busConn)
     }
-
-    console.log("[IPCBus:Bridge] Installed")
 }
 
 util.inherits(IpcBusNodeClient, EventEmitter)
