@@ -44,6 +44,18 @@ function doSendOnTopic(msgJSON) {
     process.send(JSON.stringify(msgJSON));
 }
 
+function doRequestOnTopic(msgJSON) {
+    var args = msgJSON["args"];
+    console.log("node - doRequestOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
+    ipcBus.request(args["topic"], args["msg"], function(content, peerName)
+    {   
+        msgJSON["peerName"] = peerName;
+        msgJSON["response"] = content;
+        process.send(JSON.stringify(msgJSON));
+    });
+}
+
+
 function doInit(msgJSON) {
     var args = msgJSON["args"];
     console.log("node - doInit: topicName:" + args);
@@ -64,6 +76,7 @@ function dispatchMessage(msg)
             subscribe : doSubscribeTopic,
             unsubscribe : doUnsubscribeTopic,
             send : doSendOnTopic,
+            request : doRequestOnTopic,
             init : doInit
         };
 

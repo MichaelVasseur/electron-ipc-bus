@@ -172,6 +172,7 @@ var NodeProcess = (function () {
         // Listen view messages
         var processMainFromView = new ProcessConnector("node", processId, ipcMain);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
+        processMainFromView.onSendMessage(onIPCElectron_RequestMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
 
@@ -219,8 +220,11 @@ var NodeProcess = (function () {
             {
                 switch(msgJSON["action"])
                 {
-                    case "received" :
-                        processMainToView.receivedMessageNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"]);
+                    case "receivedRequest" :
+                        processMainToView.receivedRequestNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["response"], msgJSON["args"]["peerName"]);
+                        break;
+                    case "receivedSend" :
+                        processMainToView.receivedSendNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"]);
                         break;
                     case "subscribe" :
                         processMainToView.sendSubscribeNotify(msgJSON["topic"]);
@@ -251,6 +255,16 @@ var NodeProcess = (function () {
                 };
             nodeInstance.process.send(JSON.stringify(msgJSON));
             processMainToView.sendUnsubscribeNotify(topicName);
+        }
+
+        function onIPCElectron_RequestMessage(topicName, topicMsg) {
+            console.log("Node - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
+            var msgJSON =
+                {
+                    action: "request",
+                    args: { topic : topicName, msg : topicMsg}
+                };
+            nodeInstance.process.send(JSON.stringify(msgJSON));
         }
 
         function onIPCElectron_SendMessage(topicName, topicMsg) {

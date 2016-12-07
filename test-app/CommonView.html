@@ -18,12 +18,28 @@
 
 <body>
     <div id="SubscriptionItem-template" class="panel panel-default" style="display:none">
-        <div class="panel-heading">Topic <b class="topicName"></b></div>
+        <div class="panel-heading">Topic <b class="topicName"></b>
+           <input type="button" class="btn btn-primary" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
+        </div>
         <div class="panel-body">
             <form class="form-inline">
-                <input type="button" class="form-control" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
                 <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
                 <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
+                <div class="input-group">
+                    <span class="input-group-addon">AutoReply</span>
+                    <input class="form-control topicAutoReply" class="form-control" type="text" />
+                </div>
+                <form class="form-inline topicRequest">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicRequestName" class="form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Message</span>
+                        <input class="topicRequestMsg" class="form-control" type="text" />
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Request"></<input>
+                </form>
             </form>
         </div>
     </div>
