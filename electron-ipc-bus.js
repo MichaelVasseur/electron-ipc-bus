@@ -101,9 +101,7 @@ function MapRefCount() {
             return;
         }
 
-        // Send data to subscribed connections
         keyValueCountMap.forEach(function (valuesMap, key) {
-            //            console.warn("[MapRefCount] ForEachValue : '" + key + "' = " + valuesMap + " (" + count + ")")
             callback(valuesMap, key)
         });
     }
@@ -118,7 +116,7 @@ function MapRefCount() {
 
         let valueCountMap = keyValueCountMap.get(key)
         if (valueCountMap == undefined) {
-            console.warn("[MapRefCount] ForEachKey : No key '" + key + "' !")
+            console.warn("[MapRefCount] ForEachKey : Unknown key '" + key + "' !")
         }
         else {
             valueCountMap.forEach(function (count, value) {
@@ -226,7 +224,8 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                 case IPC_BUS_COMMAND_QUERYSTATE:
                     {
                         const msgTopic = data.args[0];
-                        console.log("[IPCBus:Broker] QueryState message reply on topic : " + msgTopic)
+                        const msgPeerName = data.args[1];
+                        console.log("[IPCBus:Broker] QueryState message reply on topic : " + msgTopic + " from peer #" + msgPeerName)
                         var queryStateResult = [];
                         ipcbus._subscriptions.ForEach(function (valueConnMap, keyTopic) {
                             const keyValueInfo = { topic: keyTopic, valueCount: valueConnMap.size, totalCount: 0 }
@@ -235,7 +234,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                             })
                             queryStateResult.push(keyValueInfo)
                         })
-                        BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, queryStateResult, conn)
+                        BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, queryStateResult, msgPeerName, conn)
                     }
             }
         }
@@ -457,6 +456,17 @@ function IpcBusNodeClient(busPath) {
             })
         })
 
+        ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
+            const peerName = "Renderer_" + event.sender.id
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " unsubscribed from topic : '" + topic + "'")
+            topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
+                if (count == 0) {
+                    console.log("[IPCBus:Bridge] Forward unsubscribe '" + keyTopic + "' to IPC Broker")
+                    self.unsubscribeWithPeerName(peerName, keyTopic, rendererSubscribeHandler)
+                }
+            })
+        })
+
         ipcMain.addListener(IPC_BUS_RENDERER_SEND, function (event, topic, data) {
             const peerName = "Renderer_" + event.sender.id
             console.log("[IPCBus:Bridge] Peer #" + peerName + " sent message on '" + topic + "'")
@@ -474,29 +484,23 @@ function IpcBusNodeClient(busPath) {
             }, timeoutDelay);
         })
 
-        ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
-            console.log("[IPCBus:Bridge] Peer #" + peerName + " unsubscribed from topic : '" + topic + "'")
-            topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
-                if (count == 0) {
-                    console.log("[IPCBus:Bridge] Forward unsubscribe '" + keyTopic + "' to IPC Broker")
-                    self.unsubscribeWithPeerName(peerName, keyTopic, rendererSubscribeHandler)
-                }
-            })
-        })
-
         ipcMain.addListener(IPC_BUS_RENDERER_QUERYSTATE, function (event, topic, data) {
-            console.log("[IPCBus:Bridge] Query Broker state on topic : '" + topic + "'")
+            const peerName = "Renderer_" + event.sender.id
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " query Broker state on topic : '" + topic + "'")
             self.queryBrokerState(topic)
         })
 
         ipcMain.addListener(IPC_BUS_MASTER_QUERYSTATE, function (event, topic, data) {
-            self.queryMasterState(topic);
+            const peerName = "Renderer_" + event.sender.id
+            self.queryMasterStateWithPeerName(peerName, topic);
         })
 
-        console.log("[IPCBus:Bridge] Installed")
-
         this.queryMasterState = function (topic) {
-            console.log("[IPCBus:Bridge] Query Master state on topic : '" + topic + "'")
+            queryMasterStateWithPeerName(clientPeerName, topic)
+        }
+
+        this.queryMasterStateWithPeerName = function (peerName, topic) {
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " query Master state on topic : '" + topic + "'")
             var queryStateResult = [];
             topicRendererRefs.ForEachValue(function (count, valueId, keyTopic) {
                  const keyValueInfo = { topic : keyTopic, renderer : valueId, count: count }
@@ -504,6 +508,8 @@ function IpcBusNodeClient(busPath) {
             })
             self.send(topic, queryStateResult)
         }
+
+        console.log("[IPCBus:Bridge] Installed")
     }
 
     // Set API
@@ -563,9 +569,12 @@ function IpcBusNodeClient(busPath) {
         this.requestWithPeerName(clientPeerName, topic, data, replyCallback, timeoutDelay)
     }
 
-    this.queryBrokerState = function (topic) {
+    this.queryBrokerStateWithPeerName = function (peerName, topic) {
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_QUERYSTATE, topic, peerName, busConn)
+    }
 
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_QUERYSTATE, topic, busConn)
+    this.queryBrokerState = function (topic) {
+        self.queryBrokerStateWithPeerName(clientPeerName, topic)
     }
 
     this.subscribeWithPeerName = function (peerName, topic, handler) {
