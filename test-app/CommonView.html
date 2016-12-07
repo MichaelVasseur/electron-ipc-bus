@@ -29,17 +29,6 @@
                     <span class="input-group-addon">AutoReply</span>
                     <input class="form-control topicAutoReply" class="form-control" type="text" />
                 </div>
-                <form class="form-inline topicRequest">
-                    <div class="input-group">
-                        <span class="input-group-addon">Topic</span>
-                        <input class="topicRequestName" class="form-control" type="text" />
-                    </div>
-                    <div class="input-group">
-                        <span class="input-group-addon">Message</span>
-                        <input class="topicRequestMsg" class="form-control" type="text" />
-                    </div>
-                    <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Request"></<input>
-                </form>
             </form>
         </div>
     </div>
@@ -63,13 +52,25 @@
                 <form class="form-inline topicSend">
                     <div class="input-group">
                         <span class="input-group-addon">Topic</span>
-                        <input class="topicName" class="form-control" type="text" />
+                        <input class="topicSendName" class="form-control" type="text" />
                     </div>
                     <div class="input-group">
                         <span class="input-group-addon">Message</span>
-                        <input class="topicMsg" class="form-control" type="text" />
+                        <input class="topicSendMsg" class="form-control" type="text" />
                     </div>
                     <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+                </form>
+                <form class="form-inline topicRequest">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicRequestName" class="form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Message</span>
+                        <input class="topicRequestMsg" class="form-control" type="text" />
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Request"></<input>
+                    <input class="topicRequestResponse" class="form-control" type="text" readonly/>
                 </form>
             </div>
         </div>

@@ -120,10 +120,10 @@ function doSendMessageToTopic(event) {
 
     var target = event.target;
     var topicItemElt = target.parentElement;
-    var topicNameElt = topicItemElt.querySelector(".topicName");
+    var topicNameElt = topicItemElt.querySelector(".topicSendName");
     var topicName = topicNameElt.value;
 
-    var topicMsgElt = topicItemElt.querySelector(".topicMsg");
+    var topicMsgElt = topicItemElt.querySelector(".topicSendMsg");
     var topicMsg = topicMsgElt.value;
 
     var args = { topic: topicName, msg: topicMsg };
@@ -162,12 +162,9 @@ function onIPC_Received(topicName, msgContent, topicToReply) {
 function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
     console.log("onIPCBus_ReceivedRequest : msgTopic:" + topicName + " msgContent:" + msgContent)
 
-    var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
-    var topicItemElt = SubscriptionsListElt.querySelector(".subscription-" + topicName);
-
+    var topicItemElt = document.getElementsByClassName("topicRequestResponse");
     if (topicItemElt != null) {
-        var topicReceivedElt = topicItemElt.querySelector(".topicReply");
-        topicReceivedElt.value += msgContent + "\n";
+        topicItemElt.value += msgContent + "\n";
     }
 }
 
