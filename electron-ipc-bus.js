@@ -42,7 +42,7 @@ function MapRefCount() {
             valueCountMap = new Map()
             // This topic has NOT been subscribed yet, add it to the map
             keyValueCountMap.set(key, valueCountMap)
-            console.log("[MapRefCount] AddRef : key is added")
+            console.log("[MapRefCount] AddRef : key '" + key + "' is added")
         }
         let count = valueCountMap.get(value)
         if (count === undefined) {
@@ -134,10 +134,8 @@ function MapRefCount() {
         }
 
         const queryStateResult = []
-        keyValueCountMap.forEach(function (valueCountMap, key) 
-        {
-            valueCountMap.forEach(function (count, value) 
-            {
+        keyValueCountMap.forEach(function (valueCountMap, key) {
+            valueCountMap.forEach(function (count, value) {
                 callback(count, value, key);
             })
         })
@@ -180,6 +178,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         console.log("[IPCBus:Broker] Peer #" + msgPeerName + " subscribed to topic '" + msgTopic + "'")
                         ipcbus._subscriptions.AddRef(msgTopic, conn, function (keyTopic, valueConn, count) {
                             //console.log("[IPCBus:Broker] State : Peer #" + valueConn.busPeerName + " (" + count + ") subscribed to '" + keyTopic + "'")
+                            ipcbus._peerNames.set(valueConn, msgPeerName)
                         })
                         break
                     }
@@ -190,6 +189,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         console.log("[IPCBus:Broker] Peer #" + msgPeerName + " unsubscribed from topic '" + msgTopic + "'")
                         ipcbus._subscriptions.Release(msgTopic, conn, function (keyTopic, valueConn, count) {
                             //console.log("[IPCBus:Broker] State : Peer #" + valueConn.busPeerName + " (" + count + ") subscribed to '" + keyTopic + "'")
+                            ipcbus._peerNames.delete(valueConn)
                         })
                         break
                     }
@@ -226,14 +226,14 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         const msgTopic = data.args[0];
                         const msgPeerName = data.args[1];
                         console.log("[IPCBus:Broker] QueryState message reply on topic : " + msgTopic + " from peer #" + msgPeerName)
+
                         var queryStateResult = [];
-                        ipcbus._subscriptions.ForEach(function (valueConnMap, keyTopic) {
-                            const keyValueInfo = { topic: keyTopic, valueCount: valueConnMap.size, totalCount: 0 }
-                            valueConnMap.forEach(function (subCount) {
-                                keyValueInfo.totalCount += subCount
-                            })
+                        ipcbus._subscriptions.ForEachValue(function (count, valueConn, keyTopic) {
+                            const peerName = ipcbus._peerNames.get(valueConn);
+                            const keyValueInfo = { topic: keyTopic, peerName: peerName, count: count }
                             queryStateResult.push(keyValueInfo)
                         })
+
                         BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, queryStateResult, msgPeerName, conn)
                     }
             }
@@ -268,25 +268,25 @@ function _clientConnectProc(ipcbus, baseIpc, cmd, busPath, conn, callback) {
             switch (data.name) {
 
                 case IPC_BUS_EVENT_TOPICMESSAGE:
-                {
-                    const msgTopic = data.args[0]
-                    const msgContent = data.args[1]
-                    const msgPeerName = data.args[2]
-                    console.log("[IPCBus:Client] Emit message received on topic '" + msgTopic + "' from peer #" + msgPeerName)
-                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, msgPeerName)
-                    break
-                }
+                    {
+                        const msgTopic = data.args[0]
+                        const msgContent = data.args[1]
+                        const msgPeerName = data.args[2]
+                        console.log("[IPCBus:Client] Emit message received on topic '" + msgTopic + "' from peer #" + msgPeerName)
+                        EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, msgPeerName)
+                        break
+                    }
 
                 case IPC_BUS_EVENT_REQUESTMESSAGE:
-                {
-                    const msgTopic = data.args[0]
-                    const msgContent = data.args[1]
-                    const msgReplyTopic = data.args[2]
-                    const msgPeerName = data.args[3]
-                    console.log("[IPCBus:Client] Emit request received on topic '" + msgTopic + "' from peer #" + msgPeerName)
-                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, msgReplyTopic, msgPeerName)
-                    break
-                }
+                    {
+                        const msgTopic = data.args[0]
+                        const msgContent = data.args[1]
+                        const msgReplyTopic = data.args[2]
+                        const msgPeerName = data.args[3]
+                        console.log("[IPCBus:Client] Emit request received on topic '" + msgTopic + "' from peer #" + msgPeerName)
+                        EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, msgReplyTopic, msgPeerName)
+                        break
+                    }
             }
         }
     })
@@ -363,12 +363,12 @@ function IpcBusRendererClient(ipcObj) {
         }
 
         const replyTopic = _generateReplyTopic()
-        EventEmitter.prototype.once.call(this, replyTopic, function(topic, data, peer) {
-            
+        EventEmitter.prototype.once.call(this, replyTopic, function (topic, data, peer) {
+
             replyCallback(data, peer)
         })
 
-        if(timeoutDelay === undefined) {
+        if (timeoutDelay === undefined) {
             timeoutDelay = 2000
         }
         ipcObj.send(IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic, timeoutDelay)
@@ -450,7 +450,7 @@ function IpcBusNodeClient(busPath) {
             console.log("[IPCBus:Bridge] Peer #" + peerName + " subscribed to topic '" + topic + "'")
             topicRendererRefs.AddRef(topic, event.sender.id, function (keyTopic, valueId, count) {
                 if (count == 1) {
-                    console.log("[IPCBus:Bridge] forward subscribe '" + keyTopic + "' to IPC Broker")
+                    console.log("[IPCBus:Bridge] Forward subscribe '" + keyTopic + "' to IPC Broker")
                     self.subscribeWithPeerName(peerName, keyTopic, rendererSubscribeHandler)
                 }
             })
@@ -476,7 +476,7 @@ function IpcBusNodeClient(busPath) {
         ipcMain.addListener(IPC_BUS_RENDERER_REQUEST, function (event, topic, data, replyTopic, timeoutDelay) {
             const peerName = "Renderer_" + event.sender.id
             console.log("[IPCBus:Bridge] Peer #" + peerName + " sent request on '" + topic + "'")
-            self.requestWithPeerName(peerName, topic, data, function(replyContent, replyPeer) {
+            self.requestWithPeerName(peerName, topic, data, function (replyContent, replyPeer) {
 
                 console.log("[IPCBus:Bridge] Sending request result to peer #" + peerName)
                 event.sender.send(IPC_BUS_RENDERER_RECEIVE, replyTopic, replyContent, replyPeer)
@@ -503,8 +503,9 @@ function IpcBusNodeClient(busPath) {
             console.log("[IPCBus:Bridge] Peer #" + peerName + " query Master state on topic : '" + topic + "'")
             var queryStateResult = [];
             topicRendererRefs.ForEachValue(function (count, valueId, keyTopic) {
-                 const keyValueInfo = { topic : keyTopic, renderer : valueId, count: count }
-                 queryStateResult.push(keyValueInfo)
+                const peerName = "Renderer_" + valueId
+                const keyValueInfo = { topic: keyTopic, peerName: peerName, count: count }
+                queryStateResult.push(keyValueInfo)
             })
             self.send(topic, queryStateResult)
         }
@@ -540,7 +541,7 @@ function IpcBusNodeClient(busPath) {
 
     this.requestWithPeerName = function (peerName, topic, data, replyCallback, timeoutDelay) {
 
-        if(timeoutDelay === undefined) {
+        if (timeoutDelay === undefined) {
 
             timeoutDelay = 2000; // 2s by default
         }
@@ -549,7 +550,7 @@ function IpcBusNodeClient(busPath) {
         const replyTopic = _generateReplyTopic()
 
         // Prepare reply's handler
-        const replyHandler = function(topic, content, peerName) {
+        const replyHandler = function (topic, content, peerName) {
 
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content)
 
@@ -622,6 +623,7 @@ function IpcBusBroker(busPath, brokerProc) {
     let ipcServer = null
 
     this._subscriptions = new MapRefCount()
+    this._peerNames = new Map()
 
     // Set API
     this.start = function () {

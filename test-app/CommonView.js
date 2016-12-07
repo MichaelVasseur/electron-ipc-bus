@@ -155,7 +155,7 @@ function onIPC_MasterStatusTopic(msgTopic, msgContent) {
         cell.innerHTML = msgContent[i]["topic"];
 
         var cell = row.insertCell(1);
-        cell.innerHTML = msgContent[i]["renderer"];
+        cell.innerHTML = msgContent[i]["peerName"];
 
         var cell = row.insertCell(2);
         cell.innerHTML = msgContent[i]["count"];
@@ -178,10 +178,10 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
         cell.innerHTML = msgContent[i]["topic"];
 
         var cell = row.insertCell(1);
-        cell.innerHTML = msgContent[i]["valueCount"];
+        cell.innerHTML = msgContent[i]["peerName"];
 
         var cell = row.insertCell(2);
-        cell.innerHTML = msgContent[i]["totalCount"];
+        cell.innerHTML = msgContent[i]["count"];
     }
 }
 
@@ -200,7 +200,6 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         processToMonitor.onReceivedMessageNotify(onIPCElectron_ReceivedMessageNotify);
         processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
-        processTitleElt.textContent = args["title"];
 
         var processToolbarElt = document.getElementById("ProcessToolbar");
         processToolbarElt.style.display = "block";
@@ -211,6 +210,7 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         var processBrokerStateElt = document.getElementById("ProcessMasterState");
         processBrokerStateElt.style.display = "block";
 
+        processTitleElt.textContent = args["peerName"];
         ipcBus.connect(function () {
             ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
             ipcBus.subscribe("masterStateResults", onIPC_MasterStatusTopic);
@@ -219,7 +219,7 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     }
     if (args["type"] == "renderer") {
         processToMonitor = new ProcessConnector("renderer", args["id"], ipcRenderer);
-        processTitleElt.textContent = args["title"] + " - " + args["id"];
+        processTitleElt.textContent = args["peerName"];
         ipcBus.connect(function () {
         });
     }
@@ -228,11 +228,11 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         processToMonitor.onReceivedMessageNotify(onIPCElectron_ReceivedMessageNotify);
         processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
-        processTitleElt.textContent = args["title"] + " - " + args["id"];
+        processTitleElt.textContent = args["peerName"];
         ipcBus.connect(function () {
         });
     }
-    processTitleElt.textContent += " - WebContents ID = "+ args["webContentsId"];
+//    processTitleElt.textContent += " - WebContents ID = "+ args["webContentsId"];
     document.title = processTitleElt.textContent;
 
 });

@@ -76,7 +76,7 @@ var MainProcess = (function () {
 
         var processMainToView = new ProcessConnector("main", mainWindow.webContents);
         mainWindow.webContents.on('dom-ready', function () {
-            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main", webContentsId : mainWindow.webContents.id  });
+            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main", peerName : "Master", webContentsId : mainWindow.webContents.id  });
         });
 
         function doNewProcess(processType) {
@@ -138,7 +138,7 @@ var RendererProcess = (function () {
         });
         rendererWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
         rendererWindow.webContents.on('dom-ready', function () {
-            rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId, webContentsId : rendererWindow.webContents.id });
+            rendererWindow.webContents.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId, peerName : "Renderer_" + rendererWindow.webContents.id, webContentsId : rendererWindow.webContents.id });
         });
 
         this.onClose = function _onClose(callback)
@@ -196,7 +196,7 @@ var NodeProcess = (function () {
         });
         nodeWindow.webContents.on('dom-ready', function () 
         {
-            nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId, webContentsId : nodeWindow.webContents.id  });
+            nodeWindow.webContents.send("initializeWindow", { title: "Node", type: "node", id: processId, peerName : "Node_" + nodeInstance.process.pid, webContentsId : nodeWindow.webContents.id  });
         });
 
         this.term = function _term()
