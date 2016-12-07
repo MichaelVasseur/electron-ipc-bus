@@ -1,6 +1,6 @@
 {
     "name": "electron-ipc-bus",
-    "version": "0.2.0", 
+    "version": "0.3.0", 
     "description": "Safe IPC bus for Electron",
 	"license": "MIT",
     "author": "Michael Vasseur <michael.vasseur@thomsonreuters.com>",

@@ -175,35 +175,36 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
         if (BaseIpc.Cmd.isCmd(data) == true) {
 
             switch (data.name) {
-
                 case IPC_BUS_COMMAND_SUBSCRIBETOPIC:
                     {
                         const msgTopic = data.args[0]
-                        console.log("[IPCBus:Broker] Subscribe : Client #" + conn.id + " to '" + msgTopic + "'")
+                        const msgPeerName = data.args[1]
+                        console.log("[IPCBus:Broker] Peer #" + msgPeerName + " subscribed to topic '" + msgTopic + "'")
                         ipcbus._subscriptions.AddRef(msgTopic, conn, function (keyTopic, valueConn, count) {
-                            console.log("[IPCBus:Broker] State : Client #" + valueConn + " (" + count + ") subscribed to '" + keyTopic + "'")
+                            //console.log("[IPCBus:Broker] State : Peer #" + valueConn.busPeerName + " (" + count + ") subscribed to '" + keyTopic + "'")
                         })
                         break
                     }
                 case IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
                     {
                         const msgTopic = data.args[0]
-                        console.log("[IPCBus:Broker] Unsubscribe : Client #" + conn.id + " from '" + msgTopic + "'")
+                        const msgPeerName = data.args[1]
+                        console.log("[IPCBus:Broker] Peer #" + msgPeerName + " unsubscribed from topic '" + msgTopic + "'")
                         ipcbus._subscriptions.Release(msgTopic, conn, function (keyTopic, valueConn, count) {
-                            console.log("[IPCBus:Broker] State : Client #" + valueConn.id + " (" + count + ") subscribed to '" + keyTopic + "'")
+                            //console.log("[IPCBus:Broker] State : Peer #" + valueConn.busPeerName + " (" + count + ") subscribed to '" + keyTopic + "'")
                         })
                         break
                     }
                 case IPC_BUS_COMMAND_SENDTOPICMESSAGE:
                     {
-                        const msgTopic = data.args[0];
-                        const msgContent = data.args[1];
-                        console.log("[IPCBus:Broker] Received message : Client #" + conn.id + " from '" + msgTopic + "'")
+                        const msgTopic = data.args[0]
+                        const msgContent = data.args[1]
+                        const msgPeerName = data.args[2]
+                        console.log("[IPCBus:Broker] Received request on topic '" + msgTopic + "' from peer #" + msgPeerName)
 
                         ipcbus._subscriptions.ForEachKey(msgTopic, function (count, valueConn, keyTopic) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, keyTopic, msgContent, valueConn)
-                            console.log("[IPCBus:Broker] Received message : Forwarded to Client#" + keyTopic + ":" + valueConn.id)
+                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, keyTopic, msgContent, msgPeerName, valueConn)
                         })
                         break
                     }
@@ -211,13 +212,13 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                     {
                         const msgTopic = data.args[0];
                         const msgContent = data.args[1];
-                        const replyTopic = data.args[2];
-                        console.log("[IPCBus:Broker] Received request on topic : " + msgTopic + " / reply : " + replyTopic)
+                        const msgReplyTopic = data.args[2];
+                        const msgPeerName = data.args[3];
+                        console.log("[IPCBus:Broker] Received request on topic '" + msgTopic + "' (reply = '" + msgReplyTopic + "') from peer #" + msgPeerName)
 
                         ipcbus._subscriptions.ForEachKey(msgTopic, function (count, valueConn, keyTopic) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_REQUESTMESSAGE, keyTopic, msgContent, replyTopic, valueConn)
-                            console.log("[IPCBus:Broker] Received request : Forwarded to Client#" + keyTopic + ":" + valueConn.id)
+                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_REQUESTMESSAGE, keyTopic, msgContent, msgReplyTopic, msgPeerName, valueConn)
                         })
                         break
                     }
@@ -271,8 +272,9 @@ function _clientConnectProc(ipcbus, baseIpc, cmd, busPath, conn, callback) {
                 {
                     const msgTopic = data.args[0]
                     const msgContent = data.args[1]
-                    console.log("[IPCBus:Client] Emit message received on topic '" + msgTopic + "'")
-                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent)
+                    const msgPeerName = data.args[2]
+                    console.log("[IPCBus:Client] Emit message received on topic '" + msgTopic + "' from peer #" + msgPeerName)
+                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, msgPeerName)
                     break
                 }
 
@@ -280,9 +282,10 @@ function _clientConnectProc(ipcbus, baseIpc, cmd, busPath, conn, callback) {
                 {
                     const msgTopic = data.args[0]
                     const msgContent = data.args[1]
-                    const replyTopic = data.args[2]
-                    console.log("[IPCBus:Client] Emit request received on topic '" + msgTopic + "'")
-                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, replyTopic)
+                    const msgReplyTopic = data.args[2]
+                    const msgPeerName = data.args[3]
+                    console.log("[IPCBus:Client] Emit request received on topic '" + msgTopic + "' from peer #" + msgPeerName)
+                    EventEmitter.prototype.emit.call(ipcbus, msgTopic, msgTopic, msgContent, msgReplyTopic, msgPeerName)
                     break
                 }
             }
@@ -320,15 +323,15 @@ function IpcBusRendererClient(ipcObj) {
     const self = this
     let connected = null
 
-    ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function (eventOrTopic, topicOrContent, contentOrUndefined) {
+    ipcObj.on(IPC_BUS_RENDERER_RECEIVE, function (eventOrTopic, topicOrContent, contentOrPeer, peerOrUndefined) {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
-        if (contentOrUndefined === undefined) {
+        if (peerOrUndefined === undefined) {
             console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'")
-            EventEmitter.prototype.emit.call(self, eventOrTopic, eventOrTopic, topicOrContent)
+            EventEmitter.prototype.emit.call(self, eventOrTopic, eventOrTopic, topicOrContent, contentOrPeer)
         }
         else {
             console.log("[IPCBus:Client] Received message on '" + topicOrContent + "'")
-            EventEmitter.prototype.emit.call(self, topicOrContent, topicOrContent, contentOrUndefined)
+            EventEmitter.prototype.emit.call(self, topicOrContent, topicOrContent, contentOrPeer, peerOrUndefined)
         }
     })
 
@@ -361,9 +364,9 @@ function IpcBusRendererClient(ipcObj) {
         }
 
         const replyTopic = _generateReplyTopic()
-        EventEmitter.prototype.once.call(this, replyTopic, function(topic, data) {
+        EventEmitter.prototype.once.call(this, replyTopic, function(topic, data, peer) {
             
-            replyCallback(data)
+            replyCallback(data, peer)
         })
 
         if(timeoutDelay === undefined) {
@@ -421,53 +424,62 @@ function IpcBusNodeClient(busPath) {
     let busConn = null
     let ipcCmd = null
 
+    let clientPeerName = "Node_" + process.pid
+
     if (process.type !== undefined && process.type === "browser") {
         const ipcMain = require("electron").ipcMain
         const {webContents} = require("electron")
 
+        clientPeerName = "Master"
+
         let topicRendererRefs = new MapRefCount
 
-        let rendererSubscribeHandler = function _rendererSubscribeHandler(msgTopic, msgContent) {
+        let rendererSubscribeHandler = function (msgTopic, msgContent, msgPeer) {
             console.log("[IPCBus:Bridge] message received on '" + msgTopic + "'")
             topicRendererRefs.ForEachKey(msgTopic, function (count, valueId, keyTopic) {
-                console.log("[IPCBus:Bridge] Forward message received on '" + keyTopic + "' to renderer ID=" + valueId)
+                const peerName = "Renderer_" + valueId
+                console.log("[IPCBus:Bridge] Forward message received on '" + keyTopic + "' to peer #" + peerName)
                 var webContent = webContents.fromId(valueId)
                 if (webContent != undefined) {
-                    webContent.send(IPC_BUS_RENDERER_RECEIVE, keyTopic, msgContent)
+                    webContent.send(IPC_BUS_RENDERER_RECEIVE, keyTopic, msgContent, msgPeer)
                 }
             })
         }
 
         ipcMain.addListener(IPC_BUS_RENDERER_SUBSCRIBE, function (event, topic) {
-            console.log("[IPCBus:Bridge] Subscribe renderer ID=" + event.sender.id + " to topic '" + topic + "'")
+            const peerName = "Renderer_" + event.sender.id
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " subscribed to topic '" + topic + "'")
             topicRendererRefs.AddRef(topic, event.sender.id, function (keyTopic, valueId, count) {
                 if (count == 1) {
                     console.log("[IPCBus:Bridge] forward subscribe '" + keyTopic + "' to IPC Broker")
-                    self.subscribe(keyTopic, rendererSubscribeHandler)
+                    self.subscribeWithPeerName(peerName, keyTopic, rendererSubscribeHandler)
                 }
             })
         })
 
         ipcMain.addListener(IPC_BUS_RENDERER_SEND, function (event, topic, data) {
-            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent message on '" + topic + "'")
-            self.send(topic, data)
+            const peerName = "Renderer_" + event.sender.id
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " sent message on '" + topic + "'")
+            self.sendWithPeerName(peerName, topic, data)
         })
 
         ipcMain.addListener(IPC_BUS_RENDERER_REQUEST, function (event, topic, data, replyTopic, timeoutDelay) {
-            console.log("[IPCBus:Bridge] Renderer ID=" + event.sender.id + " sent request on '" + topic + "'")
-            self.request(topic, data, function(replyContent) {
+            const peerName = "Renderer_" + event.sender.id
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " sent request on '" + topic + "'")
+            self.requestWithPeerName(peerName, topic, data, function(replyContent, replyPeer) {
 
-                event.sender.send(IPC_BUS_RENDERER_RECEIVE, replyTopic, replyContent)
+                console.log("[IPCBus:Bridge] Sending request result to peer #" + peerName)
+                event.sender.send(IPC_BUS_RENDERER_RECEIVE, replyTopic, replyContent, replyPeer)
 
             }, timeoutDelay);
         })
 
         ipcMain.addListener(IPC_BUS_RENDERER_UNSUBSCRIBE, function (event, topic) {
-            console.log("[IPCBus:Bridge] Unsubscribe renderer ID=" + event.sender.id + " from topic : '" + topic + "'")
+            console.log("[IPCBus:Bridge] Peer #" + peerName + " unsubscribed from topic : '" + topic + "'")
             topicRendererRefs.Release(topic, event.sender.id, function (keyTopic, valueId, count) {
                 if (count == 0) {
-                    console.log("[IPCBus:Bridge] forward unsubscribe '" + keyTopic + "' to IPC Broker")
-                    self.unsubscribe(keyTopic, rendererSubscribeHandler)
+                    console.log("[IPCBus:Bridge] Forward unsubscribe '" + keyTopic + "' to IPC Broker")
+                    self.unsubscribeWithPeerName(peerName, keyTopic, rendererSubscribeHandler)
                 }
             })
         })
@@ -510,12 +522,17 @@ function IpcBusNodeClient(busPath) {
         busConn.end()
     }
 
-    this.send = function (topic, data) {
+    this.sendWithPeerName = function (peerName, topic, data) {
 
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, busConn)
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, peerName, busConn)
     }
 
-    this.request = function (topic, data, replyCallback, timeoutDelay) {
+    this.send = function (topic, data) {
+
+        this.sendWithPeerName(clientPeerName, topic, data)
+    }
+
+    this.requestWithPeerName = function (peerName, topic, data, replyCallback, timeoutDelay) {
 
         if(timeoutDelay === undefined) {
 
@@ -526,19 +543,24 @@ function IpcBusNodeClient(busPath) {
         const replyTopic = _generateReplyTopic()
 
         // Prepare reply's handler
-        const replyHandler = function(topic, content) {
+        const replyHandler = function(topic, content, peerName) {
 
-            console.log('Received request reply on ' + replyTopic + ' : ' + content)
+            console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content)
 
             self.unsubscribe(replyTopic, replyHandler)
 
-            replyCallback(content)
+            replyCallback(content, peerName)
         }
 
         self.subscribe(replyTopic, replyHandler);
 
         // Execute request
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, busConn)
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, peerName, busConn)
+    }
+
+    this.request = function (topic, data, replyCallback, timeoutDelay) {
+
+        this.requestWithPeerName(clientPeerName, topic, data, replyCallback, timeoutDelay)
     }
 
     this.queryBrokerState = function (topic) {
@@ -546,16 +568,26 @@ function IpcBusNodeClient(busPath) {
         BaseIpc.Cmd.exec(IPC_BUS_COMMAND_QUERYSTATE, topic, busConn)
     }
 
-    this.subscribe = function (topic, handler) {
+    this.subscribeWithPeerName = function (peerName, topic, handler) {
 
         EventEmitter.prototype.addListener.call(this, topic, handler)
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, busConn)
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, peerName, busConn)
+    }
+
+    this.subscribe = function (topic, handler) {
+
+        this.subscribeWithPeerName(clientPeerName, topic, handler)
+    }
+
+    this.unsubscribeWithPeerName = function (peerName, topic, handler) {
+
+        EventEmitter.prototype.removeListener.call(this, topic, handler)
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, busConn)
     }
 
     this.unsubscribe = function (topic, handler) {
 
-        EventEmitter.prototype.removeListener.call(this, topic, handler)
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, busConn)
+        this.unsubscribeWithPeerName(clientPeerName, topic, handler)
     }
 }
 
