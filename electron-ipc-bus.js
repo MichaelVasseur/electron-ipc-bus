@@ -96,6 +96,8 @@ function MapRefCount() {
     this.ReleaseValue = function _ReleaseValue(value, callback) {
         console.log("[MapRefCount] ReleaseValue : value " + value)
 
+        // Store keys in an intermediate array
+        // Not sure iterating and removing at the same time is well supported 
         var keys = [];
         for (let key of keyValueCountMap.keys()) {
             keys.push(key)
@@ -110,7 +112,7 @@ function MapRefCount() {
         console.log("[MapRefCount] ForEach")
 
         if (typeof callback !== "function") {
-            console.warn("[MapRefCount] ForEach : No callback provided !")
+            console.error("[MapRefCount] ForEach : No callback provided !")
             return;
         }
 
@@ -123,7 +125,7 @@ function MapRefCount() {
         console.log("[MapRefCount] ForEachKey : " + key)
 
         if (typeof callback !== "function") {
-            console.warn("[MapRefCount] ForEachKey : No callback provided !")
+            console.error("[MapRefCount] ForEachKey : No callback provided !")
             return;
         }
 
@@ -142,7 +144,7 @@ function MapRefCount() {
     this.ForEachValue = function _ForEachValue(callback) {
         console.log("[MapRefCount] ForEachValue")
         if (typeof callback !== "function") {
-            console.warn("[MapRefCount] ForEachValue : No callback provided !")
+            console.error("[MapRefCount] ForEachValue : No callback provided !")
             return;
         }
 
@@ -158,8 +160,7 @@ function MapRefCount() {
 function _cleanUpConn(ipcbus, conn) {
 
     // Unsubscribe topics
-    ipcbus._subscriptions.ReleaseValue(conn, function (connsMap, keyTopic) {
-    })
+    ipcbus._subscriptions.ReleaseValue(conn)
     ipcbus._peerNames.delete(conn)
 }
 
