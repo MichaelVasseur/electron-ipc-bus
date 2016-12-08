@@ -103,7 +103,7 @@ var MainProcess = (function () {
         
         function onIPCElectron_ReceivedMessage(topicName, topicMsg ,topicToReply) {
             console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
-            processMainToView.receivedMessageNotify(topicName, topicMsg, topicToReply);
+            processMainToView.receivedSendNotify(topicName, topicMsg, topicToReply);
         }
 
         function onIPCElectron_Subscribe(topicName) {
