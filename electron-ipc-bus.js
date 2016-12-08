@@ -54,7 +54,7 @@ function MapRefCount() {
         }
         valueCountMap.set(value, count)
         console.log("[MapRefCount] AddRef : count = " + count)
-        if (callback !== null) {
+        if (typeof callback === "function") {
             callback(key, value, count)
         }
     }
@@ -70,7 +70,7 @@ function MapRefCount() {
             // This topic is subscribed
             let count = valueCountMap.get(value);
             if (count === undefined) {
-                console.warn("[MapRefCount] Release : value is undefined")
+                console.warn("[MapRefCount] Release : value is unknown")
             }
             else {
                 // This connection has subscribed to this topic
@@ -86,17 +86,30 @@ function MapRefCount() {
                     }
                 }
                 console.log("[MapRefCount] Release : count = " + count)
-                if (callback !== null) {
+                if (typeof callback === "function") {
                     callback(key, value, count)
                 }
             }
         }
     }
 
+    this.ReleaseValue = function _ReleaseValue(value, callback) {
+        console.log("[MapRefCount] ReleaseValue : value " + value)
+
+        var keys = [];
+        for (let key of keyValueCountMap.keys()) {
+            keys.push(key)
+        }
+        for (let key of keys) {
+            this.Release(key, value, callback);
+        }
+    }
+
+
     this.ForEach = function _ForEach(callback) {
         console.log("[MapRefCount] ForEach")
 
-        if (callback === null) {
+        if (typeof callback !== "function") {
             console.warn("[MapRefCount] ForEach : No callback provided !")
             return;
         }
@@ -109,7 +122,7 @@ function MapRefCount() {
     this.ForEachKey = function _ForEachKey(key, callback) {
         console.log("[MapRefCount] ForEachKey : " + key)
 
-        if (callback === null) {
+        if (typeof callback !== "function") {
             console.warn("[MapRefCount] ForEachKey : No callback provided !")
             return;
         }
@@ -128,7 +141,7 @@ function MapRefCount() {
 
     this.ForEachValue = function _ForEachValue(callback) {
         console.log("[MapRefCount] ForEachValue")
-        if (callback === null) {
+        if (typeof callback !== "function") {
             console.warn("[MapRefCount] ForEachValue : No callback provided !")
             return;
         }
@@ -145,9 +158,9 @@ function MapRefCount() {
 function _cleanUpConn(ipcbus, conn) {
 
     // Unsubscribe topics
-    ipcbus._subscriptions.forEach(function (subs, topic) {
-        subs.delete(conn)
+    ipcbus._subscriptions.ReleaseValue(conn, function (connsMap, keyTopic) {
     })
+    ipcbus._peerNames.delete(conn)
 }
 
 function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
