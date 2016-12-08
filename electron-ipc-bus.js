@@ -363,9 +363,9 @@ function IpcBusRendererClient(ipcObj) {
         }
 
         const replyTopic = _generateReplyTopic()
-        EventEmitter.prototype.once.call(this, replyTopic, function (topic, data, peer) {
+        EventEmitter.prototype.once.call(this, replyTopic, function (replyTopic, data, peer) {
 
-            replyCallback(data, peer)
+            replyCallback(topic, data, peer)
         })
 
         if (timeoutDelay === undefined) {
@@ -550,13 +550,13 @@ function IpcBusNodeClient(busPath) {
         const replyTopic = _generateReplyTopic()
 
         // Prepare reply's handler
-        const replyHandler = function (topic, content, peerName) {
+        const replyHandler = function (replyTopic, content, peerName) {
 
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content)
 
             self.unsubscribe(replyTopic, replyHandler)
 
-            replyCallback(content, peerName)
+            replyCallback(topic, content, peerName)
         }
 
         self.subscribe(replyTopic, replyHandler);

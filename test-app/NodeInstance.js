@@ -13,12 +13,12 @@ const Module = require("module")
 
 const ipcBus = require("../electron-ipc-bus")()
 
-function onTopicMessage(topicName, topicMsg) {
-    console.log("node - topic:" + topicName + " data:" + topicMsg);
+function onTopicMessage(topicName, topicMsg, topicToReply) {
+    console.log("node - topic:" + topicName + " data:" + topicMsg + " reply:" + topicToReply);
     var msgJSON =
     {
-        action: "received",
-        args: { topic : topicName, msg : topicMsg}
+        action: "receivedSend",
+        args: { topic : topicName, msg : topicMsg, topicToReply : topicToReply}
     };
     process.send(JSON.stringify(msgJSON));
 }
@@ -44,6 +44,19 @@ function doSendOnTopic(msgJSON) {
     process.send(JSON.stringify(msgJSON));
 }
 
+function doRequestOnTopic(msgJSON) {
+    var args = msgJSON["args"];
+    console.log("node - doRequestOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
+    ipcBus.request(args["topic"], args["msg"], function(content, peerName)
+    {   
+        msgJSON["action"] = "receivedRequest";
+        msgJSON["peerName"] = peerName;
+        msgJSON["response"] = content;
+        process.send(JSON.stringify(msgJSON));
+    });
+}
+
+
 function doInit(msgJSON) {
     var args = msgJSON["args"];
     console.log("node - doInit: topicName:" + args);
@@ -64,6 +77,7 @@ function dispatchMessage(msg)
             subscribe : doSubscribeTopic,
             unsubscribe : doUnsubscribeTopic,
             send : doSendOnTopic,
+            request : doRequestOnTopic,
             init : doInit
         };
 

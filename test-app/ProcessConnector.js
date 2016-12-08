@@ -67,9 +67,19 @@ ProcessConnector = (function()
             _ipc.send(buildChannel("sendMessage"), { topic : topicName, msg : topicMsg } );
         }
 
-        this.receivedMessageNotify = function receivedMessageNotify(topicName, topicMsg)
+        this.receivedSendNotify = function _receivedSendNotify(topicName, topicMsg, topicToReply)
         {
-            _ipc.send(buildChannel("receivedMessage-notify"), { topic : topicName, msg : topicMsg } );
+            _ipc.send(buildChannel("sendMessage-notify"), { topic : topicName, msg : topicMsg, topicToReply : topicToReply } );
+        }
+
+        this.requestMessage = function _sendMessage(topicName, topicMsg)
+        {
+            _ipc.send(buildChannel("requestMessage"), { topic : topicName, msg : topicMsg } );
+        }
+
+        this.receivedRequestNotify = function _receivedRequestNotify(topicName, topicMsg, topicResponse, peerName)
+        {
+            _ipc.send(buildChannel("requestMessage-notify"), { topic:topicName, msg:topicMsg, peerName : peerName, response : topicResponse } );
         }
 
         this.send = function _send(eventName, data)
@@ -106,12 +116,30 @@ ProcessConnector = (function()
             });
         }
 
-        this.onReceivedMessageNotify = function _onReceivedMessageNotify(callback)
+        this.onReceivedSendNotify = function _onReceivedSendNotify(callback)
         {
-            _ipc.on(buildChannel("receivedMessage-notify"), function (event, data)
+            _ipc.on(buildChannel("sendMessage-notify"), function (event, data)
+            {
+                const response = (data !== undefined)? data: event;
+                callback(response["topic"], response["msg"], response["topicToReply"]);
+            });
+        }
+
+        this.onRequestMessage = function _onRequestMessage(callback)
+        {
+            _ipc.on(buildChannel("requestMessage"), function (event, data)
             {
                 const response = (data !== undefined)? data: event;
                 callback(response["topic"], response["msg"]);
+            });
+        }
+
+        this.onReceivedRequestNotify = function _oonReceivedRequestNotify(callback)
+        {
+            _ipc.on(buildChannel("requestMessage-notify"), function (event, data)
+            {
+                const response = (data !== undefined)? data: event;
+                callback(response["topic"],response["msg"],response["response"],response["peerName"]);
             });
         }
 
