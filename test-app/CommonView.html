@@ -14,6 +14,21 @@
 
     <script src="ProcessConnector.js"></script>
     <script src="CommonView.js"></script>
+    <script src="TableView.js"></script>
+    <style>
+        .TableResults {
+            text-align: center;
+        }
+        .FirstRow {
+            background-color: lightblue;
+            font-weight: bolder;
+        }
+        .FirstColumn {
+            background-color: lightblue;
+            font-weight: bold;
+            text-align: left;
+        }
+    </style>
 </head>
 
 <body>
@@ -39,6 +54,16 @@
     </div>
     <h3 id="ProcessTitle">Master</h3>
     <div id="ProcessMonitor" class="panel-group" topic-process="fake">
+        <div id="MatrixPanel" class="panel panel-default" style="display:none">
+            <div class="panel-heading">Test Results Matrix
+                <input type="button" class="btn btn-primary" onclick="doRunTests()" value="Run test"></input>
+            </div>
+            <div class="panel-body">
+                <b>Click any cell to require the selected-row process to send an ipcBus message to the selected-column process</b>
+                <table id="TestsResultsMatrix" class="TableResults" border="1">
+                </table>
+            </div>
+        </div>
         <div id="ProcessActions" class="panel panel-default">
             <div class="panel-heading">Actions</div>
             <div class="panel-body">
@@ -90,6 +115,7 @@
                 </table>
             </div>
         </div>
+    </div>
 </body>
 
 </html>
