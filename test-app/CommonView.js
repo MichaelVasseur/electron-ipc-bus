@@ -62,6 +62,10 @@ function onIPCElectron_SubscribeNotify(topicName) {
     var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
     SubscriptionsListElt.appendChild(topicItemElt);
 
+    var topicAutoReplyElt = topicItemElt.querySelector(".topicAutoReply");
+    topicAutoReplyElt.value = topicName + " - AutoReply";
+    
+
     //    subscriptionsListElt.appendChild(topicItemElt);
     topicItemElt.style.display = "block";
 
@@ -148,37 +152,36 @@ function onIPC_Received(topicName, msgContent, topicToReply) {
     var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
     var topicItemElt = SubscriptionsListElt.querySelector(".subscription-" + topicName);
     if (topicItemElt != null) {
-        var topicReceivedElt = topicItemElt.querySelector(".topicReceived");
-        topicReceivedElt.value += msgContent + "\n";
-
         var topicAutoReplyElt = topicItemElt.querySelector(".topicAutoReply");
         if (topicToReply != undefined)
         {
-            ipcBus.send(topicToReply, topicAutoReplyElt.textContent);
+            msgContent += " from (" + topicToReply + ")";
+            ipcBus.send(topicToReply, topicAutoReplyElt.value);
         }
+        var topicReceivedElt = topicItemElt.querySelector(".topicReceived");
+        topicReceivedElt.value += msgContent + "\n";
     }
 }
 
 function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
     console.log("onIPCBus_ReceivedRequest : msgTopic:" + topicName + " msgContent:" + msgContent)
 
-    var topicItemElt = document.getElementsByClassName("topicRequestResponse");
+    var topicItemElt = document.querySelector(".topicRequestResponse");
     if (topicItemElt != null) {
-        topicItemElt.value += msgContent + "\n";
+        topicItemElt.value += msgContent + " from (" + peerName + ")";
     }
 }
 
-function onIPCBus_ReceivedRequestNotify(msgTopic, msgContent) {
-//    onIPC_Received(msgTopic, msgContent);
+function onIPCBus_ReceivedRequestNotify(msgTopic, msgContent, msgResponse, peerName) {
+    onIPCBus_ReceivedRequest(msgTopic, msgResponse, peerName);
 }
 
-
-function onIPCBus_ReceivedSend(msgTopic, msgContent) {
-    onIPC_Received(msgTopic, msgContent);
+function onIPCBus_ReceivedSend(msgTopic, msgContent, topicToReply) {
+    onIPC_Received(msgTopic, msgContent, topicToReply);
 }
 
-function onIPCBus_ReceivedSendNotify(msgTopic, msgContent) {
-    onIPC_Received(msgTopic, msgContent);
+function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, topicToReply) {
+    onIPC_Received(msgTopic, msgContent, topicToReply);
 }
 
 function doQueryBrokerState() {
@@ -277,6 +280,7 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     }
     if (args["type"] == "node") {
         processToMonitor = new ProcessConnector("node", args["id"], ipcRenderer);
+        processToMonitor.onReceivedRequestNotify(onIPCBus_ReceivedRequestNotify);
         processToMonitor.onReceivedSendNotify(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);

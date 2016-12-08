@@ -67,9 +67,9 @@ ProcessConnector = (function()
             _ipc.send(buildChannel("sendMessage"), { topic : topicName, msg : topicMsg } );
         }
 
-        this.receivedSendNotify = function _receivedSendNotify(topicName, topicMsg)
+        this.receivedSendNotify = function _receivedSendNotify(topicName, topicMsg, topicToReply)
         {
-            _ipc.send(buildChannel("receivedSend-notify"), { topic : topicName, msg : topicMsg } );
+            _ipc.send(buildChannel("sendMessage-notify"), { topic : topicName, msg : topicMsg, topicToReply : topicToReply } );
         }
 
         this.requestMessage = function _sendMessage(topicName, topicMsg)
@@ -79,7 +79,7 @@ ProcessConnector = (function()
 
         this.receivedRequestNotify = function _receivedRequestNotify(topicName, topicMsg, topicResponse, peerName)
         {
-            _ipc.send(buildChannel("receivedRequest-notify"), { topic:topicName, msg:topicMsg, peerName : peerName, response : topicResponse } );
+            _ipc.send(buildChannel("requestMessage-notify"), { topic:topicName, msg:topicMsg, peerName : peerName, response : topicResponse } );
         }
 
         this.send = function _send(eventName, data)
@@ -118,10 +118,10 @@ ProcessConnector = (function()
 
         this.onReceivedSendNotify = function _onReceivedSendNotify(callback)
         {
-            _ipc.on(buildChannel("receivedSend-notify"), function (event, data)
+            _ipc.on(buildChannel("sendMessage-notify"), function (event, data)
             {
                 const response = (data !== undefined)? data: event;
-                callback(response["topic"], response["msg"]);
+                callback(response["topic"], response["msg"], response["topicToReply"]);
             });
         }
 
@@ -130,7 +130,7 @@ ProcessConnector = (function()
             _ipc.on(buildChannel("requestMessage"), function (event, data)
             {
                 const response = (data !== undefined)? data: event;
-                callback(response["topic"],response["msg"]);
+                callback(response["topic"], response["msg"]);
             });
         }
 
