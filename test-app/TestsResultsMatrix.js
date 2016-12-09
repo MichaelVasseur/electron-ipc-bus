@@ -1,6 +1,7 @@
 "use strict";
 
 var processes = [ "###", "master", "renderer", "node" ];
+var debugTimeout = 5;
 
 // IPC names
 var ipcName_Module = "ipc-test-app";
@@ -72,23 +73,7 @@ function onCellClicked(emitter, receiver) {
     setTimeout(function() {
         let strJSON = '{ "emitter": "' + emitter + '", "receiver": "' + receiver + '"}';
         ipcBus.send(ipcChannel, strJSON);
-    }, 5);
-};
-
-function initProcesses() {
-    processes.forEach(function(nameRow) {
-        if (nameRow != processes[0]) {
-            if (nameRow.lastIndexOf("master") == 0) {
-                ; // nothing to do here
-            }
-            else if (nameRow.lastIndexOf("renderer") == 0) {
-                processToMonitor.send("new-process", "renderer");
-            }
-            else if (nameRow.lastIndexOf("node") == 0) {
-                processToMonitor.send("new-process", "node");
-            }
-        }
-    });
+    }, debugTimeout);
 };
 
 function onIPCBus_MessageReceived(topic, message) {
@@ -155,7 +140,7 @@ function onIPCBus_RendererDispatch(topic, message) {
         let msg = JSON.parse(message);
         setTimeout(function() {
             ipcBus.send(ipcName_DispatchToMaster, message);
-        }, 5);
+        }, debugTimeout);
     }
 };
 
@@ -165,7 +150,7 @@ function onIPCBus_NodeDispatch(topic, message) {
         let msg = JSON.parse(message);
         setTimeout(function() {
             ipcBus.send(ipcName_DispatchToMaster, message);
-        }, 5);
+        }, debugTimeout);
     }
 };
 
@@ -177,9 +162,25 @@ function doRunTests() {
                 if (column != processes[0]) {
                     setTimeout(function() {
                         onCellClicked(row, column);
-                    }, 200);
+                    }, debugTimeout);
                 }
             });
             }
+    });
+};
+
+function initProcesses() {
+    processes.forEach(function(nameRow) {
+        if (nameRow != processes[0]) {
+            if (nameRow.lastIndexOf("master") == 0) {
+                ; // nothing to do here
+            }
+            else if (nameRow.lastIndexOf("renderer") == 0) {
+                processToMonitor.send("new-process", "renderer");
+            }
+            else if (nameRow.lastIndexOf("node") == 0) {
+                processToMonitor.send("new-process", "node");
+            }
+        }
     });
 };
