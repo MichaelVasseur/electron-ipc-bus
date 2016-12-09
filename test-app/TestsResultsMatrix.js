@@ -4,6 +4,7 @@ var processes = [ "###", "master", "renderer", "node" ];
 
 // IPC names
 var ipcName_Module = "ipc-test-app";
+var ipcName_EnableDebugTraces = ipcName_Module + "/EnableDebugTraces";
 // dispatch to processes
 var ipcName_DispatchToMaster = ipcName_Module + "/dispatch-to-master";
 var ipcName_DispatchToRenderer = ipcName_Module + "/dispatch-to-renderer";
@@ -105,8 +106,13 @@ function onIPCBus_MessageReceived(topic, message) {
 
 var processToMonitor = null;
 ipcRenderer.on("initializeWindow", function (event, data) {
-    const args = (data !== undefined)? data: event;
+    // enable debug traces or not?
+    ipcBus.connect(function() {
+        ipcBus.subscribe(ipcName_EnableDebugTraces, onIPCBus_EnableDebugTraces);
+    });
 
+    // check args to determine the process type
+    const args = (data !== undefined)? data: event;
     if (args["type"] == "main") {
         // init the Matrix
         let matrixElement = document.getElementById("TestsResultsMatrix");
@@ -194,9 +200,15 @@ function onIPCBus_NodeDispatch(topic, message) {
     }
 };
 
+function doEnableDebugTraces() {
+    ipcBus.send(ipcName_EnableDebugTraces, document.getElementById("EnableDebugTraces").checked);
+};
+
+function onIPCBus_EnableDebugTraces(topic, message) {
+    enableDebugTraces = message;
+};
+
 function doRunTests() {
-    // set the debugging option
-    enableDebugTraces = document.getElementById("EnableDebugTraces").checked;
     // run tests (simulate clicks)
     processes.forEach(function(row) {
         if (row != processes[0]) {
