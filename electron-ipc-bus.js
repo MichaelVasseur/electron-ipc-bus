@@ -126,8 +126,8 @@ function MapRefCount() {
         }
     }
 
-    this.ReleaseConn = function _ReleaseConn(value, callback) {
-        console.log("[MapRefCount] ReleaseConn : value " + value)
+    this.ReleaseConn = function _ReleaseConn(conn, callback) {
+        console.log("[MapRefCount] ReleaseConn : conn " + conn)
 
         // Store keys in an intermediate array
         // Not sure iterating and removing at the same time is well supported 
@@ -136,7 +136,7 @@ function MapRefCount() {
             topicsTmp.push(topic)
         }
         for (let topic of topicsTmp) {
-            this.Release(topic, value, null, callback)
+            this.Release(topic, conn, null, callback)
         }
     }
 
@@ -478,7 +478,7 @@ function IpcBusNodeClient(busPath) {
         var rendererCleanUp = function _rendererCleanUp(wcsId) {
             topicRendererRefs.ReleaseConn(wcsId, function (topic, conn, peerName, count) {
                 if (count == 0) {
-                    const peerName = "Renderer_" + topic
+                    console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker")
                     EventEmitter.prototype.removeListener.call(self, topic, rendererSubscribeHandler)
                 }
                 BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, busConn)
@@ -492,7 +492,7 @@ function IpcBusNodeClient(busPath) {
             topicRendererRefs.AddRef(topic, currentWCs.id, peerName, function (keyTopic, valueId, peerName, count) {
                 if (count == 1) {
                     EventEmitter.prototype.addListener.call(self, topic, rendererSubscribeHandler)
-                    console.log("[IPCBus:Bridge] Forward subscribe '" + keyTopic + "' to IPC Broker")
+                    console.log("[IPCBus:Bridge] Forward subscribe '" + topic + "' to IPC Broker")
                     currentWCs.on("destroyed", function () {
                         rendererCleanUp(valueId)
                     })
@@ -507,7 +507,7 @@ function IpcBusNodeClient(busPath) {
             console.log("[IPCBus:Bridge] Peer #" + peerName + " unsubscribed from topic : '" + topic + "'")
             topicRendererRefs.Release(topic, currentWCs.id, peerName, function (keyTopic, valueId, peerName, count) {
                 if (count == 0) {
-                    console.log("[IPCBus:Bridge] Forward unsubscribe '" + keyTopic + "' to IPC Broker")
+                    console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker")
                     EventEmitter.prototype.removeListener.call(self, topic, rendererSubscribeHandler)
                 }
                 BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, busConn)
