@@ -56,10 +56,13 @@
     <div id="ProcessMonitor" class="panel-group" topic-process="fake">
         <div id="MatrixPanel" class="panel panel-default" style="display:none">
             <div class="panel-heading">Tests Results Matrix
+                <input type="button" class="btn btn-primary" onclick="doInitProcesses()" value="Init processes"></input>
                 <input type="button" class="btn btn-primary" onclick="doRunTests()" value="Run test"></input>
             </div>
             <div class="panel-body">
                 <b>Click any cell to require the selected-row process to send an ipcBus message to the selected-column process</b>
+                <br/>
+                <input id="EnableDebugTraces" type="checkbox">enable debug traces in console</input>
                 <table id="TestsResultsMatrix" class="TableResults" border="1">
                 </table>
             </div>

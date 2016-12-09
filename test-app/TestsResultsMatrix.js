@@ -1,10 +1,6 @@
 "use strict";
 
 var processes = [ "###", "master", "renderer", "node" ];
-var debugTimeout = 5;
-var IPC_TEST_STATUS_mtx2emt = 1; // message from matrix to emitter
-var IPC_TEST_STATUS_emt2rcv = 2; // message from emitter to receiver
-var IPC_TEST_STATUS_rcv2mtx = 4; // message from receiver to matrix
 
 // IPC names
 var ipcName_Module = "ipc-test-app";
@@ -12,6 +8,13 @@ var ipcName_Module = "ipc-test-app";
 var ipcName_DispatchToMaster = ipcName_Module + "/dispatch-to-master";
 var ipcName_DispatchToRenderer = ipcName_Module + "/dispatch-to-renderer";
 var ipcName_DispatchToNode = ipcName_Module + "/dispatch-to-node";
+// message status
+var IPC_TEST_STATUS_mtx2emt = 1; // message from matrix to emitter
+var IPC_TEST_STATUS_emt2rcv = 2; // message from emitter to receiver
+var IPC_TEST_STATUS_rcv2mtx = 4; // message from receiver to matrix
+// debug options
+var debugTimeout = 5;
+var enableDebugTraces = false;
 
 function initResultsMatrix(htmlTable) {
     processes.forEach(function(nameRow) {
@@ -59,7 +62,9 @@ function buildJSONstring(emitter, receiver, status) {
 };
 
 function onCellClicked(emitter, receiver) {
-    // console.debug("Cell clicked: %s/%s", emitter, receiver);
+    if (enableDebugTraces) {
+        console.debug("Cell clicked: %s/%s", emitter, receiver);
+    }
     let cellId = "IPC_TEST_" + emitter + "_2_" + receiver;
     let sourceCell = document.getElementById(cellId);
     let backgroundColor = document.createAttribute("style");
@@ -85,7 +90,9 @@ function onCellClicked(emitter, receiver) {
 
 function onIPCBus_MessageReceived(topic, message) {
     if (processToMonitor.Type() == "main") {
-        // console.debug("Message received on '%s': '%s'", topic, message);
+        if (enableDebugTraces) {
+            console.debug("Message received on '%s': '%s'", topic, message);
+        }
         let cellId = "IPC_TEST_" + message + "_2_" + topic;
         let targetCell = document.getElementById(cellId);
         let backgroundColor = document.createAttribute("style");
@@ -134,7 +141,9 @@ ipcRenderer.on("initializeWindow", function (event, data) {
 });
 
 function onIPCBus_Dispatch(process, topic, message) {
-    // console.debug("%s Dispatch: %s - %s", process, topic, message);
+    if (enableDebugTraces) {
+        console.debug("%s Dispatch: %s - %s", process, topic, message);
+    }
     let msg = JSON.parse(message);
     if ((msg["status"] == IPC_TEST_STATUS_mtx2emt) && (msg["emitter"].lastIndexOf(process) == 0)) {
         var topicFwd = "";
@@ -162,7 +171,9 @@ function onIPCBus_MasterDispatch(topic, message) {
     if (processToMonitor.Type() == "main") {
         let msg = JSON.parse(message);
         if (msg["status"] == IPC_TEST_STATUS_rcv2mtx) {
-            // console.debug("%s Dispatch: %s - %s", processToMonitor.Type(), topic, message);
+            if (enableDebugTraces) {
+                console.debug("%s Dispatch: %s - %s", processToMonitor.Type(), topic, message);
+            }
             onIPCBus_MessageReceived(msg["receiver"], msg["emitter"]);
         }
         else {
@@ -184,7 +195,9 @@ function onIPCBus_NodeDispatch(topic, message) {
 };
 
 function doRunTests() {
-    initProcesses();
+    // set the debugging option
+    enableDebugTraces = document.getElementById("EnableDebugTraces").checked;
+    // run tests (simulate clicks)
     processes.forEach(function(row) {
         if (row != processes[0]) {
             processes.forEach(function(column) {
@@ -198,7 +211,7 @@ function doRunTests() {
     });
 };
 
-function initProcesses() {
+function doInitProcesses() {
     processes.forEach(function(nameRow) {
         if (nameRow != processes[0]) {
             if (nameRow.lastIndexOf("master") == 0) {
