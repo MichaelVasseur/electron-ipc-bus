@@ -19,7 +19,6 @@ const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST'
 const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE'
 const IPC_BUS_RENDERER_RECEIVE = 'IPC_BUS_RENDERER_RECEIVE'
 const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE'
-const IPC_BUS_MASTER_QUERYSTATE = 'IPC_BUS_MASTER_QUERYSTATE'
 
 const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeTopic'
 const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeTopic'
@@ -46,14 +45,14 @@ function MapRefCount() {
         }
         let peerNameMap = connMap.get(conn)
         if (peerNameMap === undefined) {
-            // This topic has NOT been already subcribed by this connection, by default 1
+            // This topic has NOT been already subscribed by this connection
             peerNameMap = new Map
             connMap.set(conn, peerNameMap)
             console.log("[MapRefCount] AddRef : conn '" + conn + "' is added")
         }
         let count = peerNameMap.get(peerName)
         if (count === undefined) {
-            // This topic has NOT been already subcribed by this connection, by default 1
+            // This topic has NOT been already subcribed by this peername, by default 1
             count = 1
             console.log("[MapRefCount] AddRef : peerName '" + peerName + "' is added")
         }
@@ -61,7 +60,7 @@ function MapRefCount() {
             ++count
         }
         peerNameMap.set(peerName, count)
-        console.log("[MapRefCount] AddRef : count = " + count)
+        console.log("[MapRefCount] AddRef : topic '" + topic + "', conn " + conn + ", count = " + peerNameMap.size)
         if (typeof callback === "function") {
             callback(topic, conn, peerName, count)
         }
@@ -79,7 +78,7 @@ function MapRefCount() {
             if (peerNameMap === undefined) {
                 console.warn("[MapRefCount] Release : conn '" + conn + "' is unknown")
             }
-            else{
+            else {
                 let count = peerNameMap.get(peerName);
                 if (count === undefined) {
                     console.warn("[MapRefCount] Release : peername '" + peerName + "' is unknown")
@@ -101,7 +100,7 @@ function MapRefCount() {
                             }
                         }
                     }
-                    console.log("[MapRefCount] Release : count = " + count)
+                    console.log("[MapRefCount] Release : topic '" + topic + "', conn " + conn + ", count = " + peerNameMap.size)
                     if (typeof callback === "function") {
                         callback(topic, conn, peerName, count)
                     }
@@ -174,9 +173,8 @@ function MapRefCount() {
 
 function _cleanUpConn(ipcbus, conn) {
 
-    // Unsubscribe topics
+    // Unsubscribe conn
     ipcbus._subscriptions.ReleaseValue(conn)
-    ipcbus._peerNames.delete(conn)
 }
 
 function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
@@ -238,12 +236,11 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         console.log("[IPCBus:Broker] Received request on topic '" + msgTopic + "' (reply = '" + msgReplyTopic + "') from peer #" + msgPeerName)
 
                         ipcbus._subscriptions.ForEachTopic(msgTopic, function (peerNames, conn, topic) {
-                            // Send data to subscribed connections
+                            // Request data to subscribed connections
                             BaseIpc.Cmd.exec(IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgReplyTopic, msgPeerName, conn)
                         })
                         break
                     }
-
                 case IPC_BUS_COMMAND_QUERYSTATE:
                     {
                         const msgTopic = data.args[0];
@@ -252,9 +249,8 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
 
                         var queryStateResult = [];
                         ipcbus._subscriptions.ForEachValue(function (peerNames, conn, topic) {
-                            peerNames.forEach(function(count, peerName) {
-                                const keyValueInfo = { topic: topic, peerName : peerName, count: count }
-                                queryStateResult.push(keyValueInfo)
+                            peerNames.forEach(function (count, peerName) {
+                                queryStateResult.push({ topic: topic, peerName: peerName, count: count })
                             })
                         })
 
@@ -405,13 +401,6 @@ function IpcBusRendererClient(ipcObj) {
         ipcObj.send(IPC_BUS_RENDERER_QUERYSTATE, topic)
     }
 
-    this.queryMasterState = function (topic) {
-        if (connected != true) {
-            throw new Error("Please connect first")
-        }
-        ipcObj.send(IPC_BUS_MASTER_QUERYSTATE, topic)
-    }
-
     this.subscribe = function (topic, handler) {
         if (connected != true) {
             throw new Error("Please connect first")
@@ -470,11 +459,12 @@ function IpcBusNodeClient(busPath) {
         }
 
         var rendererCleanUp = function _rendererCleanUp(wcsId) {
-            topicRendererRefs.ReleaseValue(wcsId, function (keyTopic, valueWebContentsId, count) {
+            topicRendererRefs.ReleaseValue(wcsId, function (topic, conn, peerName, count) {
                 if (count == 0) {
                     const peerName = "Renderer_" + keyTopic
-                    self.unsubscribeWithPeerName(peerName, keyTopic, rendererSubscribeHandler)
+                    EventEmitter.prototype.removeListener.call(self, topic, rendererSubscribeHandler)
                 }
+                BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, busConn)
             })
         }
 
@@ -501,7 +491,7 @@ function IpcBusNodeClient(busPath) {
             topicRendererRefs.Release(topic, currentWCs.id, peerName, function (keyTopic, valueId, peerName, count) {
                 if (count == 0) {
                     console.log("[IPCBus:Bridge] Forward unsubscribe '" + keyTopic + "' to IPC Broker")
-                    EventEmitter.prototype.removeListener.call(self, topic, handler)
+                    EventEmitter.prototype.removeListener.call(self, topic, rendererSubscribeHandler)
                 }
                 BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, busConn)
             })
@@ -532,28 +522,6 @@ function IpcBusNodeClient(busPath) {
             console.log("[IPCBus:Bridge] Peer #" + peerName + " query Broker state on topic : '" + topic + "'")
             self.queryBrokerState(topic)
         })
-
-        ipcMain.addListener(IPC_BUS_MASTER_QUERYSTATE, function (event, topic, data) {
-            const currentWCs = event.sender
-            const peerName = "Renderer_" + currentWCs.id
-            self.queryMasterStateWithPeerName(peerName, topic);
-        })
-
-        this.queryMasterState = function (topic) {
-            queryMasterStateWithPeerName(clientPeerName, topic)
-        }
-
-        this.queryMasterStateWithPeerName = function (peerName, topic) {
-            // console.log("[IPCBus:Bridge] Peer #" + peerName + " query Master state on topic : '" + topic + "'")
-            // var queryStateResult = [];
-            // topicRendererRefs.ForEachValue(function (peerNames, valueId, topic) {
-            //     const peerName = "Renderer_" + valueId
-            //     const keyValueInfo = { topic: keyTopic, peerName: peerName, count: count }
-            //     queryStateResult.push(keyValueInfo)
-            // })
-            // self.send(topic, queryStateResult)
-            self.queryBrokerState(topic)
-        }
 
         console.log("[IPCBus:Bridge] Installed")
     }
@@ -668,7 +636,6 @@ function IpcBusBroker(busPath, brokerProc) {
     let ipcServer = null
 
     this._subscriptions = new MapRefCount()
-    this._peerNames = new Map()
 
     // Set API
     this.start = function () {

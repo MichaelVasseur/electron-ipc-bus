@@ -188,34 +188,6 @@ function doQueryBrokerState() {
     ipcBus.queryBrokerState("brokerStateResults");
 }
 
-function doQueryMasterState() {
-    ipcBus.queryMasterState("masterStateResults");
-}
-
-
-function onIPC_MasterStatusTopic(msgTopic, msgContent) {
-    console.log("queryMastrState - msgTopic:" + msgTopic + " msgContent:" + msgContent)
-
-    var statesListElt = document.getElementById("masterStatesList");
-    statesListElt.style.display = "block";
-
-    // Keep the header
-    while (statesListElt.rows.length > 1) {
-        statesListElt.deleteRow(1);
-    }
-    for (var i = 0; i < msgContent.length; ++i) {
-        var row = statesListElt.insertRow(-1);
-        var cell = row.insertCell(0);
-        cell.innerHTML = msgContent[i]["topic"];
-
-        var cell = row.insertCell(1);
-        cell.innerHTML = msgContent[i]["peerName"];
-
-        var cell = row.insertCell(2);
-        cell.innerHTML = msgContent[i]["count"];
-    }
-}
-
 function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
     console.log("queryBrokerState - msgTopic:" + msgTopic + " msgContent:" + msgContent)
 
@@ -268,7 +240,6 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         processTitleElt.textContent = args["peerName"];
         ipcBus.connect(function () {
             ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
-            ipcBus.subscribe("masterStateResults", onIPC_MasterStatusTopic);
             doQueryBrokerState();
         });
     }
