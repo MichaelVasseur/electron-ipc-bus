@@ -34,7 +34,7 @@ function MapRefCount() {
     let topicMap = new Map
 
     this.AddRef = function _AddRef(topic, conn, peerName, callback) {
-        console.log("[MapRefCount] AddRef : " + topic + "  : value " + conn)
+        console.log("[MapRefCount] AddRef : " + topic + "  : conn " + conn)
 
         let connMap = topicMap.get(topic)
         if (connMap === undefined) {
@@ -62,15 +62,15 @@ function MapRefCount() {
         peerNameMap.set(peerName, count)
         console.log("[MapRefCount] AddRef : topic '" + topic + "', conn " + conn + ", count = " + peerNameMap.size)
         if (typeof callback === "function") {
-            callback(topic, conn, peerName, count)
+            callback(topic, conn, peerName, peerNameMap.size)
         }
     }
 
     this.Release = function _Release(topic, conn, peerName, callback) {
-        console.log("[MapRefCount] Release : " + topic + " conn " + value)
+        console.log("[MapRefCount] Release : " + topic + " conn " + conn)
 
-        let valueCountMap = topicMap.get(topic)
-        if (valueCountMap == undefined) {
+        let connMap = topicMap.get(topic)
+        if (connMap == undefined) {
             console.warn("[MapRefCount] Release : topic '" + topic + "' is unknown")
         }
         else {
@@ -79,47 +79,64 @@ function MapRefCount() {
                 console.warn("[MapRefCount] Release : conn '" + conn + "' is unknown")
             }
             else {
-                let count = peerNameMap.get(peerName);
-                if (count === undefined) {
-                    console.warn("[MapRefCount] Release : peername '" + peerName + "' is unknown")
-                }
-                else {
-                    // This connection has subscribed to this topic
-                    --count
-                    if (count > 0) {
-                        peerNameMap.set(conn, count)
-                    } else {
-                        // The connection is no more referenced
+                if ((peerName === undefined) || (peerName === null))
+                {
+                    var peerNamesTemp = []
+                    for (let peerName of peerNameMap.keys()) {
+                        peerNamesTemp.push(peerName)
+                    }
+                    for (let peerName of peerNamesTemp) {
                         peerNameMap.delete(peerName)
-                        if (peerNameMap.size === 0) {
-                            connMap.delete(conn)
-                            console.log("[MapRefCount] Release : conn '" + conn + "' is released")
-                            if (connMap.size === 0) {
-                                topicMap.delete(topic)
-                                console.log("[MapRefCount] Release : topic '" + topic + "' is released")
-                            }
+                        if (typeof callback === "function") {
+                            callback(topic, conn, peerName, peerNameMap.size)
                         }
                     }
-                    console.log("[MapRefCount] Release : topic '" + topic + "', conn " + conn + ", count = " + peerNameMap.size)
+                }
+                else
+                {
+                    let count = peerNameMap.get(peerName);
+                    if (count === undefined) {
+                        console.warn("[MapRefCount] Release : peername '" + peerName + "' is unknown")
+                    }
+                    else {
+                        // This connection has subscribed to this topic
+                        --count
+                        if (count > 0) {
+                            peerNameMap.set(conn, count)
+                        } else {
+                            // The connection is no more referenced
+                            peerNameMap.delete(peerName)
+                            console.log("[MapRefCount] Release : peerName '" + peerName + "' is released")
+                        }
+                    }
                     if (typeof callback === "function") {
-                        callback(topic, conn, peerName, count)
+                        callback(topic, conn, peerName, peerNameMap.size)
                     }
                 }
+                if (peerNameMap.size === 0) {
+                    connMap.delete(conn)
+                    console.log("[MapRefCount] Release : conn '" + conn + "' is released")
+                    if (connMap.size === 0) {
+                        topicMap.delete(topic)
+                        console.log("[MapRefCount] Release : topic '" + topic + "' is released")
+                    }
+                }
+                console.log("[MapRefCount] Release : topic '" + topic + "', conn " + conn + ", count = " + peerNameMap.size)
             }
         }
     }
 
-    this.ReleaseValue = function _ReleaseValue(value, callback) {
-        console.log("[MapRefCount] ReleaseValue : value " + value)
+    this.ReleaseConn = function _ReleaseConn(value, callback) {
+        console.log("[MapRefCount] ReleaseConn : value " + value)
 
         // Store keys in an intermediate array
         // Not sure iterating and removing at the same time is well supported 
-        var topics = [];
+        var topicsTmp = []
         for (let topic of topicMap.keys()) {
-            topics.push(topic)
+            topicsTmp.push(topic)
         }
-        for (let topic of topics) {
-            this.Release(topic, value, callback);
+        for (let topic of topicsTmp) {
+            this.Release(topic, value, null, callback)
         }
     }
 
@@ -156,10 +173,10 @@ function MapRefCount() {
         }
     }
 
-    this.ForEachValue = function _ForEachValue(callback) {
-        console.log("[MapRefCount] ForEachValue")
+    this.ForEachConn = function _ForEachConn(callback) {
+        console.log("[MapRefCount] ForEachConn")
         if (typeof callback !== "function") {
-            console.error("[MapRefCount] ForEachValue : No callback provided !")
+            console.error("[MapRefCount] ForEachConn : No callback provided !")
             return;
         }
 
@@ -174,7 +191,7 @@ function MapRefCount() {
 function _cleanUpConn(ipcbus, conn) {
 
     // Unsubscribe conn
-    ipcbus._subscriptions.ReleaseValue(conn)
+    ipcbus._subscriptions.ReleaseConn(conn)
 }
 
 function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
@@ -211,7 +228,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         const msgTopic = data.args[0]
                         const msgPeerName = data.args[1]
                         console.log("[IPCBus:Broker] Peer #" + msgPeerName + " unsubscribed from topic '" + msgTopic + "'")
-                        ipcbus._subscriptions.Release(msgTopic, conn, peerName);
+                        ipcbus._subscriptions.Release(msgTopic, conn, msgPeerName);
                         break
                     }
                 case IPC_BUS_COMMAND_SENDTOPICMESSAGE:
@@ -248,7 +265,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         console.log("[IPCBus:Broker] QueryState message reply on topic : " + msgTopic + " from peer #" + msgPeerName)
 
                         var queryStateResult = [];
-                        ipcbus._subscriptions.ForEachValue(function (peerNames, conn, topic) {
+                        ipcbus._subscriptions.ForEachConn(function (peerNames, conn, topic) {
                             peerNames.forEach(function (count, peerName) {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count })
                             })
@@ -459,9 +476,9 @@ function IpcBusNodeClient(busPath) {
         }
 
         var rendererCleanUp = function _rendererCleanUp(wcsId) {
-            topicRendererRefs.ReleaseValue(wcsId, function (topic, conn, peerName, count) {
+            topicRendererRefs.ReleaseConn(wcsId, function (topic, conn, peerName, count) {
                 if (count == 0) {
-                    const peerName = "Renderer_" + keyTopic
+                    const peerName = "Renderer_" + topic
                     EventEmitter.prototype.removeListener.call(self, topic, rendererSubscribeHandler)
                 }
                 BaseIpc.Cmd.exec(IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, busConn)

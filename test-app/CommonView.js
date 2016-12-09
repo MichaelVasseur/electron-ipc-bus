@@ -234,9 +234,6 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         var processBrokerStateElt = document.getElementById("ProcessBrokerState");
         processBrokerStateElt.style.display = "block";
 
-        var processBrokerStateElt = document.getElementById("ProcessMasterState");
-        processBrokerStateElt.style.display = "block";
-
         processTitleElt.textContent = args["peerName"];
         ipcBus.connect(function () {
             ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
