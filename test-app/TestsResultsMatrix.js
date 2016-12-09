@@ -2,6 +2,9 @@
 
 var processes = [ "###", "master", "renderer", "node" ];
 var debugTimeout = 5;
+var IPC_TEST_STATUS_mtx2emt = 1; // message from matrix to emitter
+var IPC_TEST_STATUS_emt2rcv = 2; // message from emitter to receiver
+var IPC_TEST_STATUS_rcv2mtx = 4; // message from receiver to matrix
 
 // IPC names
 var ipcName_Module = "ipc-test-app";
@@ -50,6 +53,11 @@ function initResultsMatrix(htmlTable) {
     });
 };
 
+function buildJSONstring(emitter, receiver, status) {
+    var result = ' { "emitter": "' + emitter + '", "receiver": "' + receiver + '", "status": "' + status + '" }';
+    return result;
+};
+
 function onCellClicked(emitter, receiver) {
     // console.debug("Cell clicked: %s/%s", emitter, receiver);
     let cellId = "IPC_TEST_" + emitter + "_2_" + receiver;
@@ -71,8 +79,7 @@ function onCellClicked(emitter, receiver) {
         ipcChannel = ipcName_DispatchToNode;
     }
     setTimeout(function() {
-        let strJSON = '{ "emitter": "' + emitter + '", "receiver": "' + receiver + '"}';
-        ipcBus.send(ipcChannel, strJSON);
+        ipcBus.send(ipcChannel, buildJSONstring(emitter, receiver, IPC_TEST_STATUS_mtx2emt));
     }, debugTimeout);
 };
 
@@ -126,31 +133,53 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     }
 });
 
+function onIPCBus_Dispatch(process, topic, message) {
+    // console.debug("%s Dispatch: %s - %s", process, topic, message);
+    let msg = JSON.parse(message);
+    if ((msg["status"] == IPC_TEST_STATUS_mtx2emt) && (msg["emitter"].lastIndexOf(process) == 0)) {
+        var topicFwd = "";
+        if (msg["receiver"].lastIndexOf("master") == 0) {
+            topicFwd = ipcName_DispatchToMaster;
+        }
+        else if (msg["receiver"].lastIndexOf("renderer") == 0) {
+            topicFwd = ipcName_DispatchToRenderer;
+        }
+        else if (msg["receiver"].lastIndexOf("node") == 0) {
+            topicFwd = ipcName_DispatchToNode;
+        }
+        setTimeout(function() {
+            ipcBus.send(topicFwd, buildJSONstring(msg["emitter"], msg["receiver"], IPC_TEST_STATUS_emt2rcv));
+        }, debugTimeout);
+    }
+    else if ((msg["status"] == IPC_TEST_STATUS_emt2rcv) && (msg["receiver"].lastIndexOf(process) == 0)) {
+        setTimeout(function() {
+            ipcBus.send(ipcName_DispatchToMaster, buildJSONstring(msg["emitter"], msg["receiver"], IPC_TEST_STATUS_rcv2mtx));
+        }, debugTimeout);
+    }
+}
+
 function onIPCBus_MasterDispatch(topic, message) {
     if (processToMonitor.Type() == "main") {
-        // console.debug("Master Dispatch: %s - %s", topic, message);
         let msg = JSON.parse(message);
-        onIPCBus_MessageReceived(msg["receiver"], msg["emitter"]);
+        if (msg["status"] == IPC_TEST_STATUS_rcv2mtx) {
+            // console.debug("%s Dispatch: %s - %s", processToMonitor.Type(), topic, message);
+            onIPCBus_MessageReceived(msg["receiver"], msg["emitter"]);
+        }
+        else {
+            onIPCBus_Dispatch("master", topic, message);
+        }
     }
 };
 
 function onIPCBus_RendererDispatch(topic, message) {
     if (processToMonitor.Type() == "renderer") {
-        // console.debug("Renderer Dispatch: %s - %s", topic, message);
-        let msg = JSON.parse(message);
-        setTimeout(function() {
-            ipcBus.send(ipcName_DispatchToMaster, message);
-        }, debugTimeout);
+        onIPCBus_Dispatch(processToMonitor.Type(), topic, message);
     }
 };
 
 function onIPCBus_NodeDispatch(topic, message) {
     if (processToMonitor.Type() == "node") {
-        // console.debug("Node Dispatch: %s - %s", topic, message);
-        let msg = JSON.parse(message);
-        setTimeout(function() {
-            ipcBus.send(ipcName_DispatchToMaster, message);
-        }, debugTimeout);
+        onIPCBus_Dispatch(processToMonitor.Type(), topic, message);
     }
 };
 
