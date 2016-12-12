@@ -55,7 +55,7 @@ Ex:
 Send a request message on specified topic. ***callback*** is called when the result is available.
 Ex:
 
-    function processRequestResult(result) {
+    function processRequestResult(topic, result) {
 
         ...
     }        
