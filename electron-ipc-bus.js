@@ -102,7 +102,7 @@ function MapRefCount() {
                         // This connection has subscribed to this topic
                         --count
                         if (count > 0) {
-                            peerNameMap.set(conn, count)
+                            peerNameMap.set(peerName, count)
                         } else {
                             // The connection is no more referenced
                             peerNameMap.delete(peerName)
