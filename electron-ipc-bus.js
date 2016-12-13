@@ -635,9 +635,6 @@ util.inherits(IpcBusNodeClient, EventEmitter)
 
 // Implementation for Broker process
 function IpcBusBroker(busPath, brokerProc) {
-
-    EventEmitter.call(this)
-
     if (busPath === undefined || busPath === null) {
 
         busPath = _getCmdLineArgValue('bus-path')
