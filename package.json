@@ -1,23 +1,28 @@
 {
-    "name": "electron-ipc-bus",
-    "version": "0.3.0", 
-    "description": "Safe IPC bus for Electron",
-	"license": "MIT",
-    "author": "Michael Vasseur <michael.vasseur@thomsonreuters.com>",
-    "contributors": [
-        "Emmanuel Kimmerlin <emmanuel.kimmerlin@thomsonreuters.com>",
-        "Gregory Gatellier <gregory.gatellier@thomsonreuters.com>",
-        "Thomas Moutel <thomas.moutel@thomsonreuters.com>"
-    ],
-	"homepage": "https://github.com/MichaelVasseur/electron-ipc-bus",
-    "repository": {
-        "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git", 
-        "type": "git"
-    }, 
-    "dependencies": {
-        "easy-ipc":"0.2.2",
-        "uuid":"2.0.3"
-    }, 
-    "main": "electron-ipc-bus.js",
-	"types": "electron-ipc-bus.d.ts"
+  "name": "electron-ipc-bus",
+  "version": "1.0.0",
+  "description": "A safe IPC bus for applications built on Electron.",
+  "main": "electron-ipc-bus.js",
+  "dependencies": {
+    "typescript": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "0.0.3",
+    "typescript": "^2.1.4",
+    "typings": "^2.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MichaelVasseur/electron-ipc-bus/issues"
+  },
+  "homepage": "https://github.com/MichaelVasseur/electron-ipc-bus#readme"
 }
