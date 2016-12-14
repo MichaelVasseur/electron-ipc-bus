@@ -13,9 +13,8 @@ import {EventEmitter} from 'events';
  
 // Implementation for Renderer process
 export class IpcBusRenderer extends EventEmitter {
-
-    _ipcObj : any;
-    _connected? : boolean = null;
+    private _ipcObj : any;
+    private _connected? : boolean = null;
 
     constructor(){
         super();

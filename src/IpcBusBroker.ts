@@ -9,12 +9,13 @@ import {Ipc as BaseIpc, IpcCmd as BaseIpcCmd} from 'easy-ipc';
 
 // Implementation for Broker process
 class IpcBusBrokerImpl {
-    _baseIpc : BaseIpc = new BaseIpc();
+    _baseIpc : BaseIpc;
     _ipcServer : any = null;
     _busPath : string = null;
     _ipcBusBrokerProc : IpcBusBrokerProc;
 
     constructor(busPath? : string) {
+        this._baseIpc = new BaseIpc();
         if (busPath == null) {
             this._busPath = ElectronIpcBus._getCmdLineArgValue('bus-path');
         }
