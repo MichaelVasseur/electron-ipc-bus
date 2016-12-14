@@ -7,24 +7,6 @@
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc, IpcCmd as BaseIpcCmd} from 'easy-ipc';
 
-// import {*} from "IpcBusInterfaces";
-
-// import {TopicConnectionMap} from "TopicConnectionMap";
-
-// import {ElectronIpcBus} from 'IpcBusConstants';
- 
-function _getCmdLineArgValue(argName : string) {
-
-    for (let i = 0; i < process.argv.length; i++) {
-
-        if (process.argv[i].startsWith("--" + argName)) {
-            const argValue = process.argv[i].split("=")[1];
-            return argValue;
-        }
-    }
-    return null;
-}
-
 // Implementation for Broker process
 class IpcBusBrokerImpl {
     _baseIpc : BaseIpc = new BaseIpc();
@@ -34,7 +16,7 @@ class IpcBusBrokerImpl {
 
     constructor(busPath? : string) {
         if (busPath == null) {
-            this._busPath = _getCmdLineArgValue('bus-path')
+            this._busPath = ElectronIpcBus._getCmdLineArgValue('bus-path');
         }
         else{
             this._busPath = busPath;
@@ -54,7 +36,6 @@ class IpcBusBrokerImpl {
     stop() {
        this._ipcServer.close();
        this._ipcServer = null;
-       this._ipcBusBrokerProc = null;
     }
 }
 

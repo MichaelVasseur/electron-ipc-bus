@@ -285,7 +285,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
     })
 }
 
-function _clientConnectProc(ipcbus, baseIpc, cmd, busPath, conn, callback) {
+function _clientConnectProc(ipcbus, baseIpc, busPath, conn, callback) {
 
     console.log("[IPCBus:Client] Connected to broker on '" + busPath + "'")
 
@@ -451,7 +451,6 @@ function IpcBusNodeClient(busPath) {
     const BaseIpc = require(BASE_IPC_MODULE)
     const baseIpc = new BaseIpc()
     let busConn = null
-    let ipcCmd = null
 
     let clientPeerName = "Node_" + process.pid
 
@@ -549,7 +548,7 @@ function IpcBusNodeClient(busPath) {
 
             busConn = conn
 
-            _clientConnectProc(self, baseIpc, ipcCmd, busPath, busConn, callback)
+            _clientConnectProc(self, baseIpc, busPath, busConn, callback)
         })
         baseIpc.connect(busPath)
     }

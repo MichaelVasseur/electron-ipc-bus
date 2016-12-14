@@ -4,16 +4,15 @@
   "description": "A safe IPC bus for applications built on Electron.",
   "main": "electron-ipc-bus.js",
   "dependencies": {
-    "typescript": "^2.1.4"
+    "@types/node": "0.0.3",
   },
   "devDependencies": {
-    "@types/node": "0.0.3",
     "typescript": "^2.1.4",
     "typings": "^2.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    },
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"

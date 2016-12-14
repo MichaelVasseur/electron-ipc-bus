@@ -1,13 +1,27 @@
-/// <reference types="node" />
-
 namespace ElectronIpcBus {
 
-import {uuid} from 'uuid';
+function uuid():string {
+    return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
+}
 
 export function _generateReplyTopic() : string {
 
-    return 'replyTopic/' + uuid.v4()
+    return 'replyTopic/' + uuid();
 }
+
+export function _getCmdLineArgValue(argName : string) : string {
+
+    for (let i = 0; i < process.argv.length; i++) {
+
+        if (process.argv[i].startsWith("--" + argName)) {
+            const argValue = process.argv[i].split("=")[1];
+            return argValue;
+        }
+    }
+    return null;
+}
+
+
 
 export interface TopicConnectionMapCB { (peerNames? : Map<string, number>, conn? : any, topic? : string, count? : number) : void };
 

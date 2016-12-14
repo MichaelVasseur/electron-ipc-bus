@@ -12,7 +12,7 @@ import {EventEmitter} from 'events';
 // import {ElectronIpcBus} from 'IpcBusConstants';
  
 // Implementation for Renderer process
-class IpcBusRendererClient extends EventEmitter {
+export class IpcBusRenderer extends EventEmitter {
 
     _ipcObj : any;
     _connected? : boolean = null;
@@ -20,7 +20,7 @@ class IpcBusRendererClient extends EventEmitter {
     constructor(){
         super();
         this._ipcObj = require('electron').ipcRenderer;
-        this._ipcObj.on(ElectronIpcBus.IPC_BUS_RENDERER_RECEIVE, function (eventOrTopic, topicOrContent, contentOrPeer, peerOrUndefined) {
+        this._ipcObj.on(ElectronIpcBus.IPC_BUS_RENDERER_RECEIVE, function (eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) {
             // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
             if (peerOrUndefined === undefined) {
                 console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'")
@@ -61,7 +61,7 @@ class IpcBusRendererClient extends EventEmitter {
             throw new Error("Please connect first")
         }
 
-        const replyTopic = _generateReplyTopic()
+        const replyTopic = ElectronIpcBus._generateReplyTopic();
         EventEmitter.prototype.once.call(this, replyTopic, function (replyTopic : string, data : Object | string, peer : string) {
 
             replyCallback(topic, data, peer)
@@ -73,14 +73,14 @@ class IpcBusRendererClient extends EventEmitter {
         this._ipcObj.send(ElectronIpcBus.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic, timeoutDelay)
     }
 
-    this.queryBrokerState = function (topic : string) : void {
+    queryBrokerState(topic : string) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }
         this._ipcObj.send(ElectronIpcBus.IPC_BUS_RENDERER_QUERYSTATE, topic)
     }
 
-    this.subscribe = function (topic : string, handler : Function) : void {
+    subscribe(topic : string, handler : Function) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }
@@ -88,7 +88,7 @@ class IpcBusRendererClient extends EventEmitter {
         this._ipcObj.send(ElectronIpcBus.IPC_BUS_RENDERER_SUBSCRIBE, topic)
     }
 
-    this.unsubscribe = function (topic : string,  handler : Function) : void {
+    unsubscribe(topic : string,  handler : Function) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }
