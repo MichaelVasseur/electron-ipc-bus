@@ -1,9 +1,9 @@
 /// <reference types="node" />
 /// <reference path="IpcBusConstants.ts" />
-/// <reference path="IpcBusInterfaces.ts" />
 /// <reference path="TopicConnectionMap.ts" />
 
 import {EventEmitter} from 'events';
+import {IpcBusClient} from "./IpcBusInterfaces";
 
 // import {*} from "IpcBusInterfaces";
 
@@ -12,7 +12,7 @@ import {EventEmitter} from 'events';
 // import {ElectronIpcBus} from 'IpcBusConstants';
  
 // Implementation for Renderer process
-export class IpcBusRenderer extends EventEmitter {
+export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
     private _ipcObj : any;
     private _connected? : boolean = null;
 
@@ -55,7 +55,7 @@ export class IpcBusRenderer extends EventEmitter {
         this._ipcObj.send(ElectronIpcBus.IPC_BUS_RENDERER_SEND, topic, data)
     }
 
-    request (topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) : void {
+    request(topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }

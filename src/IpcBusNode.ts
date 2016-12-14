@@ -5,9 +5,10 @@
 
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc, IpcCmd as BaseIpcCmd} from 'easy-ipc';
+import {IpcBusClient} from "./IpcBusInterfaces";
 
 // Implementation for Node process
-export class IpcBusNode extends EventEmitter {
+export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     protected _busPath : string;
     protected _baseIpc : BaseIpc;
     protected _peerName : string;
@@ -67,17 +68,17 @@ export class IpcBusNode extends EventEmitter {
         this._busConn.end();
     }
 
-    send(topic : string, data : any) {
+    send(topic : string, data : Object | string) {
         BaseIpcCmd.exec(ElectronIpcBus.IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, this._peerName, this._busConn);
     }
 
-    request(topic : string, data : any, replyCallback : Function, timeoutDelay : number) {
+    request(topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) {
         if (timeoutDelay === undefined) {
             timeoutDelay = 2000; // 2s by default
         }
 
         // Prepare reply's handler
-        const replyHandler = function (replyTopic : string, content : any, peerName : string) {
+        const replyHandler = function (replyTopic : string, content : Object | string, peerName : string) {
 
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
             this.unsubscribe(replyTopic, replyHandler);

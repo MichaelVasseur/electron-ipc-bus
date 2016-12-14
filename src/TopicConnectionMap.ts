@@ -10,7 +10,6 @@ export function _generateReplyTopic() : string {
 }
 
 export function _getCmdLineArgValue(argName : string) : string {
-
     for (let i = 0; i < process.argv.length; i++) {
 
         if (process.argv[i].startsWith("--" + argName)) {
@@ -20,7 +19,6 @@ export function _getCmdLineArgValue(argName : string) : string {
     }
     return null;
 }
-
 
 
 export interface TopicConnectionMapCB { (peerNames? : Map<string, number>, conn? : any, topic? : string, count? : number) : void };

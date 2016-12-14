@@ -6,39 +6,7 @@
 
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc, IpcCmd as BaseIpcCmd} from 'easy-ipc';
-
-// Implementation for Broker process
-class IpcBusBrokerImpl {
-    _baseIpc : BaseIpc;
-    _ipcServer : any = null;
-    _busPath : string = null;
-    _ipcBusBrokerProc : IpcBusBrokerProc;
-
-    constructor(busPath? : string) {
-        this._baseIpc = new BaseIpc();
-        if (busPath == null) {
-            this._busPath = ElectronIpcBus._getCmdLineArgValue('bus-path');
-        }
-        else{
-            this._busPath = busPath;
-        }
-    }
-
-    // Set API
-    start() {
-        this._baseIpc.on('listening', function (server : any) {
-            this._ipcServer = server;
-            console.log("[IPCBus:Broker] Listening for incoming connections on '" + this._busPath + "' ...");
-            this._ipcBusBrokerProc = new IpcBusBrokerProc(this._baseIpc);
-        })
-        this._baseIpc.listen(this._busPath);
-    }
-
-    stop() {
-       this._ipcServer.close();
-       this._ipcServer = null;
-    }
-}
+import {IpcBusBroker} from "./IpcBusInterfaces";
 
 class IpcBusBrokerProc {
     _baseIpc : BaseIpc;
@@ -126,6 +94,39 @@ class IpcBusBrokerProc {
                     }
             }
         }
+    }
+}
+
+// Implementation for Broker process
+export class IpcBusBrokerClient implements IpcBusBroker {
+    _baseIpc : BaseIpc;
+    _ipcServer : any = null;
+    _busPath : string = null;
+    _ipcBusBrokerProc : IpcBusBrokerProc;
+
+    constructor(busPath? : string) {
+        this._baseIpc = new BaseIpc();
+        if (busPath == null) {
+            this._busPath = ElectronIpcBus._getCmdLineArgValue('bus-path');
+        }
+        else{
+            this._busPath = busPath;
+        }
+    }
+
+    // Set API
+    start() {
+        this._baseIpc.on('listening', function (server : any) {
+            this._ipcServer = server;
+            console.log("[IPCBus:Broker] Listening for incoming connections on '" + this._busPath + "' ...");
+            this._ipcBusBrokerProc = new IpcBusBrokerProc(this._baseIpc);
+        })
+        this._baseIpc.listen(this._busPath);
+    }
+
+    stop() {
+       this._ipcServer.close();
+       this._ipcServer = null;
     }
 }
 

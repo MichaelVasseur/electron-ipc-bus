@@ -3,11 +3,10 @@
 /// <reference path="IpcBusConstants.ts" />
 /// <reference path="IpcBusInterfaces.ts" />
 /// <reference path="TopicConnectionMap.ts" />
-/// <reference path="IpcBusNode.ts" />
 
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc, IpcCmd as BaseIpcCmd} from 'easy-ipc';
-//import {IpcBusNode} from "IpcBusNode";
+import {IpcBusNodeClient} from "./IpcBusNode";
 
 class IpcBusBridge extends EventEmitter {
     _ipcObj : any;
@@ -118,7 +117,7 @@ class IpcBusBridge extends EventEmitter {
 
 
 // Implementation for Master process
-export class IpcBusMaster extends IpcBusNode {
+export class IpcBusMasterClient extends IpcBusNodeClient {
     private _ipcBusBridge : IpcBusBridge;
 
     constructor(busPath? : string) {
