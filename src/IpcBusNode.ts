@@ -56,9 +56,10 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
 
     // Set API
     connect(callback : Function) {
+        let self = this; // closure
         this._baseIpc.on('connect', function (conn : any) {
-            this._busConn = conn
-            callback('connect', this._busConn);
+            self._busConn = conn
+            callback('connect', self._busConn);
         })
         this._baseIpc.connect(this._busPath);
     }

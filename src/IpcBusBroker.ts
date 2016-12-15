@@ -14,12 +14,12 @@ class IpcBusBrokerProc {
 
     constructor(baseIpc : BaseIpc){
         this._baseIpc = baseIpc;
-        this._baseIpc.on('connection', this.onConnection);
-        this._baseIpc.on('close', this.onClose);
-        this._baseIpc.on('data', this.onData);
+        this._baseIpc.on('connection', (conn : any, server : any) => this.onConnection(conn, server));
+        this._baseIpc.on('close', (err : any, conn : any, server : any) => this.onClose(err, conn, server));
+        this._baseIpc.on('data', (data : any, conn : any, server  : any) => this.onData(data, conn, server));
     }
 
-    onConnection(conn : any, server  : any) : void {
+    onConnection(conn : any, server : any) : void {
          console.log("[IPCBus:Broker] Incoming connection !");
          conn.on("error", function (err : string) {
              console.log("[IPCBus:Broker] Error on connection : " + err);
@@ -31,7 +31,7 @@ class IpcBusBrokerProc {
         console.log("[IPCBus:Broker] Connection closed !");
      }
 
-    onData(data : any, conn : any, server  : any) : void {
+    onData(data : any, conn : any, server : any) : void {
         if (BaseIpc.Cmd.isCmd(data) == true) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC:
