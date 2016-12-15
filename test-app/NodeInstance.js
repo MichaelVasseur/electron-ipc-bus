@@ -13,7 +13,7 @@ const Module = require("module")
 
 //const ipcBus = require("../electron-ipc-bus")()
 const ipcBusModule = require("../build/IpcBusInterfaces");
-const ipcBus = ipcBusModule.CreateIPCBusClient();
+const ipcBus = ipcBusModule.CreateIPCBusClient(process);
 
 
 function onTopicMessage(topicName, topicMsg, topicToReply) {

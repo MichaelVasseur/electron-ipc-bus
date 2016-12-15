@@ -26,10 +26,8 @@ import {IpcBusNodeClient} from "./IpcBusNode";
 import {IpcBusMasterClient} from "./IpcBusMaster";
 import {IpcBusRendererClient} from "./IpcBusRenderer";
 
-export function CreateIPCBusClient() : IpcBusClient {
-    const busPath = arguments.length >= 1 ? arguments[0] : null;
-
-    const processType = (process as any)["type"];
+export function CreateIPCBusClient(localProcess : any, busPath? : string) : IpcBusClient {
+    const processType = localProcess.type;
     console.log("CreateIPCBusClient process type = " + processType + ", busPath = " + busPath);
     switch (processType)
     {   

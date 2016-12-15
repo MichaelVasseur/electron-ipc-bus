@@ -133,9 +133,9 @@ export class IpcBusMasterClient extends IpcBusNodeClient {
     // Set API
     connect(callback : Function) {
         let self = this; // closure
-        super.connect(function(conn : any){
+        super.connect(function(event : string, conn : any){
             self._ipcBusBridge = new IpcBusBridge(conn);
-            callback('connect', conn);
+            callback(event, conn);
         })
     }
 }
