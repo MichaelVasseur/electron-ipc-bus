@@ -61,9 +61,8 @@ class IpcBusBridge {
             if (count == 1) {
                 EventEmitter.prototype.addListener.call(self._eventEmitter, topic, (msgTopic : string, msgContent : any, msgPeer : string) => self.rendererSubscribeHandler(msgTopic, msgContent, msgPeer))
                 console.log("[IPCBus:Bridge] Forward subscribe '" + topic + "' to IPC Broker")
-                let self2 = self; // closure
                 currentWCs.on("destroyed", function () {
-                    self2.rendererCleanUp(valueId);
+                    self.rendererCleanUp(valueId);
                 });
             }
             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, peerName, self._busConn)
