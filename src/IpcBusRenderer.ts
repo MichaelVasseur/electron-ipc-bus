@@ -15,7 +15,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) => this.onReceive(eventOrTopic, topicOrContent, contentOrPeer, peerOrUndefined));
     }
 
-     private onReceive(eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) : void {
+    private onReceive(eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) : void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (peerOrUndefined === undefined) {
             console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'")
@@ -25,9 +25,8 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
             console.log("[IPCBus:Client] Received message on '" + topicOrContent + "'")
             EventEmitter.prototype.emit.call(this, topicOrContent, topicOrContent, contentOrPeer, peerOrUndefined)
         }
-     }
+    }
     
-
     // Set API
     connect(callback : Function) : void {
         if (this._connected == false) {

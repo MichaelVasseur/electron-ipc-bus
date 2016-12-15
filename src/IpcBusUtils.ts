@@ -157,7 +157,6 @@ export class TopicConnectionMap {
         this._release(topic, conn, peerName, callback);
     }
 
-
     public releaseConnection(conn : any, callback? : Function) {
         this._log("ReleaseConn : conn " + conn);
 
@@ -180,6 +179,7 @@ export class TopicConnectionMap {
             return;
         }
 
+        let self = this; // closure
         this.topicsMap.forEach(function (connsMap, topic) {
             callback(connsMap, topic);
         });
@@ -198,8 +198,9 @@ export class TopicConnectionMap {
             this._warn("ForEachTopic : Unknown topic '" + topic + "' !");
         }
         else {
+            let self = this; // closure
             connsMap.forEach(function (peerNames, conn) {
-                this._warn("ForEachTopic : '" + topic + "' = " + conn + " (" + peerNames.size + ")");
+                self._warn("ForEachTopic : '" + topic + "' = " + conn + " (" + peerNames.size + ")");
                 callback(peerNames, conn, topic);
             });
         }
@@ -213,6 +214,7 @@ export class TopicConnectionMap {
             return;
         }
 
+        let self = this; // closure
         this.topicsMap.forEach(function (connsMap, topic) {
             connsMap.forEach(function (peerNames, conn) {
                 callback(peerNames, conn, topic);

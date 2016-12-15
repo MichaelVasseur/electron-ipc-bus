@@ -24,7 +24,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
         this._peerName = "Node_" + process.pid;
 
         this._baseIpc = new BaseIpc();
-        this._baseIpc.on('data', this.onData);
+        this._baseIpc.on('data', (data : any, conn : any) => this.onData(data, conn));
     }
 
     onData(data : any, conn : any) : void {

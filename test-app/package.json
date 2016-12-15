@@ -6,14 +6,16 @@
   "scripts": {
     "start": "electron .",
     "start-sandboxed": "electron . --enable-sandbox",
-    "bundle-preload" : "browserify -o BundledBrowserWindowPreload.js -x electron BrowserWindowPreload.js",
-    "bundle-electronipcbus" : "browserify -o BundledElectronIpcBus.js -x electron ../build/IpcBusInterfaces.js"  
+    "bundle-preload": "browserify -o BundledBrowserWindowPreload.js -x electron BrowserWindowPreload.js",
+    "bundle-electronipcbus": "browserify -o BundledElectronIpcBus.js -x electron ../build/IpcBusInterfaces.js",
+    "bundle-electronipcbus2": "browserify ../build/IpcBusInterfaces.js -x electron -p [ tsify --noImplicitAny ] > BundledElectronIpcBus.js"
   },
   "author": "Thomson Reuters",
   "homepage": "http://www.thomsonreuters.com",
   "devDependencies": {
-    "electron":"1.4.10",
-    "browserify": "13.1.1"
+    "browserify": "13.1.1",
+    "electron": "1.4.10",
+    "tsify": "^2.0.3"
   },
   "dependencies": {
     "bootstrap": "^3.3.7",

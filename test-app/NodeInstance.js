@@ -11,7 +11,10 @@ const path = require("path");
 const child_process = require("child_process");
 const Module = require("module")
 
-const ipcBus = require("../electron-ipc-bus")()
+//const ipcBus = require("../electron-ipc-bus")()
+const ipcBusModule = require("../build/IpcBusInterfaces");
+const ipcBus = ipcBusModule.CreateIPCBusClient();
+
 
 function onTopicMessage(topicName, topicMsg, topicToReply) {
     console.log("node - topic:" + topicName + " data:" + topicMsg + " reply:" + topicToReply);
