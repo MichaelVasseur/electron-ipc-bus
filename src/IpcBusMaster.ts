@@ -94,7 +94,7 @@ class IpcBusBridge {
         const currentWCs = event.sender;
         const peerName = "Renderer_" + currentWCs.id;
         console.log("[IPCBus:Bridge] Peer #" + peerName + " sent request on '" + topic + "'");
-        if (timeoutDelay === undefined) {
+        if (timeoutDelay == null) {
 
             timeoutDelay = 2000; // 2s by default
         }

@@ -55,15 +55,15 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
             throw new Error("Please connect first")
         }
 
+        if (timeoutDelay == null) {
+            timeoutDelay = 2000
+        }
+
         const replyTopic = IpcBusUtils.GenerateReplyTopic();
         EventEmitter.prototype.once.call(this, replyTopic, function (replyTopic : string, data : Object | string, peer : string) {
-
             replyCallback(topic, data, peer)
         })
 
-        if (timeoutDelay === undefined) {
-            timeoutDelay = 2000
-        }
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic, timeoutDelay)
     }
 
