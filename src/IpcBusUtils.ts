@@ -102,7 +102,7 @@ export class TopicConnectionMap {
         }
         else {
             let peerNamesMap = connsMap.get(conn);
-            if (peerNamesMap != null) {
+            if (peerNamesMap == null) {
                 this._warn("Release : conn '" + conn + "' is unknown");
             }
             else {
