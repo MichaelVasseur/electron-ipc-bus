@@ -7,16 +7,17 @@ declare module "easy-ipc" {
     connect(port?: any, host?: any, cb?: any): void;
     listen(port?: any, host?: any, cb?: any): void;
     start(port?: any, host?: any, cb?: any): void;
+    static Cmd : IpcCmd;
   }
 
-  export class IpcCmd {
-    contructor(ipc: Ipc, conn: any) : IpcCmd;
-    set(obj: any): this;
-    add(name: string, func: Function, scope: any, doc: string, sig: any): this;
-    static introspect(conn: any): void;
-    static exec(cmdName: string, ...args: any[]): boolean;
-    static isCmd(d: any): boolean;
-    static mkCmd(cmd: string, ...args: any[]): any;
+  export interface IpcCmd {
+//    contructor(ipc: Ipc, conn: any) : IpcCmd;
+//    set(obj: any): this;
+//    add(name: string, func: Function, scope: any, doc: string, sig: any): this;
+    introspect(conn: any): void;
+    exec(cmdName: string, ...args: any[]): boolean;
+    isCmd(d: any): boolean;
+    mkCmd(cmd: string, ...args: any[]): any;
   }
 }
 

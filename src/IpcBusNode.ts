@@ -1,11 +1,10 @@
 /// <reference types="node" />
 /// <reference path="typings/easy-ipc.d.ts"/>
-/// <reference path="IpcBusConstants.ts" />
-/// <reference path="IpcBusInterfaces.ts" />
 
 import {EventEmitter} from 'events';
-import {Ipc as BaseIpc, IpcCmd as BaseIpcCmd} from 'easy-ipc';
+import {Ipc as BaseIpc} from 'easy-ipc';
 import {IpcBusClient} from "./IpcBusInterfaces";
+import * as IpcBusUtils from './IpcBusUtils';
 
 // Implementation for Node process
 export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
@@ -17,7 +16,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     constructor(busPath? : string) {
         super();
         if (busPath == null) {
-            this._busPath = ElectronIpcBus._getCmdLineArgValue('bus-path');
+            this._busPath = IpcBusUtils.GetCmdLineArgValue('bus-path');
         }
         else{
             this._busPath = busPath;
@@ -29,9 +28,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     }
 
     onData(data : any, conn : any) : void {
-        if (BaseIpcCmd.isCmd(data) == true) {
+        if (BaseIpc.Cmd.isCmd(data) == true) {
             switch (data.name) {
-                case ElectronIpcBus.IPC_BUS_EVENT_TOPICMESSAGE:
+                case IpcBusUtils.IPC_BUS_EVENT_TOPICMESSAGE:
                     {
                         const msgTopic = data.args[0]
                         const msgContent = data.args[1]
@@ -41,7 +40,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
                         break
                     }
 
-                case ElectronIpcBus.IPC_BUS_EVENT_REQUESTMESSAGE:
+                case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
                     {
                         const msgTopic = data.args[0]
                         const msgContent = data.args[1]
@@ -69,7 +68,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     }
 
     send(topic : string, data : Object | string) {
-        BaseIpcCmd.exec(ElectronIpcBus.IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, this._peerName, this._busConn);
     }
 
     request(topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) {
@@ -86,24 +85,24 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
         }
 
         // Set reply's topic 
-        const replyTopic = ElectronIpcBus._generateReplyTopic();
+        const replyTopic = IpcBusUtils.GenerateReplyTopic();
         this.subscribe(replyTopic, replyHandler);
         // Execute request
-        BaseIpcCmd.exec(ElectronIpcBus.IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
     }
 
     queryBrokerState(topic : string) {
-        BaseIpcCmd.exec(ElectronIpcBus.IPC_BUS_COMMAND_QUERYSTATE, topic, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, this._peerName, this._busConn);
     }
 
     subscribe(topic : string, handler : Function) {
         EventEmitter.prototype.addListener.call(this, topic, handler)
-        BaseIpcCmd.exec(ElectronIpcBus.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }
 
     unsubscribe(topic : string, handler : Function) {
         EventEmitter.prototype.removeListener.call(this, topic, handler)
-        BaseIpcCmd.exec(ElectronIpcBus.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }
 }
 

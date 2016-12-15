@@ -1,15 +1,33 @@
-namespace ElectronIpcBus {
+// Constants
+export const IPC_BUS_TOPIC_SUBSCRIBE = 'IPC_BUS_TOPIC_SUBSCRIBE';
+export const IPC_BUS_TOPIC_SEND = 'IPC_BUS_TOPIC_SEND';
+export const IPC_BUS_TOPIC_UNSUBSCRIBE = 'IPC_BUS_TOPIC_UNSUBSCRIBE';
+
+export const IPC_BUS_RENDERER_SUBSCRIBE = 'IPC_BUS_RENDERER_SUBSCRIBE';
+export const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND';
+export const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST';
+export const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE';
+export const IPC_BUS_RENDERER_RECEIVE = 'IPC_BUS_RENDERER_RECEIVE';
+export const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE';
+
+export const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeTopic';
+export const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeTopic';
+export const IPC_BUS_COMMAND_SENDTOPICMESSAGE = 'sendTopicMessage';
+export const IPC_BUS_COMMAND_SENDREQUESTMESSAGE = 'sendRequestMessage';
+export const IPC_BUS_COMMAND_QUERYSTATE = 'queryState';
+export const IPC_BUS_EVENT_TOPICMESSAGE = 'onTopicMessage';
+export const IPC_BUS_EVENT_REQUESTMESSAGE = 'onRequestMessage';
 
 function uuid():string {
     return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
 }
 
-export function _generateReplyTopic() : string {
+export function GenerateReplyTopic() : string {
 
     return 'replyTopic/' + uuid();
 }
 
-export function _getCmdLineArgValue(argName : string) : string {
+export function GetCmdLineArgValue(argName : string) : string {
     for (let i = 0; i < process.argv.length; i++) {
 
         if (process.argv[i].startsWith("--" + argName)) {
@@ -21,7 +39,7 @@ export function _getCmdLineArgValue(argName : string) : string {
 }
 
 
-export interface TopicConnectionMapCB { (peerNames? : Map<string, number>, conn? : any, topic? : string, count? : number) : void };
+//export interface TopicConnectionMapCB { (peerNames? : Map<string, number>, conn? : any, topic? : string, count? : number) : void };
 
 export class TopicConnectionMap {
 
@@ -201,6 +219,4 @@ export class TopicConnectionMap {
             })
         })
     }
-}
-
 }

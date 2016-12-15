@@ -4,7 +4,8 @@
   "description": "A safe IPC bus for applications built on Electron.",
   "main": "electron-ipc-bus.js",
   "dependencies": {
-    "@types/node": "0.0.3"
+    "@types/node": "0.0.3",
+    "easy-ipc": "^0.2.2"
   },
   "devDependencies": {
     "typescript": "^2.1.4",
