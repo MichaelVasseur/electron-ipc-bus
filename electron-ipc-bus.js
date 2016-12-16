@@ -9,10 +9,6 @@ const Module = require('module')
 const uuid = require("uuid")
 
 // Constants
-const IPC_BUS_TOPIC_SUBSCRIBE = 'IPC_BUS_TOPIC_SUBSCRIBE'
-const IPC_BUS_TOPIC_SEND = 'IPC_BUS_TOPIC_SEND'
-const IPC_BUS_TOPIC_UNSUBSCRIBE = 'IPC_BUS_TOPIC_UNSUBSCRIBE'
-
 const IPC_BUS_RENDERER_SUBSCRIBE = 'IPC_BUS_RENDERER_SUBSCRIBE'
 const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND'
 const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST'
@@ -22,10 +18,10 @@ const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE'
 
 const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeTopic'
 const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeTopic'
-const IPC_BUS_COMMAND_SENDTOPICMESSAGE = 'sendTopicMessage'
-const IPC_BUS_COMMAND_SENDREQUESTMESSAGE = 'sendRequestMessage'
+const IPC_BUS_COMMAND_SENDMESSAGE = 'sendMessage'
+const IPC_BUS_COMMAND_REQUESTMESSAGE = 'requestMessage'
 const IPC_BUS_COMMAND_QUERYSTATE = 'queryState'
-const IPC_BUS_EVENT_TOPICMESSAGE = 'onTopicMessage'
+const IPC_BUS_EVENT_SENDMESSAGE = 'onSendMessage'
 const IPC_BUS_EVENT_REQUESTMESSAGE = 'onRequestMessage'
 
 const BASE_IPC_MODULE = 'easy-ipc'
@@ -231,7 +227,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                         ipcbus._subscriptions.Release(msgTopic, conn, msgPeerName);
                         break
                     }
-                case IPC_BUS_COMMAND_SENDTOPICMESSAGE:
+                case IPC_BUS_COMMAND_SENDMESSAGE:
                     {
                         const msgTopic = data.args[0]
                         const msgContent = data.args[1]
@@ -240,11 +236,11 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
 
                         ipcbus._subscriptions.ForEachTopic(msgTopic, function (peerNames, conn, topic) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, topic, msgContent, msgPeerName, conn)
+                            BaseIpc.Cmd.exec(IPC_BUS_EVENT_SENDMESSAGE, topic, msgContent, msgPeerName, conn)
                         })
                         break
                     }
-                case IPC_BUS_COMMAND_SENDREQUESTMESSAGE:
+                case IPC_BUS_COMMAND_REQUESTMESSAGE:
                     {
                         const msgTopic = data.args[0];
                         const msgContent = data.args[1];
@@ -271,7 +267,7 @@ function _brokerListeningProc(ipcbus, baseIpc, busPath, server) {
                             })
                         })
 
-                        BaseIpc.Cmd.exec(IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, queryStateResult, msgPeerName, conn)
+                        BaseIpc.Cmd.exec(IPC_BUS_EVENT_SENDMESSAGE, msgTopic, queryStateResult, msgPeerName, conn)
                     }
             }
         }
@@ -304,7 +300,7 @@ function _clientConnectProc(ipcbus, baseIpc, busPath, conn, callback) {
 
             switch (data.name) {
 
-                case IPC_BUS_EVENT_TOPICMESSAGE:
+                case IPC_BUS_EVENT_SENDMESSAGE:
                     {
                         const msgTopic = data.args[0]
                         const msgContent = data.args[1]
@@ -560,7 +556,7 @@ function IpcBusNodeClient(busPath) {
 
     this.sendWithPeerName = function (peerName, topic, data) {
 
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, peerName, busConn)
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDMESSAGE, topic, data, peerName, busConn)
     }
 
     this.send = function (topic, data) {
@@ -591,7 +587,7 @@ function IpcBusNodeClient(busPath) {
         self.subscribe(replyTopic, replyHandler);
 
         // Execute request
-        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, peerName, busConn)
+        BaseIpc.Cmd.exec(IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, peerName, busConn)
     }
 
     this.request = function (topic, data, replyCallback, timeoutDelay) {
