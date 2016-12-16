@@ -39,9 +39,10 @@ export function GetCmdLineArgValue(argName : string) : string {
 
 export class TopicConnectionMap {
 
-    private topicsMap : Map<string, Map<any, Map<string, number>>> = new Map<string, Map<any, Map<string, number>>>();
+    private topicsMap : Map<string, Map<any, Map<string, number>>>;
 
     constructor(){
+        this.topicsMap = new Map<string, Map<any, Map<string, number>>>();
     }
 
     private _log(str : string) {
@@ -136,10 +137,10 @@ export class TopicConnectionMap {
                         callback(topic, conn, peerName, peerNamesMap.size);
                     }
                 }
-                if (peerNamesMap.size === 0) {
+                if (peerNamesMap.size == 0) {
                     connsMap.delete(conn);
                     this._log("Release : conn '" + conn + "' is released");
-                    if (connsMap.size === 0) {
+                    if (connsMap.size == 0) {
                         this.topicsMap.delete(topic);
                         this._log("Release : topic '" + topic + "' is released");
                     }
