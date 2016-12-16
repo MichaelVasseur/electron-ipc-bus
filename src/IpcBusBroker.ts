@@ -4,7 +4,6 @@
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc} from 'easy-ipc';
 //import BaseIpc from 'easy-ipc';
-//const BaseIpc = require('easy-ipc');
 import {IpcBusBroker} from "./IpcBusInterfaces";
 import * as IpcBusUtils from './IpcBusUtils';
 

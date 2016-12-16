@@ -3,6 +3,7 @@
 
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc} from 'easy-ipc';
+//import BaseIpc from 'easy-ipc';
 import {IpcBusClient} from "./IpcBusInterfaces";
 import * as IpcBusUtils from './IpcBusUtils';
 
@@ -24,10 +25,10 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
         this._peerName = "Node_" + process.pid;
 
         this._baseIpc = new BaseIpc();
-        this._baseIpc.on('data', (data : any, conn : any) => this.onData(data, conn));
+        this._baseIpc.on('data', (data : any, conn : any) => this._onData(data, conn));
     }
 
-    onData(data : any, conn : any) : void {
+    protected _onData(data : any, conn : any) : void {
         if (BaseIpc.Cmd.isCmd(data) == true) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_EVENT_TOPICMESSAGE:
