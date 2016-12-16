@@ -31,7 +31,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     protected _onData(data : any, conn : any) : void {
         if (BaseIpc.Cmd.isCmd(data) == true) {
             switch (data.name) {
-                case IpcBusUtils.IPC_BUS_EVENT_TOPICMESSAGE:
+                case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
                     {
                         const msgTopic = data.args[0]
                         const msgContent = data.args[1]
@@ -70,7 +70,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     }
 
     send(topic : string, data : Object | string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, this._peerName, this._busConn);
     }
 
     request(topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) {
@@ -80,7 +80,6 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
 
         // Prepare reply's handler
         const replyHandler = function (replyTopic : string, content : Object | string, peerName : string) {
-
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
             this.unsubscribe(replyTopic, replyHandler);
             replyCallback(topic, content, peerName);
@@ -90,7 +89,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
         const replyTopic = IpcBusUtils.GenerateReplyTopic();
         this.subscribe(replyTopic, replyHandler);
         // Execute request
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
     }
 
     queryBrokerState(topic : string) {

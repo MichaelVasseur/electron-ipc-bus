@@ -45,14 +45,7 @@ class IpcBusBridge {
     }
 
     rendererCleanUp(webContentsId : string) : void {
-        let self = this;
-        this._topicRendererRefs.releaseConnection(webContentsId, function (topic : string, conn : any, peerName : string, count : number) {
-            if (count == 0) {
-                console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker")
-                EventEmitter.prototype.removeListener.call(self._eventEmitter, topic, self._lambdaListenerHandler)
-            }
-            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, self._busConn)
-        })
+        this._topicRendererRefs.releaseConnection(webContentsId, (keyTopic : string, valueId : any, peerName : string, count : number) => this.onUnsubscribeCB(keyTopic, valueId, peerName, count));
     }
 
     onSubscribe(event : any, topic : string) : void {
@@ -61,6 +54,7 @@ class IpcBusBridge {
         console.log("[IPCBus:Bridge] Peer #" + peerName + " subscribed to topic '" + topic + "'")
         let self = this; // closure
         this._topicRendererRefs.addRef(topic, webContentsId.id, peerName, function (keyTopic : string, valueId : any, peerName : string, count : number) {
+        // If it is the first time this renderer is listening this topic, we have to add the callback
             if (count == 1) {
                 EventEmitter.prototype.addListener.call(self._eventEmitter, topic, self._lambdaListenerHandler)
                 console.log("[IPCBus:Bridge] Forward subscribe '" + topic + "' to IPC Broker")
@@ -72,25 +66,29 @@ class IpcBusBridge {
         })
     }
 
+    onUnsubscribeCB(topic : string, valueId : any, peerName : string, count : number)
+    {
+        // If it is the last time this renderer is listening this topic, we have to remove the callback
+        if (count == 0) {
+            console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker");
+            EventEmitter.prototype.removeListener.call(this._eventEmitter, topic, this._lambdaListenerHandler);
+        }
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, this._busConn);        
+    }
+
     onUnsubscribe(event : any, topic : string) {
         const webContentsId = event.sender;
         const peerName = "Renderer_" + webContentsId.id;
         console.log("[IPCBus:Bridge] Peer #" + peerName + " unsubscribed from topic : '" + topic + "'");
         let self = this;
-        this._topicRendererRefs.release(topic, webContentsId.id, peerName, function (keyTopic : string, valueId : any, peerName : string, count : number) {
-            if (count == 0) {
-                console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker");
-                EventEmitter.prototype.removeListener.call(self._eventEmitter, topic, self._lambdaListenerHandler);
-            }
-            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, self._busConn);
-        })
+        this._topicRendererRefs.release(topic, webContentsId.id, peerName, (keyTopic : string, valueId : any, peerName : string, count : number) => this.onUnsubscribeCB(keyTopic, valueId, peerName, count));
     }
 
     onSend(event :any, topic : string, data : any) : void {
         const webContentsId = event.sender;
         const peerName = "Renderer_" + webContentsId.id;
         console.log("[IPCBus:Bridge] Peer #" + peerName + " sent message on '" + topic + "'");
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDTOPICMESSAGE, topic, data, peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, peerName, this._busConn);
     }
 
     onRequest(event : any, topic : string, data : any, replyTopic : string, timeoutDelay : number) : void {
@@ -114,7 +112,7 @@ class IpcBusBridge {
 
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, replyTopic, peerName, this._busConn);
         // Execute request
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDREQUESTMESSAGE, topic, data, replyTopic, peerName, this._busConn);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, peerName, this._busConn);
     }
 
     onQueryState(event : any, topic : string) {

@@ -50,7 +50,7 @@ class IpcBusBrokerProc {
                         this._subscriptions.release(msgTopic, conn, msgPeerName);
                         break
                     }
-                case IpcBusUtils.IPC_BUS_COMMAND_SENDTOPICMESSAGE:
+                case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
                     {
                         const msgTopic = data.args[0] as string;
                         const msgContent = data.args[1] as string;
@@ -59,11 +59,11 @@ class IpcBusBrokerProc {
 
                         this._subscriptions.forEachTopic(msgTopic, function (peerNames : Map<string, number>, conn : any, topic : string) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_TOPICMESSAGE, topic, msgContent, msgPeerName, conn)
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, msgContent, msgPeerName, conn)
                         })
                         break
                     }
-                case IpcBusUtils.IPC_BUS_COMMAND_SENDREQUESTMESSAGE:
+                case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE:
                     {
                         const msgTopic = data.args[0] as string;
                         const msgContent = data.args[1] as string;
@@ -89,7 +89,7 @@ class IpcBusBrokerProc {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count })
                             })
                         })
-                        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_TOPICMESSAGE, msgTopic, queryStateResult, msgPeerName, conn)
+                        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, msgTopic, queryStateResult, msgPeerName, conn)
                         break;
                     }
             }
