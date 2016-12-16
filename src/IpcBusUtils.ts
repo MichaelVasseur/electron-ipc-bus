@@ -109,10 +109,15 @@ export class TopicConnectionMap {
                     for (let peerName of peerNamesMap.keys()) {
                         peerNamesTemp.push(peerName);
                     }
-                    for (let peerName of peerNamesTemp) {
-                        peerNamesMap.delete(peerName);
-                        if ((callback instanceof Function) == true) {
+                    if ((callback instanceof Function) == true) {
+                        for (let peerName of peerNamesTemp) {
+                            peerNamesMap.delete(peerName);
                             callback(topic, conn, peerName, peerNamesMap.size);
+                        }
+                    }
+                    else {
+                        for (let peerName of peerNamesTemp) {
+                            peerNamesMap.delete(peerName);
                         }
                     }
                 }
