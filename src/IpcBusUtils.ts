@@ -85,7 +85,7 @@ export class TopicConnectionMap {
         }
         peerNamesMap.set(peerName, count);
         this._log("AddRef : topic '" + topic + "', conn " + conn + ", count = " + peerNamesMap.size);
-        if (callback != null) {
+        if ((callback instanceof Function) == true) {
             callback(topic, conn, peerName, peerNamesMap.size);
         }
     }
@@ -111,7 +111,7 @@ export class TopicConnectionMap {
                     }
                     for (let peerName of peerNamesTemp) {
                         peerNamesMap.delete(peerName);
-                        if (callback != null) {
+                        if ((callback instanceof Function) == true) {
                             callback(topic, conn, peerName, peerNamesMap.size);
                         }
                     }
@@ -133,7 +133,7 @@ export class TopicConnectionMap {
                             this._log("Release : peerName '" + peerName + "' is released");
                         }
                     }
-                    if (callback != null) {
+                    if ((callback instanceof Function) == true) {
                         callback(topic, conn, peerName, peerNamesMap.size);
                     }
                 }
@@ -171,7 +171,7 @@ export class TopicConnectionMap {
     public forEach(callback : Function) {
         this._log("ForEach");
 
-        if (callback == null) {
+        if ((callback instanceof Function) == false) {
             this._error("ForEach : No callback provided !");
             return;
         }
@@ -185,7 +185,7 @@ export class TopicConnectionMap {
     public forEachTopic(topic : string, callback : Function) {
         this._log("ForEachTopic : " + topic);
 
-        if (callback == null) {
+        if ((callback instanceof Function) == false) {
             this._error("ForEachTopic : No callback provided !");
             return;
         }
@@ -206,7 +206,7 @@ export class TopicConnectionMap {
     public forEachConnection(callback : Function) {
         this._log("ForEachConn");
 
-        if (typeof callback !== "function") {
+        if ((callback instanceof Function) == false) {
             this._error("ForEachConn : No callback provided !");
             return;
         }
