@@ -10,10 +10,11 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 class IpcBusBrokerProc {
     _baseIpc : BaseIpc;
-    _subscriptions : IpcBusUtils.TopicConnectionMap = new IpcBusUtils.TopicConnectionMap(); 
+    _subscriptions : IpcBusUtils.TopicConnectionMap; 
 
     constructor(baseIpc : BaseIpc){
         this._baseIpc = baseIpc;
+        this._subscriptions = new IpcBusUtils.TopicConnectionMap(); 
         this._baseIpc.on('connection', (conn : any, server : any) => this.onConnection(conn, server));
         this._baseIpc.on('close', (err : any, conn : any, server : any) => this.onClose(err, conn, server));
         this._baseIpc.on('data', (data : any, conn : any, server  : any) => this.onData(data, conn, server));
@@ -100,10 +101,10 @@ class IpcBusBrokerProc {
 
 // Implementation for Broker process
 export class IpcBusBrokerClient implements IpcBusBroker {
-    _baseIpc : BaseIpc;
-    _ipcServer : any = null;
-    _busPath : string = null;
-    _ipcBusBrokerProc : IpcBusBrokerProc;
+    private _baseIpc : BaseIpc;
+    private _ipcServer : any = null;
+    private _busPath : string = null;
+    private _ipcBusBrokerProc : IpcBusBrokerProc;
 
     constructor(busPath? : string) {
         this._baseIpc = new BaseIpc();
@@ -113,15 +114,15 @@ export class IpcBusBrokerClient implements IpcBusBroker {
         else{
             this._busPath = busPath;
         }
+        this._ipcBusBrokerProc = new IpcBusBrokerProc(this._baseIpc);
     }
 
     // Set API
     start() {
-        let self = this;
+        let self = this; // closure
         this._baseIpc.on('listening', function (server : any) {
-            self._ipcServer = server; // closure
+            self._ipcServer = server;
             console.log("[IPCBus:Broker] Listening for incoming connections on '" + self._busPath + "' ...");
-            self._ipcBusBrokerProc = new IpcBusBrokerProc(self._baseIpc);
         })
         this._baseIpc.listen(this._busPath);
     }

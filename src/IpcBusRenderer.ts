@@ -63,7 +63,6 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
         EventEmitter.prototype.once.call(this, replyTopic, function (replyTopic : string, data : Object | string, peer : string) {
             replyCallback(topic, data, peer)
         })
-
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic, timeoutDelay)
     }
 
