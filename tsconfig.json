@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "types" : ["node"],
-		"module": "CommonJS",
+		"module": "commonjs",
 		"moduleResolution": "node",
 		"target": "es6",        
         "noImplicitAny": true,
@@ -11,7 +11,7 @@
         "preserveConstEnums": true,
         "alwaysStrict" : true,
         "noUnusedLocals" : true,
-        "noUnusedParameters" : true,
+//        "noUnusedParameters" : true,
         "sourceMap": true,
         "outDir" : "build"
     },
