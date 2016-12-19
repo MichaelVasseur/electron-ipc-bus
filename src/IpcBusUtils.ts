@@ -1,8 +1,8 @@
 // Constants
 export const IPC_BUS_RENDERER_SUBSCRIBE = 'IPC_BUS_RENDERER_SUBSCRIBE';
+export const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE';
 export const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND';
 export const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST';
-export const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE';
 export const IPC_BUS_RENDERER_RECEIVE = 'IPC_BUS_RENDERER_RECEIVE';
 export const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE';
 
@@ -181,8 +181,7 @@ export class TopicConnectionMap {
             return;
         }
 
-        let self = this; // closure
-        this.topicsMap.forEach(function (connsMap : Map<any, Map<string, number>>, topic : string) {
+        this.topicsMap.forEach((connsMap : Map<any, Map<string, number>>, topic : string) => {
             callback(connsMap, topic);
         });
     }
@@ -200,9 +199,8 @@ export class TopicConnectionMap {
             this._warn("ForEachTopic : Unknown topic '" + topic + "' !");
         }
         else {
-            let self = this; // closure
-            connsMap.forEach(function (peerNames : Map<string, number>, conn : any) {
-                self._warn("ForEachTopic : '" + topic + "' = " + conn + " (" + peerNames.size + ")");
+            connsMap.forEach((peerNames : Map<string, number>, conn : any) => {
+                this._warn("ForEachTopic : '" + topic + "' = " + conn + " (" + peerNames.size + ")");
                 callback(peerNames, conn, topic);
             });
         }
@@ -216,8 +214,7 @@ export class TopicConnectionMap {
             return;
         }
 
-        let self = this; // closure
-        this.topicsMap.forEach(function (connsMap : Map<any, Map<string, number>>, topic : string) {
+        this.topicsMap.forEach((connsMap : Map<any, Map<string, number>>, topic : string) => {
             connsMap.forEach(function (peerNames : Map<string, number>, conn : any) {
                 callback(peerNames, conn, topic);
             })

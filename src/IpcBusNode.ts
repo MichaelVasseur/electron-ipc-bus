@@ -57,10 +57,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
 
     // Set API
     connect(callback : IpcBusInterfaces.IpcBusConnectFunc) {
-        let self = this; // closure
-        this._baseIpc.on('connect', function (conn : any) {
-            self._busConn = conn
-            callback('connect', self._busConn);
+        this._baseIpc.on('connect', (conn : any) => {
+            this._busConn = conn
+            callback('connect', this._busConn);
         })
         this._baseIpc.connect(this._busPath);
     }
@@ -79,10 +78,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         }
 
         // Prepare reply's handler
-        let self = this; // closure
-        const replyHandler : IpcBusInterfaces.IpcBusRequestFunc = function (replyTopic : string, content : Object | string, peerName : string) {
+        const replyHandler : IpcBusInterfaces.IpcBusRequestFunc = (replyTopic : string, content : Object | string, peerName : string) => {
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
-            self.unsubscribe(replyTopic, replyHandler);
+            this.unsubscribe(replyTopic, replyHandler);
             replyCallback(topic, content, peerName);
         }
 

@@ -1,16 +1,24 @@
 {
     "compilerOptions": {
         "types" : ["node"],
-		"module": "commonjs",
+		"module": "CommonJS",
 		"moduleResolution": "node",
 		"target": "es6",        
         "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
         "removeComments": true,
         "preserveConstEnums": true,
+        "alwaysStrict" : true,
+        "noUnusedLocals" : true,
+        "noUnusedParameters" : true,
         "sourceMap": true,
         "outDir" : "build"
     },
 	"include": [
 		"./src/**/*.ts"
+	],
+	"exclude": [
+		"./src/typings/*.ts"
 	]
 }

@@ -118,10 +118,9 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
 
     // Set API
     start() {
-        let self = this; // closure
-        this._baseIpc.on('listening', function (server : any) {
-            self._ipcServer = server;
-            console.log("[IPCBus:Broker] Listening for incoming connections on '" + self._busPath + "' ...");
+        this._baseIpc.on('listening', (server : any) => {
+            this._ipcServer = server;
+            console.log("[IPCBus:Broker] Listening for incoming connections on '" + this._busPath + "' ...");
         })
         this._baseIpc.listen(this._busPath);
     }
