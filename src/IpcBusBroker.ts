@@ -4,7 +4,7 @@
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc} from 'easy-ipc';
 //import BaseIpc from 'easy-ipc';
-import {IpcBusBroker} from "./IpcBusInterfaces";
+import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from './IpcBusUtils';
 
 class IpcBusBrokerProc {
@@ -99,7 +99,7 @@ class IpcBusBrokerProc {
 
 
 // Implementation for Broker process
-export class IpcBusBrokerClient implements IpcBusBroker {
+export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc : BaseIpc;
     private _ipcServer : any = null;
     private _busPath : string = null;

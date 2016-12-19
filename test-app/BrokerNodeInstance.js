@@ -9,7 +9,7 @@ console.log("Starting IPC Broker instance ...")
 //const path = require('path')
 
 //const ipcBroker = require("../electron-ipc-bus")("broker")
-const ipcBusModule = require("../build/IpcBusInterfaces");
+const ipcBusModule = require("../build/electron-ipc-bus");
 const ipcBroker = ipcBusModule.CreateIPCBusBroker();
 
 ipcBroker.start()

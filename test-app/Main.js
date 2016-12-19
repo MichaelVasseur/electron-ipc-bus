@@ -24,9 +24,8 @@ console.log("IPC Bus Path : " + busPath);
 
 // IPC Bus
 //const ipcBus = require("../electron-ipc-bus")("browser", busPath, ipcMain);
-const ipcBusModule = require("../build/IpcBusInterfaces");
-//const ipcBusModule = require("./BundledElectronIpcBus");
-const ipcBus = ipcBusModule.CreateIPCBusClient(process, busPath);
+const ipcBusModule = require("../build/electron-ipc-bus");
+const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Browser, busPath);
 
 // Load node-import without wrapping to variable. 
 require('node-import');

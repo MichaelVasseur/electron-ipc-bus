@@ -4,11 +4,11 @@
 import {EventEmitter} from 'events';
 import {Ipc as BaseIpc} from 'easy-ipc';
 //import BaseIpc from 'easy-ipc';
-import {IpcBusClient} from "./IpcBusInterfaces";
+import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from './IpcBusUtils';
 
 // Implementation for Node process
-export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
+export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.IpcBusClient {
     protected _busPath : string;
     protected _baseIpc : BaseIpc;
     protected _peerName : string;
@@ -56,7 +56,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
     }
 
     // Set API
-    connect(callback : Function) {
+    connect(callback : IpcBusInterfaces.IpcBusConnectFunc) {
         let self = this; // closure
         this._baseIpc.on('connect', function (conn : any) {
             self._busConn = conn
@@ -73,13 +73,13 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, this._peerName, this._busConn);
     }
 
-    request(topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) {
+    request(topic : string, data : Object | string, replyCallback : IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay : number) {
         if (timeoutDelay === undefined) {
             timeoutDelay = 2000; // 2s by default
         }
 
         // Prepare reply's handler
-        const replyHandler = function (replyTopic : string, content : Object | string, peerName : string) {
+        const replyHandler : IpcBusInterfaces.IpcBusRequestFunc = function (replyTopic : string, content : Object | string, peerName : string) {
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
             this.unsubscribe(replyTopic, replyHandler);
             replyCallback(topic, content, peerName);
@@ -96,12 +96,12 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusClient {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, this._peerName, this._busConn);
     }
 
-    subscribe(topic : string, handler : Function) {
+    subscribe(topic : string, handler : IpcBusInterfaces.IpcBusListenFunc) {
         EventEmitter.prototype.addListener.call(this, topic, handler)
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }
 
-    unsubscribe(topic : string, handler : Function) {
+    unsubscribe(topic : string, handler : IpcBusInterfaces.IpcBusListenFunc) {
         EventEmitter.prototype.removeListener.call(this, topic, handler)
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }

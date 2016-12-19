@@ -6,6 +6,7 @@ import {Ipc as BaseIpc} from 'easy-ipc';
 //import BaseIpc from 'easy-ipc';
 import {IpcBusNodeClient} from "./IpcBusNode";
 import * as IpcBusUtils from './IpcBusUtils';
+import * as IpcBusInterfaces from "./IpcBusInterfaces";
 
 class IpcBusBridge {
     _ipcObj : any;
@@ -101,7 +102,7 @@ class IpcBusBridge {
 
         // Prepare reply's handler
         let self = this;
-        const replyHandler = function (replyTopic : string, content : any, peerName : string) {
+        const replyHandler : IpcBusInterfaces.IpcBusRequestFunc = function (replyTopic : string, content : any, peerName : string) {
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
             EventEmitter.prototype.removeListener.call(self._eventEmitter, replyTopic, replyHandler);
             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, replyTopic, peerName, self._busConn);
@@ -133,11 +134,11 @@ export class IpcBusMasterClient extends IpcBusNodeClient {
     }
 
     // Set API
-    connect(callback : Function) {
+    connect(callback : IpcBusInterfaces.IpcBusConnectFunc) {
         let self = this; // closure
-        super.connect(function(event : string, conn : any){
+        super.connect(function(eventName : string, conn : any){
             self._ipcBusBridge = new IpcBusBridge(self, conn);
-            callback(event, conn);
+            callback(eventName, conn);
         })
     }
 }

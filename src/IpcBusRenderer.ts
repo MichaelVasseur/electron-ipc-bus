@@ -1,11 +1,11 @@
 /// <reference types="node" />
 
 import {EventEmitter} from 'events';
-import {IpcBusClient} from "./IpcBusInterfaces";
+import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from './IpcBusUtils';
 
 // Implementation for Renderer process
-export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
+export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfaces.IpcBusClient {
     private _ipcObj : any;
     private _connected? : boolean = null;
 
@@ -28,14 +28,14 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
     }
     
     // Set API
-    connect(callback : Function) : void {
+    connect(callback : IpcBusInterfaces.IpcBusConnectFunc) : void {
         if (this._connected == false) {
             throw new Error("Connection is closed")
         }
         // connect can be called multiple times
         this._connected = true
         setTimeout(function () {
-            callback('connect')
+            callback('connect', -1)
         }, 1)
     }
 
@@ -50,7 +50,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, topic, data)
     }
 
-    request(topic : string, data : Object | string, replyCallback : Function, timeoutDelay : number) : void {
+    request(topic : string, data : Object | string, replyCallback : IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay : number) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }
@@ -73,7 +73,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, topic)
     }
 
-    subscribe(topic : string, handler : Function) : void {
+    subscribe(topic : string, handler : IpcBusInterfaces.IpcBusListenFunc) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }
@@ -81,7 +81,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusClient {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, topic)
     }
 
-    unsubscribe(topic : string,  handler : Function) : void {
+    unsubscribe(topic : string,  handler : IpcBusInterfaces.IpcBusListenFunc) : void {
         if (this._connected != true) {
             throw new Error("Please connect first")
         }

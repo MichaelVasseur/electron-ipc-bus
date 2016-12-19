@@ -5,6 +5,6 @@
 
 //window.ipcBus = require("../electron-ipc-bus")("renderer")
 //window.ipcBusModule = require("../build/IpcBusInterfaces");
-window.ipcBusModule = require("../build/IpcBusInterfaces");
-//window.ipcBus = ipcBusModule.CreateIPCBusClient(process);
+const ipcBusModule = require("../build/electron-ipc-bus");
+window.ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Renderer);
 window.ipcRenderer = require("electron").ipcRenderer

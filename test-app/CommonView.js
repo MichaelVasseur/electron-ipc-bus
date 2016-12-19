@@ -1,7 +1,7 @@
-console.log("process1 " + process.type);
-var ipcBus = ipcBusModule.CreateIPCBusClient(process);
+//console.log("process1 " + process.type);
+//var ipcBus = ipcBusModule.CreateIPCBusClient(process);
 //var ipcBus = ipcBusModule.CreateIPCBusClient();
-console.log("process2 " + process.type);
+//console.log("process2 " + process.type);
 
 function doNewNodeInstance(event)
 {
