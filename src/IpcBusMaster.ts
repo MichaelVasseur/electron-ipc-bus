@@ -104,11 +104,10 @@ class IpcBusBridge {
         let self = this;
         const replyHandler : IpcBusInterfaces.IpcBusRequestFunc = function (replyTopic : string, content : any, peerName : string) {
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
-            EventEmitter.prototype.removeListener.call(self._eventEmitter, replyTopic, replyHandler);
             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, replyTopic, peerName, self._busConn);
             webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, replyTopic, content, peerName);
         }
-        EventEmitter.prototype.addListener.call(this._eventEmitter, replyTopic, replyHandler);
+        EventEmitter.prototype.once.call(this._eventEmitter, replyTopic, replyHandler);
 
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, replyTopic, peerName, this._busConn);
         // Execute request

@@ -12,10 +12,10 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
     constructor(){
         super();
         this._ipcObj = require('electron').ipcRenderer;
-        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) => this.onReceive(eventOrTopic, topicOrContent, contentOrPeer, peerOrUndefined));
+        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) => this._onReceive(eventOrTopic, topicOrContent, contentOrPeer, peerOrUndefined));
     }
 
-    private onReceive(eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) : void {
+    private _onReceive(eventOrTopic : any, topicOrContent : any, contentOrPeer : any, peerOrUndefined : any) : void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (peerOrUndefined === undefined) {
             console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'")

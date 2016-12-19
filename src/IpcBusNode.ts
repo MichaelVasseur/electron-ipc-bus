@@ -79,9 +79,10 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         }
 
         // Prepare reply's handler
+        let self = this; // closure
         const replyHandler : IpcBusInterfaces.IpcBusRequestFunc = function (replyTopic : string, content : Object | string, peerName : string) {
             console.log('Peer #' + peerName + ' replied to request on ' + replyTopic + ' : ' + content);
-            this.unsubscribe(replyTopic, replyHandler);
+            self.unsubscribe(replyTopic, replyHandler);
             replyCallback(topic, content, peerName);
         }
 
