@@ -85,7 +85,7 @@ class IpcBusBrokerProc {
 
                         let queryStateResult : any = [];
                         this._subscriptions.forEachConnection(function (peerNames : Map<string, number>, conn : any, topic : string) {
-                            peerNames.forEach(function (count, peerName) {
+                            peerNames.forEach(function (count : number, peerName : string) {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count })
                             })
                         })

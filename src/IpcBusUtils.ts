@@ -182,7 +182,7 @@ export class TopicConnectionMap {
         }
 
         let self = this; // closure
-        this.topicsMap.forEach(function (connsMap, topic) {
+        this.topicsMap.forEach(function (connsMap : Map<any, Map<string, number>>, topic : string) {
             callback(connsMap, topic);
         });
     }
@@ -201,7 +201,7 @@ export class TopicConnectionMap {
         }
         else {
             let self = this; // closure
-            connsMap.forEach(function (peerNames, conn) {
+            connsMap.forEach(function (peerNames : Map<string, number>, conn : any) {
                 self._warn("ForEachTopic : '" + topic + "' = " + conn + " (" + peerNames.size + ")");
                 callback(peerNames, conn, topic);
             });
@@ -217,8 +217,8 @@ export class TopicConnectionMap {
         }
 
         let self = this; // closure
-        this.topicsMap.forEach(function (connsMap, topic) {
-            connsMap.forEach(function (peerNames, conn) {
+        this.topicsMap.forEach(function (connsMap : Map<any, Map<string, number>>, topic : string) {
+            connsMap.forEach(function (peerNames : Map<string, number>, conn : any) {
                 callback(peerNames, conn, topic);
             })
         })
