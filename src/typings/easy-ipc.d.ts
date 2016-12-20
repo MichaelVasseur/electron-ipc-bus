@@ -1,23 +1,35 @@
 ///<reference path="../../node_modules/@types/node/index.d.ts"/>
 
 declare module "easy-ipc" {
-  import { Stream } from 'stream';
-  export class Ipc extends Stream {
-    contructor(options?: any) : Ipc;
-    connect(port?: any, host?: any, cb?: any): void;
-    listen(port?: any, host?: any, cb?: any): void;
-    start(port?: any, host?: any, cb?: any): void;
-    static Cmd : IpcCmd;
+  import { Stream } from "stream";
+
+  class EasyIpc extends Stream {
+    constructor(options?: any);
+    connect(port: any, host?: any, cb?: any): any;
+    listen(port: any, host?: any, cb?: any): void;
+    start(port: any, host?: any, cb?: any): void;
+    static Cmd: EasyIpc.Cmd;
   }
 
-  export interface IpcCmd {
-//    contructor(ipc: Ipc, conn: any) : IpcCmd;
-//    set(obj: any): this;
-//    add(name: string, func: Function, scope: any, doc: string, sig: any): this;
-    introspect(conn: any): void;
-    exec(cmdName: string, ...args: any[]): boolean;
-    isCmd(d: any): boolean;
-    mkCmd(cmd: string, ...args: any[]): any;
+  namespace EasyIpc {
+    interface Cli {
+      //    constructor(ipc: any, conn: any);
+      console(mode: any): void;
+      consoleRefresh(): void;
+      setConnection(conn: any): void;
+      writeToConsole(...args: any[]): void;
+    }
+
+    interface Cmd {
+      //    constructor(ipc: any, conn: any, ...args: any[]);
+      add(name: any, func: any, scope: any, doc: any, sig: any): any;
+      set(obj: any): any;
+      exec(...args: any[]): any;
+      introspect(conn: any): void;
+      isCmd(d: any): any;
+      line2cmd(line: any): any;
+      mkCmd(...args: any[]): any;
+    }
   }
+  export = EasyIpc;
 }
-

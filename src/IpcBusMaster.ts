@@ -2,8 +2,8 @@
 /// <reference path="typings/easy-ipc.d.ts"/>
 
 import { EventEmitter } from "events";
-import { Ipc as BaseIpc } from "easy-ipc";
-// import BaseIpc from 'easy-ipc';
+//import { Ipc as BaseIpc } from "easy-ipc";
+import * as BaseIpc from "easy-ipc";
 import { IpcBusNodeClient } from "./IpcBusNode";
 import * as IpcBusUtils from "./IpcBusUtils";
 import * as IpcBusInterfaces from "./IpcBusInterfaces";
