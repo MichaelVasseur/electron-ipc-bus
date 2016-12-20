@@ -2,6 +2,7 @@
     "compilerOptions": {
         "types" : ["node"],
 		"module": "commonjs",
+        "declaration": true,
 		"moduleResolution": "node",
 		"target": "es6",        
         "noImplicitAny": true,
@@ -16,9 +17,6 @@
         "outDir" : "build"
     },
 	"include": [
-		"./src/**/*.ts"
-	],
-	"exclude": [
-		"./src/typings/*.ts"
+		"./src/index.ts"
 	]
 }

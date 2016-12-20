@@ -1,4 +1,4 @@
-///<reference path="../../node_modules/@types/node/index.d.ts"/>
+///<reference types="node"/>
 
 declare module "easy-ipc" {
   import { Stream } from "stream";

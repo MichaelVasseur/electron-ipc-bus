@@ -1,16 +1,16 @@
 
-import * as IpcBusInterfaces from "./IpcBusInterfaces";
+import * as IpcBusInterfaces from "./IpcBus/IpcBusInterfaces";
 
-import { IpcBusBrokerClient } from "./IpcBusBroker";
+import { IpcBusBrokerClient } from "./IpcBus/IpcBusBroker";
 
 // tslint:disable-next-line:typedef-whitespace
 export function CreateIPCBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
     return new IpcBusBrokerClient(busPath) as IpcBusInterfaces.IpcBusBroker;
 }
 
-import { IpcBusNodeClient } from "./IpcBusNode";
-import { IpcBusMasterClient } from "./IpcBusMaster";
-import { IpcBusRendererClient } from "./IpcBusRenderer";
+import { IpcBusNodeClient } from "./IpcBus/IpcBusNode";
+import { IpcBusMasterClient } from "./IpcBus/IpcBusMaster";
+import { IpcBusRendererClient } from "./IpcBus/IpcBusRenderer";
 
 export enum ProcessType {
     Node,

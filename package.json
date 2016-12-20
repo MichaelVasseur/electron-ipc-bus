@@ -2,30 +2,69 @@
   "name": "electron-ipc-bus",
   "version": "1.0.0",
   "description": "A safe IPC bus for applications built on Electron.",
-  "main": "electron-ipc-bus.js",
-  "dependencies": {
-    "@types/node": "0.0.3",
-    "easy-ipc": "^0.2.2"
-  },
-  "devDependencies": {
-    "tslint": "^4.1.1",
-    "typescript": "^2.1.4",
-    "typings": "^2.0.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "tslint": "tslint",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Michael Vasseur",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/MichaelVasseur/electron-ipc-bus/issues"
   },
-  "homepage": "https://github.com/MichaelVasseur/electron-ipc-bus#readme"
+  "homepage": "https://github.com/MichaelVasseur/electron-ipc-bus#readme",
+  "maintainers": [
+    {
+      "name": "Michael Vasseur",
+      "email": "michael.vasseur@thomsonreuters.com"
+    },
+    {
+      "name": "Emmanuel Kimmerlin",
+      "email": "emmanuel.kimmerlin@thomsonreuters.com"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Thomas Moutel",
+      "email": "thomas.moutel@thomsonreuters.com"
+    }
+  ],
+  "main": "./lib/index.js",
+  "types": "./lib/index",
+  "files": [
+    "lib/"
+  ],
+  "os": [
+    "linux",
+    "macos",
+    "win"
+  ],
+  "dependencies": {
+    "@types/node": "0.0.3",
+    "easy-ipc": "^0.2.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-mocha": "^3.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-shell": "^0.5.2",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-tslint": "^6.1.1",
+    "gulp-typescript": "^3.1.3",
+    "merge2": "^1.0.2",
+    "tslint": "^4.1.1",
+    "tslint-microsoft-contrib": "^2.0.10",
+    "typescript": "^2.1.4",
+    "typings": "^2.0.0"
+  },
+  "scripts": {
+    "clean": "gulp clean-ts",
+    "build": "gulp compile-ts",
+    "tsc": "tsc",
+    "tslint": "tslint",
+    "gulp": "gulp",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
 }
