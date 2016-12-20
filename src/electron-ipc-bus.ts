@@ -4,9 +4,7 @@ import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import { IpcBusBrokerClient } from "./IpcBusBroker";
 
 // tslint:disable-next-line:typedef-whitespace
-export function CreateIPCBusBroker(): IpcBusInterfaces.IpcBusBroker {
-    const busPath = arguments.length >= 1 ? arguments[1] : null;
-
+export function CreateIPCBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
     return new IpcBusBrokerClient(busPath) as IpcBusInterfaces.IpcBusBroker;
 }
 
