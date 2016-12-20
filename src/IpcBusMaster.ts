@@ -38,7 +38,7 @@ class IpcBusBridge {
             const peerName = "Renderer_" + webContentsId;
             console.log("[IPCBus:Bridge] Forward message received on '" + topic + "' to peer #" + peerName);
             let webContents = this._webContents.fromId(webContentsId);
-            if (webContents != undefined) {
+            if (webContents != null) {
                 webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, msgTopic, msgContent, msgPeer);
             }
         });
@@ -54,7 +54,7 @@ class IpcBusBridge {
         console.log("[IPCBus:Bridge] Peer #" + peerName + " subscribed to topic '" + topic + "'");
         this._topicRendererRefs.addRef(topic, webContents.id, peerName, (topic: string, webContentsId: any, peerName: string, count: number) => {
             // If it is the first time this renderer is listening this topic, we have to add the callback
-            if (count == 1) {
+            if (count === 1) {
                 EventEmitter.prototype.addListener.call(this._eventEmitter, topic, this._lambdaListenerHandler);
                 console.log("[IPCBus:Bridge] Forward subscribe '" + topic + "' to IPC Broker");
                 webContents.on("destroyed", () => {
@@ -67,7 +67,7 @@ class IpcBusBridge {
 
     onUnsubscribeCB(topic: string, webContentsId: any, peerName: string, count: number) {
         // If it is the last time this renderer is listening this topic, we have to remove the callback
-        if (count == 0) {
+        if (count === 0) {
             console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker");
             EventEmitter.prototype.removeListener.call(this._eventEmitter, topic, this._lambdaListenerHandler);
         }

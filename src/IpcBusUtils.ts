@@ -83,7 +83,7 @@ export class TopicConnectionMap {
         }
         peerNamesMap.set(peerName, count);
         this._log("AddRef: topic '" + topic + "', conn " + conn + ", count = " + peerNamesMap.size);
-        if ((callback instanceof Function) == true) {
+        if ((callback instanceof Function) === true) {
             callback(topic, conn, peerName, peerNamesMap.size);
         }
     }
@@ -107,7 +107,7 @@ export class TopicConnectionMap {
                         peerNamesTemp.push(peerName);
                     }
                     // Test callback first to manage performance
-                    if ((callback instanceof Function) == true) {
+                    if ((callback instanceof Function) === true) {
                         for (let peerName of peerNamesTemp) {
                             peerNamesMap.delete(peerName);
                             callback(topic, conn, peerName, peerNamesMap.size);
@@ -135,14 +135,14 @@ export class TopicConnectionMap {
                             this._log("Release: peerName '" + peerName + "' is released");
                         }
                     }
-                    if ((callback instanceof Function) == true) {
+                    if ((callback instanceof Function) === true) {
                         callback(topic, conn, peerName, peerNamesMap.size);
                     }
                 }
-                if (peerNamesMap.size == 0) {
+                if (peerNamesMap.size === 0) {
                     connsMap.delete(conn);
                     this._log("Release: conn '" + conn + "' is released");
-                    if (connsMap.size == 0) {
+                    if (connsMap.size === 0) {
                         this.topicsMap.delete(topic);
                         this._log("Release: topic '" + topic + "' is released");
                     }
@@ -173,7 +173,7 @@ export class TopicConnectionMap {
     public forEach(callback: Function) {
         this._log("ForEach");
 
-        if ((callback instanceof Function) == false) {
+        if ((callback instanceof Function) === false) {
             this._error("ForEach: No callback provided !");
             return;
         }
@@ -186,7 +186,7 @@ export class TopicConnectionMap {
     public forEachTopic(topic: string, callback: Function) {
         this._log("ForEachTopic: " + topic);
 
-        if ((callback instanceof Function) == false) {
+        if ((callback instanceof Function) === false) {
             this._error("ForEachTopic: No callback provided !");
             return;
         }
@@ -206,7 +206,7 @@ export class TopicConnectionMap {
     public forEachConnection(callback: Function) {
         this._log("ForEachConn");
 
-        if ((callback instanceof Function) == false) {
+        if ((callback instanceof Function) === false) {
             this._error("ForEachConn: No callback provided !");
             return;
         }
