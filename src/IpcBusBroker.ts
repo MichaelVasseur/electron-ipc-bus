@@ -1,7 +1,6 @@
 /// <reference types="node" />
 /// <reference path="typings/easy-ipc.d.ts"/>
 
-//import { Ipc as BaseIpc } from "easy-ipc";
 import * as BaseIpc from "easy-ipc";
 import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from "./IpcBusUtils";
