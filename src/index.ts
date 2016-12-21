@@ -4,7 +4,7 @@ import * as IpcBusInterfaces from "./IpcBus/IpcBusInterfaces";
 import { IpcBusBrokerClient } from "./IpcBus/IpcBusBroker";
 
 // tslint:disable-next-line:typedef-whitespace
-export function CreateIPCBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
+export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
     return new IpcBusBrokerClient(busPath) as IpcBusInterfaces.IpcBusBroker;
 }
 
@@ -18,8 +18,8 @@ export enum ProcessType {
     Main,
     Renderer
 }
-export function CreateIPCBusForProcess(processTypeValue: ProcessType, busPath?: string): IpcBusInterfaces.IpcBusClient {
-    console.log("CreateIPCBusForClient process type = " + processTypeValue + ", busPath = " + busPath);
+export function CreateIpcBusForProcess(processTypeValue: ProcessType, busPath?: string): IpcBusInterfaces.IpcBusClient {
+    console.log("CreateIpcBusForClient process type = " + processTypeValue + ", busPath = " + busPath);
     switch (processTypeValue) {
         case ProcessType.Renderer:
             return new IpcBusRendererClient() as IpcBusInterfaces.IpcBusClient;
@@ -35,7 +35,7 @@ export function CreateIPCBusForProcess(processTypeValue: ProcessType, busPath?: 
     }
 }
 
-export function CreateIPCBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
+export function CreateIpcBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
     let processTypeValue: ProcessType = ProcessType.Node;
     let processType: string = ElectronUtils.GuessElectronProcessType();
     if (processType === "renderer") {
@@ -45,5 +45,5 @@ export function CreateIPCBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
         processTypeValue = ProcessType.Main;
     }
     console.log("Guess process type = " + ProcessType[processTypeValue]);
-    return CreateIPCBusForProcess(processTypeValue, busPath);
+    return CreateIpcBusForProcess(processTypeValue, busPath);
 }
