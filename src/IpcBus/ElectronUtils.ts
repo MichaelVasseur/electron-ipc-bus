@@ -1,9 +1,12 @@
 /// <reference path="typings/electron.d.ts"/>
+// Take care to not reference Nodes but Electron only
 
 export function GuessElectronProcessType(): string {
     let processType: string = process.type;
+    // May be null in Sandbox or in Node Process
     if (processType == null) {
         try {
+            // Will raise an exception in Node Process
             let ipcRend = require("electron").ipcRenderer;
             if (ipcRend != null) {
                 processType = "renderer";
@@ -18,7 +21,7 @@ export function GuessElectronProcessType(): string {
                 }
             }
         }
-        catch(e) {
+        catch (e) {
             processType = null; // Node
         }
     }

@@ -22,33 +22,33 @@ Ex, busPath set by command line: electron . --bus-path=***value***
 ### Initialization in the Main/Browser Node process
  
     const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Main, [, busPath]);
+    const ipcBus = ipcBusModule.CreateIPCBusForProcess(ipcBusModule.ProcessType.Main, [, busPath]);
 
-The require() loads the module. CreateIPCBusClient setups the client with the ***busPath*** that was used to start the broker.
+The require() loads the module. CreateIPCBusForProcess setups the client with the ***busPath*** that was used to start the broker.
 If ***busPath*** is not specified, the framework tries to get it from the command line with switch ***--bus-path***.
  
 Ex, busPath set by code:
 
-    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Main, '/my-ipc-bus-path');
+    const ipcBus = ipcBusModule.CreateIPCBusForProcess(ipcBusModule.ProcessType.Main, '/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Main);
+    const ipcBus = ipcBusModule.CreateIPCBusForProcess(ipcBusModule.ProcessType.Main);
 
 ### Initialization in a Node single process
  
 Ex, busPath set by code:
 
-    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Node, '/my-ipc-bus-path');
+    const ipcBus = ipcBusModule.CreateIPCBusForProcess(ipcBusModule.ProcessType.Node, '/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Node);
+    const ipcBus = ipcBusModule.CreateIPCBusForProcess(ipcBusModule.ProcessType.Node);
 
 ### Initialization in a Renderer (Sandboxed or not) process
 
     const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Renderer);
+    const ipcBus = ipcBusModule.CreateIPCBusForProcess(ipcBusModule.ProcessType.Renderer);
 
 NOTE : If the renderer is running in sandboxed mode, the code above
 must be run from the ***BrowserWindow***'s preload script. Otherwise, the
@@ -56,7 +56,13 @@ Electron's ipcRenderer is not accessible and the client cannot work.
 The code below to make the client accessible to the the Web page scripts.
 
     window.ipcBus = ipcBus;
- 
+
+#### Expiremental
+A single function creates the right IPCBus whatever the process (Renderer, Main or Node)
+
+    const ipcBusModule = require("electron-ipc-bus");
+    const ipcBus = ipcBusModule.CreateIPCBus([busPath]);
+
 
 ### Common API - IPCBus Client
 #### connect([handler])
