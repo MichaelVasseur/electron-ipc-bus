@@ -119,7 +119,7 @@ class IpcBusBridge {
 
 
 // Implementation for Master process
-export class IpcBusMasterClient extends IpcBusNodeClient {
+export class IpcBusMainClient extends IpcBusNodeClient {
     private _ipcBusBridge: IpcBusBridge;
 
     constructor(busPath?: string) {

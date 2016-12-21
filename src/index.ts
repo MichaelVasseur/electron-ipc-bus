@@ -9,23 +9,23 @@ export function CreateIPCBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBro
 }
 
 import { IpcBusNodeClient } from "./IpcBus/IpcBusNode";
-import { IpcBusMasterClient } from "./IpcBus/IpcBusMaster";
+import { IpcBusMainClient } from "./IpcBus/IpcBusMain";
 import { IpcBusRendererClient } from "./IpcBus/IpcBusRenderer";
+import * as ElectronUtils from "./IpcBus/ElectronUtils";
 
 export enum ProcessType {
     Node,
-    Browser,
+    Main,
     Renderer
 }
-
-export function CreateIPCBusClient(processType: ProcessType, busPath?: string): IpcBusInterfaces.IpcBusClient {
-    console.log("CreateIPCBusClient process type = " + processType + ", busPath = " + busPath);
-    switch (processType) {
+export function CreateIPCBusForProcess(processTypeValue: ProcessType, busPath?: string): IpcBusInterfaces.IpcBusClient {
+    console.log("CreateIPCBusForClient process type = " + processTypeValue + ", busPath = " + busPath);
+    switch (processTypeValue) {
         case ProcessType.Renderer:
             return new IpcBusRendererClient() as IpcBusInterfaces.IpcBusClient;
 
-        case ProcessType.Browser:
-            return new IpcBusMasterClient(busPath) as IpcBusInterfaces.IpcBusClient;
+        case ProcessType.Main:
+            return new IpcBusMainClient(busPath) as IpcBusInterfaces.IpcBusClient;
 
         case ProcessType.Node:
             return new IpcBusNodeClient(busPath) as IpcBusInterfaces.IpcBusClient;
@@ -33,4 +33,17 @@ export function CreateIPCBusClient(processType: ProcessType, busPath?: string): 
         default:
             return new IpcBusNodeClient(busPath) as IpcBusInterfaces.IpcBusClient;
     }
+}
+
+export function CreateIPCBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
+    let processTypeValue: ProcessType = ProcessType.Node;
+    let processType: string = ElectronUtils.GuessElectronProcessType();
+    if (processType === "renderer") {
+        processTypeValue = ProcessType.Renderer;
+    }
+    else if (processType === "browser") {
+        processTypeValue = ProcessType.Main;
+    }
+    console.log("Guess process type = " + ProcessType[processTypeValue]);
+    return CreateIPCBusForProcess(processTypeValue, busPath);
 }
