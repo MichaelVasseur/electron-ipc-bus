@@ -35,7 +35,7 @@
     "lib/"
   ],
   "dependencies": {
-    "@types/node": "0.0.3",
+    "@types/node": "^0.0.3",
     "easy-ipc": "^0.2.2"
   },
   "devDependencies": {

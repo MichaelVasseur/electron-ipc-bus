@@ -55,10 +55,10 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
     }
 
     // Set API
-    connect(callback: IpcBusInterfaces.IpcBusConnectFunc) {
+    connect(connectCallback: IpcBusInterfaces.IpcBusConnectFunc) {
         this._baseIpc.on("connect", (conn: any) => {
             this._busConn = conn;
-            callback("connect", this._busConn);
+            connectCallback("connect", this._busConn);
         });
         this._baseIpc.connect(this._busPath);
     }
@@ -71,21 +71,21 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, this._peerName, this._busConn);
     }
 
-    request(topic: string, data: Object | string, replyCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number) {
+    request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number) {
         if (timeoutDelay === undefined) {
             timeoutDelay = 2000; // 2s by default
         }
 
         // Prepare reply's handler
-        const replyHandler: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
+        const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
             console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-            this.unsubscribe(replyTopic, replyHandler);
-            replyCallback(topic, content, peerName);
+            this.unsubscribe(replyTopic, localRequestCallback);
+            requestCallback(topic, content, peerName);
         };
 
         // Set reply's topic 
         const replyTopic = IpcBusUtils.GenerateReplyTopic();
-        this.subscribe(replyTopic, replyHandler);
+        this.subscribe(replyTopic, localRequestCallback);
         // Execute request
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
     }
@@ -94,13 +94,13 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, this._peerName, this._busConn);
     }
 
-    subscribe(topic: string, handler: IpcBusInterfaces.IpcBusListenFunc) {
-        EventEmitter.prototype.addListener.call(this, topic, handler);
+    subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusListenFunc) {
+        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }
 
-    unsubscribe(topic: string, handler: IpcBusInterfaces.IpcBusListenFunc) {
-        EventEmitter.prototype.removeListener.call(this, topic, handler);
+    unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusListenFunc) {
+        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }
 }

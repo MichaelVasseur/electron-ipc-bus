@@ -12,11 +12,11 @@ export interface IpcBusRequestFunc {
 }
 
 export interface IpcBusClient {
-    connect(callback: IpcBusConnectFunc): void;
-    subscribe(topic: string, handler: IpcBusListenFunc): void;
+    connect(connectCallback: IpcBusConnectFunc): void;
+    subscribe(topic: string, listenCallback: IpcBusListenFunc): void;
     send(topic: string, payload: Object | string): void;
-    request(topic: string, payload: Object | string, replyHandler: IpcBusRequestFunc, timeoutDelay: number): void;
-    unsubscribe(topic: string, handler: IpcBusListenFunc): void;
+    request(topic: string, payload: Object | string, requestCallback: IpcBusRequestFunc, timeoutDelay: number): void;
+    unsubscribe(topic: string, listenCallback: IpcBusListenFunc): void;
     queryBrokerState(topic: string): void;
     close(): void;
 }
