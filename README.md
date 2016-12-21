@@ -1,33 +1,63 @@
 # electron-ipc-bus
-A safe IPC bus for applications built on Electron.
+A safe IPC bus for applications built on Electron. 
+Dispatching of messages is managed by a broker.
+For performance purpose, it is supposed to be instanciated in a process node instance.
 
 ## How to use
+### Initialization of the Broker (in a node process)
+    const ipcBusModule = require("electron-ipc-bus");
+    const ipcBusBroker = ipcBusModule.CreateIPCBusBroker([busPath]);
+
+The require() loads and setup the broker with the ***busPath***.
+If ***busPath*** is not specified, the framework tries to get it from the command line with switch ***--bus-path***.
+ 
+Ex, busPath set by code:
+
+    const ipcBusBroker = ipcBusModule.CreateIPCBusBroker('/my-ipc-bus-path');
+
+Ex, busPath set by command line: electron . --bus-path=***value***
+    
+    const ipcBusBroker = ipcBusModule.CreateIPCBusBroker();
+
 ### Initialization in a Renderer (Sandboxed or not) process
 
-    const ipcClient = require('electron-ipc-bus')('renderer')
+    const ipcBusModule = require("electron-ipc-bus");
+    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Renderer);
 
 NOTE : If the renderer is running in sandboxed mode, the code above
 must be run from the ***BrowserWindow***'s preload script. Otherwise, the
 Electron's ipcRenderer is not accessible and the client cannot work.
 The code below to make the client accessible to the the Web page scripts.
 
-    window.ipcClient = ipcClient
+    window.ipcBus = ipcBus;
  
-### Initialization in a Node (Main or Simple) process
+### Initialization in a Node Browser process
  
-     const ipcClient = require('electron-ipc-bus')('main', [, busPath])
+    const ipcBusModule = require("electron-ipc-bus");
+    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Browser, [, busPath]);
 
-The require() loads and setup the client with the ***busPath*** that was used to start the broker.
+The require() loads the module. CreateIPCBusClient setups the client with the ***busPath*** that was used to start the broker.
 If ***busPath*** is not specified, the framework tries to get it from the command line with switch ***--bus-path***.
  
 Ex, busPath set by code:
 
-    const ipcClient = require('electron-ipc-bus')('main', '/my-ipc-bus-path') 
+    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Browser, '/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcClient = require('electron-ipc-bus')('main') 
+    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Browser);
+
+### Initialization in a Node single process
  
+Ex, busPath set by code:
+
+    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Node, '/my-ipc-bus-path');
+
+Ex, busPath set by command line: electron . --bus-path=***value***
+    
+    const ipcBus = ipcBusModule.CreateIPCBusClient(ipcBusModule.ProcessType.Node);
+
+
 ### Common API
 #### connect([handler])
 
