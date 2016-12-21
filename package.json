@@ -1,6 +1,6 @@
 {
   "name": "electron-ipc-bus",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
@@ -33,11 +33,6 @@
   "types": "./lib/index",
   "files": [
     "lib/"
-  ],
-  "os": [
-    "linux",
-    "macos",
-    "win"
   ],
   "dependencies": {
     "@types/node": "0.0.3",
