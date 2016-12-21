@@ -35,8 +35,7 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
     }
 
     stop() {
-        if (this._ipcServer != null)
-        {
+        if (this._ipcServer != null) {
             this._ipcServer.close();
             this._ipcServer = null;
         }
