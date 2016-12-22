@@ -11,11 +11,8 @@ const path = require("path");
 const child_process = require("child_process");
 const Module = require("module")
 
-// const ipcBus = require("../electron-ipc-bus")()
-// const ipcBusModule = require("../../lib/electron-ipc-bus");
 const ipcBusModule = require("electron-ipc-bus");
-// const ipcBus = ipcBusModule.CreateIpcBusForClient(ipcBusModule.ProcessType.Node);
-// const ipcBusModule = require("../../");
+// const ipcBus = ipcBusModule.CreateIpcBusForClient("node");
 const ipcBus = ipcBusModule.CreateIpcBus();
 
 

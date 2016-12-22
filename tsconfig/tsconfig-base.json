@@ -2,7 +2,6 @@
     "compilerOptions": {
         "types" : ["node"],
 		"module": "commonjs",
-        "declaration": true,
 		"moduleResolution": "node",
 		"target": "es6",        
         "noImplicitAny": true,
@@ -18,10 +17,6 @@
 //        "inlineSourceMap": true,
         "stripInternal": true,
         "sourceMap": true,
-        "outDir" : "./lib"
-    },
-	"include": [
-		"./src/index.ts",
-		"./src/IpcBus/*.ts"
-	]
+        "outDir" : "../lib"
+    }
 }

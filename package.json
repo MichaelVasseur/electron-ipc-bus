@@ -39,28 +39,18 @@
     "easy-ipc": "^0.2.2"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
     "del": "^2.2.2",
     "del-cli": "^0.2.1",
-    "gulp": "^3.9.1",
-    "gulp-mocha": "^3.0.1",
-    "gulp-rename": "^1.2.2",
-    "gulp-shell": "^0.5.2",
-    "gulp-sourcemaps": "^1.6.0",
-    "gulp-tslint": "^6.1.1",
-    "gulp-typescript": "^3.1.3",
-    "merge2": "^1.0.2",
     "tslint": "^4.1.1",
     "tslint-microsoft-contrib": "^2.0.10",
     "typescript": "^2.1.4",
     "typings": "^2.0.0"
   },
   "scripts": {
-    "gulp-clean": "gulp clean-ts",
-    "gulp-build": "gulp build-ts",
-    "gulp-lint": "gulp lint-ts",
     "clean": "del-cli ./lib ./build ./dist",
-    "build": "tsc",
+    "build": "npm run build-js && npm run build-declaration",
+    "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
+    "build-declaration": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "lint": "tslint --project .",
     "gulp": "gulp",
     "test": "echo \"Error: no test specified\" && exit 1"

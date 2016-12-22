@@ -5,6 +5,7 @@ export function GuessElectronProcessType(): string {
     let processType: string = process.type;
     // May be null in Sandbox or in Node Process
     if (processType == null) {
+        processType = "node"; // Node by default
         try {
             // Will raise an exception in Node Process
             let ipcRend = require("electron").ipcRenderer;
@@ -16,13 +17,9 @@ export function GuessElectronProcessType(): string {
                 if (ipcMain != null) {
                     processType = "browser";
                 }
-                else {
-                    processType = null; // Node
-                }
             }
         }
         catch (e) {
-            processType = null; // Node
         }
     }
     return processType;

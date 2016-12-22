@@ -1,48 +1,13 @@
+import * as IpcBusApi from "./IpcBus/IpcBusApi";
 
-import * as IpcBusInterfaces from "./IpcBus/IpcBusInterfaces";
-
-import { IpcBusBrokerClient } from "./IpcBus/IpcBusBroker";
-
-export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
-    return new IpcBusBrokerClient(busPath) as IpcBusInterfaces.IpcBusBroker;
+export function CreateIpcBusBroker(busPath?: string): IpcBusApi.IpcBusBroker {
+    return IpcBusApi.CreateIpcBusBroker(busPath);
 }
 
-import { IpcBusNodeClient } from "./IpcBus/IpcBusNode";
-import { IpcBusMainClient } from "./IpcBus/IpcBusMain";
-import { IpcBusRendererClient } from "./IpcBus/IpcBusRenderer";
-import * as ElectronUtils from "./IpcBus/ElectronUtils";
-
-export enum ProcessType {
-    Node,
-    Main,
-    Renderer
-}
-export function CreateIpcBusForProcess(processTypeValue: ProcessType, busPath?: string): IpcBusInterfaces.IpcBusClient {
-    console.log("CreateIpcBusForClient process type = " + processTypeValue + ", busPath = " + busPath);
-    switch (processTypeValue) {
-        case ProcessType.Renderer:
-            return new IpcBusRendererClient() as IpcBusInterfaces.IpcBusClient;
-
-        case ProcessType.Main:
-            return new IpcBusMainClient(busPath) as IpcBusInterfaces.IpcBusClient;
-
-        case ProcessType.Node:
-            return new IpcBusNodeClient(busPath) as IpcBusInterfaces.IpcBusClient;
-
-        default:
-            return new IpcBusNodeClient(busPath) as IpcBusInterfaces.IpcBusClient;
-    }
+export function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusApi.IpcBusClient {
+    return IpcBusApi.CreateIpcBusForProcess(processType, busPath);
 }
 
-export function CreateIpcBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
-    let processTypeValue: ProcessType = ProcessType.Node;
-    let processType: string = ElectronUtils.GuessElectronProcessType();
-    if (processType === "renderer") {
-        processTypeValue = ProcessType.Renderer;
-    }
-    else if (processType === "browser") {
-        processTypeValue = ProcessType.Main;
-    }
-    console.log("Guess process type = " + ProcessType[processTypeValue]);
-    return CreateIpcBusForProcess(processTypeValue, busPath);
+export function CreateIpcBus(busPath?: string): IpcBusApi.IpcBusClient {
+    return IpcBusApi.CreateIpcBus(busPath);
 }

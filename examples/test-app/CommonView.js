@@ -18,7 +18,7 @@ function getTopicName(elt) {
         return "";
     }
     var topicName = elt.getAttribute("topic-name");
-    if (topicName !== undefined)
+    if ((topicName !== undefined) && (topicName !== null))
     {
         return topicName;
     }
@@ -77,7 +77,7 @@ function doUnsubscribeFromTopic(event) {
     var target = event.target;
     var topicName = getTopicName(target);
 
-    if (processToMonitor.Type() == "renderer") {
+    if (processToMonitor.Type() === "renderer") {
         ipcBus.connect(function () {
             ipcBus.unsubscribe(topicName, onIPCBus_ReceivedSend);
             onIPCElectron_UnsubscribeNotify(topicName);
