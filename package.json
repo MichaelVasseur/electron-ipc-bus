@@ -41,6 +41,7 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "del": "^2.2.2",
+    "del-cli": "^0.2.1",
     "gulp": "^3.9.1",
     "gulp-mocha": "^3.0.1",
     "gulp-rename": "^1.2.2",
@@ -55,10 +56,12 @@
     "typings": "^2.0.0"
   },
   "scripts": {
-    "clean": "gulp clean-ts",
-    "build": "gulp compile-ts",
-    "tsc": "tsc",
-    "tslint": "tslint",
+    "gulp-clean": "gulp clean-ts",
+    "gulp-build": "gulp build-ts",
+    "gulp-lint": "gulp lint-ts",
+    "clean": "del-cli ./lib ./build ./dist",
+    "build": "tsc",
+    "lint": "tslint --project .",
     "gulp": "gulp",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
