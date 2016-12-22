@@ -97,12 +97,12 @@ class IpcBusBridge {
         }
 
         // Prepare reply's handler
-        const replyHandler: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: any, peerName: string) => {
+        const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: any, peerName: string) => {
             console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, replyTopic, peerName, this._busConn);
             webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, replyTopic, content, peerName);
         };
-        EventEmitter.prototype.once.call(this._eventEmitter, replyTopic, replyHandler);
+        EventEmitter.prototype.once.call(this._eventEmitter, replyTopic, localRequestCallback);
 
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, replyTopic, peerName, this._busConn);
         // Execute request
