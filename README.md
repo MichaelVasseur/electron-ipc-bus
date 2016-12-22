@@ -1,7 +1,7 @@
 # electron-ipc-bus
 A safe IPC bus for applications built on Electron. 
 Dispatching of messages is managed by a broker.
-For performance purpose, it is supposed to be instanciated in a process node instance.
+For performance purpose, it is better to instanciate the broker in an independent process node instance.
 
 ## How to use
 ### Initialization of the Broker (in a node process)
@@ -119,7 +119,7 @@ NOTE : This folder is not packaged by NPM.
 To build the application :
 
     npm install
-    npm run bundle-preload
+    npm run build
 
 To run the application :
 

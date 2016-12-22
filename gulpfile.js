@@ -12,22 +12,22 @@ var gulp = require("gulp"),
 var merge = require("merge2");
 var shell = require("gulp-shell");
 
-// gulp.task('ts-lint', ['clean-ts'], function () {
-//     return gulp.src(['./**/*.ts', '!typings/**/*.ts', '!node_modules/**/*.ts']).pipe(tslint({
-//     formatter: "prose"
-// }))
-// .pipe(tslint.report());
-// });
+gulp.task("lint:ts", function () {
+     return tsProject.src().pipe(tslint({
+        formatter: "prose"
+    }))
+    .pipe(tslint.report());
+});
 
 /**
  * Compile TypeScript and include references to library and app .d.ts files.
  */
-gulp.task("compile-ts", function () {
-    var tsOutDir = "dist"; // tsProject.outDir;
+gulp.task("build:ts", function () {
+    var tsOutDir = "lib"; // tsProject.outDir;
     console.log(tsOutDir);
     var tsResult = tsProject.src()
-    .pipe(sourcemaps.init())
-    .pipe(tsProject());
+        .pipe(sourcemaps.init())
+        .pipe(tsProject());
     return merge([
         tsResult.dts.pipe(gulp.dest(tsOutDir)),
         tsResult.js.pipe(sourcemaps.write(".", {
@@ -50,14 +50,15 @@ gulp.task("compile-ts", function () {
 
 // });
 
-gulp.task("clean-ts", function (cb) {
+gulp.task("clean:ts", function () {
   var typeScriptGenFiles = [
-                              "./dist/**/*.*",    // path to all JS files auto gen'd by editor
-                              "./build/**/*.*"    // path to all JS files auto gen'd by editor
+                              "./dist/",
+                              "./build/",
+                              "./lib/"
                            ];
 
   // delete the files
-  return del(typeScriptGenFiles, cb);
+  return del(typeScriptGenFiles);
 });
  
 // gulp.task('test', ['copy-json'], function () {
@@ -73,4 +74,4 @@ gulp.task("pack", shell.task([
     ])
 );
 
-gulp.task("default", ["clean-ts", "ts-lint", "compile-ts", "copy-json", "test"]);
+gulp.task("default", ["clean:ts", "lint:ts", "build:ts"]);

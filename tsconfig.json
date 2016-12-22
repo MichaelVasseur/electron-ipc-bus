@@ -14,9 +14,10 @@
         "noUnusedLocals" : true,
 //        "noUnusedParameters" : true,
         "sourceMap": true,
-        "outDir" : "lib"
+        "outDir" : "./lib"
     },
 	"include": [
-		"./src/index.ts"
+		"./src/index.ts",
+		"./src/IpcBus/*.ts"
 	]
 }
