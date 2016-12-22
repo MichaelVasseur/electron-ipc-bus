@@ -11,8 +11,12 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "alwaysStrict" : true,
+        "noFallthroughCasesInSwitch" : true,
         "noUnusedLocals" : true,
 //        "noUnusedParameters" : true,
+//        "inlineSources": true,
+//        "inlineSourceMap": true,
+        "stripInternal": true,
         "sourceMap": true,
         "outDir" : "./lib"
     },
