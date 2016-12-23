@@ -80,15 +80,20 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         // Prepare reply's handler
         const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
             console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-            this.unsubscribe(replyTopic, localRequestCallback);
             requestCallback(topic, content, peerName);
         };
 
         // Set reply's topic 
         const replyTopic = IpcBusUtils.GenerateReplyTopic();
         this.subscribe(replyTopic, localRequestCallback);
+
         // Execute request
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
+
+        // Clean-up
+        setTimeout(() => {
+           this.unsubscribe(replyTopic, localRequestCallback);
+        }, timeoutDelay);
     }
 
     queryBrokerState(topic: string) {
