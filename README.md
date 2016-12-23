@@ -117,6 +117,8 @@ The test-app folder contains all sources of the testing application.
 NOTE : This folder is not packaged by NPM.
 
 To build the application :
+    cd examples
+    cd test-app
 
     npm install
     npm run build

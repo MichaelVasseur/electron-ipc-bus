@@ -51,8 +51,8 @@
     "build": "npm run build-js && npm run build-declaration",
     "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
     "build-declaration": "tsc -p ./tsconfig/tsconfig-declaration.json",
-    "lint": "tslint --project .",
-    "gulp": "gulp",
+    "tsc": "tsc",
+    "lint": "tslint",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
