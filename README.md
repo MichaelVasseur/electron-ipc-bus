@@ -36,7 +36,7 @@ Ex:
     ipcBusBroker.stop() 
 
 
-## Broker Ipc Bus client
+## Ipc Bus client
 
 ### Initialization in the Main/Browser Node process
  
