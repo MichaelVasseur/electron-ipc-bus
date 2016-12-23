@@ -47,7 +47,7 @@ function spawnNodeInstance(scriptPath) {
 
 // Window const
 var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
-var width = 900;
+var width = 1000;
 
 var MainProcess = (function () {
     function MainProcess() {

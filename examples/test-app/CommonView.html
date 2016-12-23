@@ -26,7 +26,7 @@
                 <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
                 <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
                 <div class="input-group">
-                    <span class="input-group-addon">AutoReply</span>
+                    <span class="input-group-addon">Auto Response</span>
                     <input class="form-control topicAutoReply" class="form-control" type="text" />
                 </div>
             </form>
@@ -45,32 +45,35 @@
                 <form class="form-inline topicSubscribe">
                     <div class="input-group">
                         <span class="input-group-addon">Topic</span>
-                        <input class="topicSubscribeName" class="form-control" type="text" />
+                        <input class="topicSubscribeName form-control" type="text" />
                     </div>
                     <input type="button" class="btn btn-primary" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
                 </form>
                 <form class="form-inline topicSend">
                     <div class="input-group">
                         <span class="input-group-addon">Topic</span>
-                        <input class="topicSendName" class="form-control" type="text" />
+                        <input class="topicSendName form-control" type="text" />
                     </div>
                     <div class="input-group">
                         <span class="input-group-addon">Message</span>
-                        <input class="topicSendMsg" class="form-control" type="text" />
+                        <input class="topicSendMsg form-control" type="text" />
                     </div>
                     <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
                 </form>
                 <form class="form-inline topicRequest">
                     <div class="input-group">
                         <span class="input-group-addon">Topic</span>
-                        <input class="topicRequestName" class="form-control" type="text" />
+                        <input class="topicRequestName form-control" type="text" />
                     </div>
                     <div class="input-group">
                         <span class="input-group-addon">Message</span>
-                        <input class="topicRequestMsg" class="form-control" type="text" />
+                        <input class="topicRequestMsg form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Response</span>
+                        <input class="topicRequestResponse form-control" type="text" />
                     </div>
                     <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Request"></<input>
-                    <input class="topicRequestResponse" class="form-control" type="text"/>
                 </form>
             </div>
         </div>
