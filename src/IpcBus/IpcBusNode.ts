@@ -77,7 +77,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
             timeoutDelay = 2000; // 2s by default
         }
 
-        // Prepare reply's handler
+        // Prepare reply's handler, we have to change the replyTopic to topic
         const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
             console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
             requestCallback(topic, content, peerName);

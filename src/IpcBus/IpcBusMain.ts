@@ -26,7 +26,7 @@ class IpcBusBridge {
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, (event: any, topic: string) => this.onSubscribe(event, topic));
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, (event: any, topic: string) => this.onUnsubscribe(event, topic));
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND, (event: any, topic: string, data: any) => this.onSend(event, topic, data));
-        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, (event: any, topic: string, data: any, replyTopic: string, timeoutDelay: number) => this.onRequest(event, topic, data, replyTopic, timeoutDelay));
+        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, (event: any, topic: string, data: any, replyTopic: string) => this.onRequest(event, topic, data, replyTopic));
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, (event: any, topic: string) => this.onQueryState(event, topic));
         console.log("[IPCBus:Bridge] Installed");
     }
@@ -87,32 +87,11 @@ class IpcBusBridge {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, peerName, this._busConn);
     }
 
-    onRequest(event: any, topic: string, data: any, replyTopic: string, timeoutDelay: number): void {
+    onRequest(event: any, topic: string, data: any, replyTopic: string): void {
         const webContents = event.sender;
         const peerName = "Renderer_" + webContents.id;
         console.log("[IPCBus:Bridge] Peer #" + peerName + " sent request on '" + topic + "'");
-        if (timeoutDelay == null) {
-
-            timeoutDelay = 2000; // 2s by default
-        }
-
-        // Prepare reply's handler
-        const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: any, peerName: string) => {
-            console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-            webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, replyTopic, content, peerName);
-        };
-        EventEmitter.prototype.addListener.call(this._eventEmitter, replyTopic, localRequestCallback);
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, replyTopic, peerName, this._busConn);
-
-        // Execute request
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, peerName, this._busConn);
-
-        // Clean-up
-        setTimeout(() => {
-            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, replyTopic, peerName, this._busConn);
-            EventEmitter.prototype.removeListener.call(this._eventEmitter, replyTopic, localRequestCallback);
-        }, timeoutDelay);
-
     }
 
     onQueryState(event: any, topic: string) {

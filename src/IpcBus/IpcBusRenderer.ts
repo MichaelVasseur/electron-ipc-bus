@@ -60,21 +60,21 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
             timeoutDelay = 2000;
         }
 
-        // Prepare reply's handler
+        // Prepare reply's handler, we have to change the replyTopic to topic
         const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
             console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
             requestCallback(topic, content, peerName);
         };
 
         const replyTopic = IpcBusUtils.GenerateReplyTopic();
-        EventEmitter.prototype.addListener.call(this, replyTopic, localRequestCallback);
+        this.subscribe(replyTopic, localRequestCallback);
 
         // Execute request
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic, timeoutDelay);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic);
 
         // Clean-up
         setTimeout(() => {
-           EventEmitter.prototype.removeListener.call(this, replyTopic, localRequestCallback);
+            this.unsubscribe(replyTopic, localRequestCallback);
         }, timeoutDelay);
     }
 
