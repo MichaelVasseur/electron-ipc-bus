@@ -119,6 +119,7 @@ class IpcBusBridge {
 
 
 // Implementation for Master process
+/** @internal */
 export class IpcBusMainClient extends IpcBusNodeClient {
     private _ipcBusBridge: IpcBusBridge;
 

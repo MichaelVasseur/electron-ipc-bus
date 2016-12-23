@@ -76,7 +76,7 @@ The code below to make the client accessible to the the Web page scripts.
 
     window.ipcBus = ipcBus;
 
-### Expiremental
+### Experimental
 A single function creates the right Ipc Bus whatever the process (Renderer, Main or Node)
 
     const ipcBusModule = require("electron-ipc-bus");

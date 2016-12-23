@@ -5,6 +5,7 @@ import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from "./IpcBusUtils";
 
 // Implementation for Renderer process
+/** @internal */
 export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfaces.IpcBusClient {
     private _ipcObj: any;
     private _connected?: boolean = null;

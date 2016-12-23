@@ -18,10 +18,12 @@ function uuid(): string {
     return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
 }
 
+/** @internal */
 export function GenerateReplyTopic(): string {
     return "replyTopic/" + uuid();
 }
 
+/** @internal */
 export function GetCmdLineArgValue(argName: string): string {
     for (let i = 0; i < process.argv.length; ++i) {
         if (process.argv[i].startsWith("--" + argName)) {
@@ -35,6 +37,7 @@ export function GetCmdLineArgValue(argName: string): string {
 
 // export interface TopicConnectionMapCB { (peerNames?: Map<string, number>, conn?: any, topic?: string, count?: number): void };
 
+/** @internal */
 export class TopicConnectionMap {
 
     private topicsMap: Map<string, Map<any, Map<string, number>>>;

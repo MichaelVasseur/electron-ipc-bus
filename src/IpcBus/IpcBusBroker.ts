@@ -5,6 +5,7 @@ import * as BaseIpc from "easy-ipc";
 import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from "./IpcBusUtils";
 
+/** @internal */
 export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc: BaseIpc;
     private _ipcServer: any = null;

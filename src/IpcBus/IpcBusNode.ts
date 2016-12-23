@@ -7,6 +7,7 @@ import * as IpcBusInterfaces from "./IpcBusInterfaces";
 import * as IpcBusUtils from "./IpcBusUtils";
 
 // Implementation for Node process
+/** @internal */
 export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.IpcBusClient {
     protected _busPath: string;
     protected _baseIpc: BaseIpc;
