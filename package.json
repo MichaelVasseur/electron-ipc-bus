@@ -30,10 +30,7 @@
     }
   ],
   "main": "./lib/index.js",
-  "types": "./lib/index",
-  "files": [
-    "lib/"
-  ],
+  "types": "./lib/index.d.ts",
   "dependencies": {
     "@types/node": "^0.0.3",
     "easy-ipc": "^0.2.2"
@@ -52,7 +49,6 @@
     "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
     "build-declaration": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "tsc": "tsc",
-    "lint": "tslint",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "tslint"
   }
 }

@@ -3,7 +3,8 @@ A safe IPC bus for applications built on Electron.
 Dispatching of messages is managed by a broker.
 For performance purpose, it is better to instanciate the broker in an independent process node instance.
 
-## How to use
+# How to use
+## Ipc Bus Broker
 ### Initialization of the Broker (in a node process)
     const ipcBusModule = require("electron-ipc-bus");
     const ipcBusBroker = ipcBusModule.CreateIpcBusBroker([busPath]);
@@ -18,6 +19,24 @@ Ex, busPath set by code:
 Ex, busPath set by command line: electron . --bus-path=***value***
     
     const ipcBusBroker = ipcBusModule.CreateIpcBusBroker();
+
+### API
+#### start()
+
+Ex:
+   
+    ipcBusBroker.start() 
+
+Start the messages dispatcher
+
+#### stop()
+
+Ex:
+   
+    ipcBusBroker.stop() 
+
+
+## Broker Ipc Bus client
 
 ### Initialization in the Main/Browser Node process
  
@@ -64,7 +83,7 @@ A single function creates the right Ipc Bus whatever the process (Renderer, Main
     const ipcBus = ipcBusModule.CreateIpcBus([busPath]);
 
 
-### Common API - IPCBus Client
+### Common API
 #### connect([handler])
 
 Ex:

@@ -45,6 +45,10 @@ function spawnNodeInstance(scriptPath) {
     return child_process.spawn(process.argv[0], args, options);
 }
 
+// Window const
+var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
+var width = 900;
+
 var MainProcess = (function () {
     function MainProcess() {
         var processId = 0;
@@ -58,9 +62,8 @@ var MainProcess = (function () {
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
         processMainFromView.on("new-process", doNewProcess);
 
-        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
         const mainWindow = new BrowserWindow({
-            width: 800, height: 800,
+            width: width, height: 800,
             webPreferences:
             {
                 preload: preloadFile
@@ -134,9 +137,8 @@ var MainProcess = (function () {
 
 var RendererProcess = (function () {
     function RendererProcess(processId) {
-        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
         const rendererWindow = new BrowserWindow({
-            width: 800, height: 600,
+            width: width, height: 600,
             webPreferences:
             {
                 preload: preloadFile
@@ -183,9 +185,8 @@ var NodeProcess = (function () {
         nodeInstance.process.on("message", onIPCProcess_Message);
 
         nodeInstance.process.send(JSON.stringify({ action: "init", args: { title: "Node", type: "node", id: processId } }));
-        var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
         const nodeWindow = new BrowserWindow({
-            width: 800, height: 600,
+            width: width, height: 600,
             webPreferences:
             {
                 preload: preloadFile
