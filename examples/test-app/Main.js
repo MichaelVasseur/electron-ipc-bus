@@ -57,6 +57,7 @@ var MainProcess = (function () {
         // Listen view messages
         var processMainFromView = new ProcessConnector("browser", ipcMain);
         processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
+        processMainFromView.onRequestPromiseMessage(onIPCElectron_RequestPromiseMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
@@ -125,10 +126,21 @@ var MainProcess = (function () {
         }
 
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
-            console.log("Master - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
+            console.log("Master - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
             ipcBus.request(topicName, topicMsg, function (topic, content, peerName) {
                 processMainToView.postRequestMessageDone(topic, topicMsg, content, peerName);
             });
+        }
+
+        function onIPCElectron_RequestPromiseMessage(topicName, topicMsg) {
+            console.log("Master - onIPCElectron_RequestPromiseMessage : topic:" + topicName + " msg:" + topicMsg);
+            ipcBus.requestPromise(topicName, topicMsg)
+                .then((requestPromiseArgs) => {
+                    processMainToView.postRequestPromiseThen(requestPromiseArgs);
+                })
+                .catch((err) => {
+                    processMainToView.postRequestPromiseCatch(err);
+                });
         }
 
     }

@@ -1,10 +1,8 @@
-function doNewNodeInstance(event)
-{
+function doNewNodeInstance(event) {
     processToMonitor.send("new-process", "node");
 }
 
-function doNewRendererInstance(event)
-{
+function doNewRendererInstance(event) {
     processToMonitor.send("new-process", "renderer");
 }
 
@@ -13,13 +11,11 @@ function getProcessElt() {
 }
 
 function getTopicName(elt) {
-    if (elt == null)
-    {
+    if (elt == null) {
         return "";
     }
     var topicName = elt.getAttribute("topic-name");
-    if ((topicName !== undefined) && (topicName !== null))
-    {
+    if ((topicName !== undefined) && (topicName !== null)) {
         return topicName;
     }
     return getTopicName(elt.parentElement);
@@ -63,7 +59,7 @@ function onIPCElectron_SubscribeNotify(topicName) {
 
     var topicAutoReplyElt = topicItemElt.querySelector(".topicAutoReply");
     topicAutoReplyElt.value = topicName + " - AutoReply";
-    
+
 
     //    subscriptionsListElt.appendChild(topicItemElt);
     topicItemElt.style.display = "block";
@@ -129,24 +125,34 @@ function doRequestPromiseMessageToTopic(event) {
     var topicMsgElt = topicItemElt.querySelector(".topicRequestPromiseMsg");
     var topicMsg = topicMsgElt.value;
 
-    var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
-
     var args = { topic: topicName, msg: topicMsg };
     if (processToMonitor.Type() == "renderer") {
         let p = ipcBus.requestPromise(topicName, topicMsg, 1000)
-        .then((requestPromiseArgs) => {
-            if (topicRespElt != null) {
-                topicRespElt.value += requestPromiseArgs.payload + " from (" + requestPromiseArgs.peerName + ")";
-            }
-        })
-        .catch((err) => {
-            if (topicRespElt != null) {
-                topicRespElt.value += "Error:" + err;
-            }
-        });
+            .then((requestPromiseArgs) => {
+                onIPCBus_OnRequestPromiseThen(requestPromiseArgs);
+            })
+            .catch((err) => {
+                onIPCBus_OnRequestPromiseCatch(err);
+            });
     }
     else {
-        processToMonitor.postRequestMessage(topicName, topicMsg);
+        processToMonitor.postRequestPromiseMessage(topicName, topicMsg);
+    }
+}
+
+function onIPCBus_OnRequestPromiseThen(requestPromiseArgs) {
+    console.log("onIPCBus_OnRequestPromiseThen : requestPromiseArgs:" + requestPromiseArgs)
+    var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
+    if (topicRespElt != null) {
+        topicRespElt.value += requestPromiseArgs.payload + " from (" + requestPromiseArgs.peerName + ")";
+    }
+}
+
+function onIPCBus_OnRequestPromiseCatch(err) {
+    console.log("onIPCBus_OnRequestPromiseCatch : err:" + err)
+    var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
+    if (topicRespElt != null) {
+        topicRespElt.value += "Error:" + err;
     }
 }
 
@@ -184,8 +190,7 @@ function onIPC_Received(topicName, msgContent, topicToReply) {
     var topicItemElt = SubscriptionsListElt.querySelector(".subscription-" + topicName);
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector(".topicAutoReply");
-        if (topicToReply != undefined)
-        {
+        if (topicToReply != undefined) {
             msgContent += " from (" + topicToReply + ")";
             ipcBus.send(topicToReply, topicAutoReplyElt.value);
         }
@@ -244,7 +249,7 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
 
 var processToMonitor = null;
 ipcRenderer.on("initializeWindow", function (event, data) {
-    const args = (data !== undefined)? data: event;
+    const args = (data !== undefined) ? data : event;
     console.log("initializeWindow" + args);
 
     var processMonitorElt = document.getElementById("ProcessMonitor");
@@ -268,6 +273,8 @@ ipcRenderer.on("initializeWindow", function (event, data) {
 
     processToMonitor = new ProcessConnector(args["type"], ipcRenderer, args["id"]);
     if (args["type"] === "browser") {
+        processToMonitor.onRequestPromiseThen(onIPCBus_OnRequestPromiseThen);
+        processToMonitor.onRequestPromiseCatch(onIPCBus_OnRequestPromiseCatch);
         processToMonitor.onRequestMessageDone(onIPCBus_ReceivedRequestNotify);
         processToMonitor.onSendMessageDone(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
@@ -289,6 +296,8 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         });
     }
     if (args["type"] === "node") {
+        processToMonitor.onRequestPromiseThen(onIPCBus_OnRequestPromiseThen);
+        processToMonitor.onRequestPromiseCatch(onIPCBus_OnRequestPromiseCatch);
         processToMonitor.onRequestMessageDone(onIPCBus_ReceivedRequestNotify);
         processToMonitor.onSendMessageDone(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);

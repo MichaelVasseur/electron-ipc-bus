@@ -108,6 +108,40 @@ ProcessConnector = (function () {
             });
         }
 
+        this.postRequestPromiseMessage = function _postRequestPromiseMessage(topicName, topicMsg) {
+            _ipc.send(buildChannel("requestPromiseMessage"), { topic: topicName, msg: topicMsg });
+        }
+
+        this.onRequestPromiseMessage = function _onRequestPromiseMessage(callback) {
+            _ipc.on(buildChannel("requestPromiseMessage"), function (event, data) {
+                const response = (data !== undefined) ? data : event;
+                callback(response["topic"], response["msg"]);
+            });
+        }
+
+        this.postRequestPromiseThen = function _postRequestPromiseThen(requestPromiseArgs) {
+            _ipc.send(buildChannel("requestPromiseMessage-then"), requestPromiseArgs);
+        }
+
+        this.onRequestPromiseThen = function _onRequestPromiseThen(callback) {
+            _ipc.on(buildChannel("requestPromiseMessage-then"), function (event, data) {
+                const response = (data !== undefined) ? data : event;
+                callback(response);
+            });
+        }
+
+        this.postRequestPromiseCatch = function _postRequestPromiseCatch(err) {
+            _ipc.send(buildChannel("requestPromiseMessage-catch"), err);
+        }
+
+        this.onRequestPromiseCatch = function _onRequestPromiseCatch(callback) {
+            _ipc.on(buildChannel("requestPromiseMessage-catch"), function (event, data) {
+                const response = (data !== undefined) ? data : event;
+                callback(response);
+            });
+        }
+
+
         this.send = function _send(eventName, data) {
             _ipc.send(buildChannel(eventName), data);
         }
