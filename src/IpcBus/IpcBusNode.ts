@@ -96,6 +96,36 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         }, timeoutDelay);
     }
 
+    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestPromise> {
+        if (timeoutDelay == null) {
+            timeoutDelay = 2000;
+        }
+
+        let p = new Promise<IpcBusInterfaces.IpcBusRequestPromise>((resolve, reject) => {
+            // Prepare reply's handler, we have to change the replyTopic to topic
+            const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
+                console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
+                this.unsubscribe(replyTopic, localRequestCallback);
+                resolve({ topic: topic, payload: content, peerName: peerName});
+            };
+
+            const replyTopic = IpcBusUtils.GenerateReplyTopic();
+            this.subscribe(replyTopic, localRequestCallback);
+
+            // Execute request
+            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
+
+            // Clean-up
+            setTimeout(() => {
+                if (EventEmitter.prototype.listenerCount.call(this, replyTopic) > 0) {
+                    this.unsubscribe(replyTopic, localRequestCallback);
+                    reject("timeout");
+                }
+            }, timeoutDelay);
+        });
+        return p;
+    }
+
     queryBrokerState(topic: string) {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, this._peerName, this._busConn);
     }

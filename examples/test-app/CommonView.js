@@ -41,7 +41,7 @@ function doSubscribeToTopic(event) {
         });
     }
     else {
-        processToMonitor.sendSubscribe(topicName);
+        processToMonitor.postSubscribe(topicName);
     }
 }
 
@@ -84,7 +84,7 @@ function doUnsubscribeFromTopic(event) {
         });
     }
     else {
-        processToMonitor.sendUnsubscribe(topicName);
+        processToMonitor.postUnsubscribe(topicName);
     }
 }
 
@@ -114,7 +114,39 @@ function doRequestMessageToTopic(event) {
         ipcBus.request(topicName, topicMsg, onIPCBus_ReceivedRequest, 1000);
     }
     else {
-        processToMonitor.requestMessage(topicName, topicMsg);
+        processToMonitor.postRequestMessage(topicName, topicMsg);
+    }
+}
+
+function doRequestPromiseMessageToTopic(event) {
+    console.log("doRequestMessageToTopic:" + event);
+
+    var target = event.target;
+    var topicItemElt = target.parentElement;
+    var topicNameElt = topicItemElt.querySelector(".topicRequestPromiseName");
+    var topicName = topicNameElt.value;
+
+    var topicMsgElt = topicItemElt.querySelector(".topicRequestPromiseMsg");
+    var topicMsg = topicMsgElt.value;
+
+    var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
+
+    var args = { topic: topicName, msg: topicMsg };
+    if (processToMonitor.Type() == "renderer") {
+        let p = ipcBus.requestPromise(topicName, topicMsg, 1000)
+        .then((requestPromiseArgs) => {
+            if (topicRespElt != null) {
+                topicRespElt.value += requestPromiseArgs.payload + " from (" + requestPromiseArgs.peerName + ")";
+            }
+        })
+        .catch((err) => {
+            if (topicRespElt != null) {
+                topicRespElt.value += "Error:" + err;
+            }
+        });
+    }
+    else {
+        processToMonitor.postRequestMessage(topicName, topicMsg);
     }
 }
 
@@ -134,7 +166,7 @@ function doSendMessageToTopic(event) {
         ipcBus.send(topicName, topicMsg);
     }
     else {
-        processToMonitor.sendMessage(topicName, topicMsg);
+        processToMonitor.postSendMessage(topicName, topicMsg);
     }
 }
 
@@ -165,9 +197,9 @@ function onIPC_Received(topicName, msgContent, topicToReply) {
 function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
     console.log("onIPCBus_ReceivedRequest : msgTopic:" + topicName + " msgContent:" + msgContent)
 
-    var topicItemElt = document.querySelector(".topicRequestResponse");
-    if (topicItemElt != null) {
-        topicItemElt.value += msgContent + " from (" + peerName + ")";
+    var topicRespElt = document.querySelector(".topicRequestResponse");
+    if (topicRespElt != null) {
+        topicRespElt.value += msgContent + " from (" + peerName + ")";
     }
 }
 
@@ -219,43 +251,7 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     processMonitorElt.setAttribute("topic-process", args["type"]);
 
     var processTitleElt = document.getElementById("ProcessTitle");
-
-    if (args["type"] === "main") {
-        processToMonitor = new ProcessConnector("main", ipcRenderer);
-        processToMonitor.onReceivedSendNotify(onIPCBus_ReceivedSendNotify);
-        processToMonitor.onReceivedRequestNotify(onIPCBus_ReceivedRequestNotify);
-        processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
-        processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
-
-        var processToolbarElt = document.getElementById("ProcessToolbar");
-        processToolbarElt.style.display = "block";
-
-        var processBrokerStateElt = document.getElementById("ProcessBrokerState");
-        processBrokerStateElt.style.display = "block";
-
-        processTitleElt.textContent = args["peerName"];
-        ipcBus.connect(function () {
-            ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
-            doQueryBrokerState();
-        });
-    }
-    if (args["type"] === "renderer") {
-        processToMonitor = new ProcessConnector("renderer", args["id"], ipcRenderer);
-        processTitleElt.textContent = args["peerName"];
-        ipcBus.connect(function () {
-        });
-    }
-    if (args["type"] === "node") {
-        processToMonitor = new ProcessConnector("node", args["id"], ipcRenderer);
-        processToMonitor.onReceivedRequestNotify(onIPCBus_ReceivedRequestNotify);
-        processToMonitor.onReceivedSendNotify(onIPCBus_ReceivedSendNotify);
-        processToMonitor.onSubscribeNotify(onIPCElectron_SubscribeNotify);
-        processToMonitor.onUnsubscribeNotify(onIPCElectron_UnsubscribeNotify);
-        processTitleElt.textContent = args["peerName"];
-        ipcBus.connect(function () {
-        });
-    }
-//    processTitleElt.textContent += " - WebContents ID = "+ args["webContentsId"];
+    processTitleElt.textContent = args["peerName"];
     document.title = processTitleElt.textContent;
 
     var processMonitorDefaultSubscribe = processMonitorElt.querySelector(".topicSubscribeName");
@@ -266,5 +262,39 @@ ipcRenderer.on("initializeWindow", function (event, data) {
 
     var processMonitorDefaultRequest = processMonitorElt.querySelector(".topicRequestMsg");
     processMonitorDefaultRequest.value = "RequestFrom:" + args["peerName"];
+
+    var processMonitorDefaultRequestPromise = processMonitorElt.querySelector(".topicRequestPromiseMsg");
+    processMonitorDefaultRequestPromise.value = "PromiseFrom:" + args["peerName"];
+
+    processToMonitor = new ProcessConnector(args["type"], ipcRenderer, args["id"]);
+    if (args["type"] === "browser") {
+        processToMonitor.onRequestMessageDone(onIPCBus_ReceivedRequestNotify);
+        processToMonitor.onSendMessageDone(onIPCBus_ReceivedSendNotify);
+        processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
+        processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
+
+        var processToolbarElt = document.getElementById("ProcessToolbar");
+        processToolbarElt.style.display = "block";
+
+        var processBrokerStateElt = document.getElementById("ProcessBrokerState");
+        processBrokerStateElt.style.display = "block";
+
+        ipcBus.connect(function () {
+            ipcBus.subscribe("brokerStateResults", onIPC_BrokerStatusTopic);
+            doQueryBrokerState();
+        });
+    }
+    if (args["type"] === "renderer") {
+        ipcBus.connect(function () {
+        });
+    }
+    if (args["type"] === "node") {
+        processToMonitor.onRequestMessageDone(onIPCBus_ReceivedRequestNotify);
+        processToMonitor.onSendMessageDone(onIPCBus_ReceivedSendNotify);
+        processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
+        processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
+        ipcBus.connect(function () {
+        });
+    }
 });
 

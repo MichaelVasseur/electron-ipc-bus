@@ -78,6 +78,41 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         }, timeoutDelay);
     }
 
+    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestPromise> {
+        if (this._connected !== true) {
+            throw new Error("Please connect first");
+        }
+
+        if (timeoutDelay == null) {
+            timeoutDelay = 2000;
+        }
+
+        let p = new Promise<IpcBusInterfaces.IpcBusRequestPromise>((resolve, reject) => {
+            // Prepare reply's handler, we have to change the replyTopic to topic
+            const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
+                console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
+                this.unsubscribe(replyTopic, localRequestCallback);
+                resolve({ topic: topic, payload: content, peerName: peerName});
+            };
+
+            const replyTopic = IpcBusUtils.GenerateReplyTopic();
+            this.subscribe(replyTopic, localRequestCallback);
+
+            // Execute request
+            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic);
+
+            // Clean-up
+            setTimeout(() => {
+                if (EventEmitter.prototype.listenerCount.call(this, replyTopic) > 0) {
+                    this.unsubscribe(replyTopic, localRequestCallback);
+                    reject("timeout");
+                }
+            }, timeoutDelay);
+        });
+        return p;
+    }
+
+
     queryBrokerState(topic: string): void {
         if (this._connected !== true) {
             throw new Error("Please connect first");

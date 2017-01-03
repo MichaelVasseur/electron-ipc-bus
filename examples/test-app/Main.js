@@ -55,7 +55,7 @@ var MainProcess = (function () {
         var instances = new Map;
 
         // Listen view messages
-        var processMainFromView = new ProcessConnector("main", ipcMain);
+        var processMainFromView = new ProcessConnector("browser", ipcMain);
         processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
@@ -78,9 +78,9 @@ var MainProcess = (function () {
 
         mainWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
 
-        var processMainToView = new ProcessConnector("main", mainWindow.webContents);
+        var processMainToView = new ProcessConnector("browser", mainWindow.webContents);
         mainWindow.webContents.on("dom-ready", function () {
-            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "main", peerName: "Master", webContentsId: mainWindow.webContents.id });
+            mainWindow.webContents.send("initializeWindow", { title: "Main", type: "browser", peerName: "Main", webContentsId: mainWindow.webContents.id });
         });
 
         function doNewProcess(processType) {
@@ -104,19 +104,19 @@ var MainProcess = (function () {
 
         function onIPCElectron_ReceivedMessage(topicName, topicMsg, topicToReply) {
             console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
-            processMainToView.receivedSendNotify(topicName, topicMsg, topicToReply);
+            processMainToView.postSendMessageDone(topicName, topicMsg, topicToReply);
         }
 
         function onIPCElectron_Subscribe(topicName) {
             console.log("Master - onIPCElectron_Subscribe:" + topicName);
             ipcBus.subscribe(topicName, onIPCElectron_ReceivedMessage);
-            processMainToView.sendSubscribeNotify(topicName);
+            processMainToView.postSubscribeDone(topicName);
         }
 
         function onIPCElectron_Unsubscribe(topicName) {
             console.log("Master - onIPCElectron_Subscribe:" + topicName);
             ipcBus.unsubscribe(topicName, onIPCElectron_ReceivedMessage);
-            processMainToView.sendUnsubscribeNotify(topicName);
+            processMainToView.postUnsubscribeDone(topicName);
         }
 
         function onIPCElectron_SendMessage(topicName, topicMsg) {
@@ -127,7 +127,7 @@ var MainProcess = (function () {
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log("Master - onIPCElectron_SendMessage : topic:" + topicName + " msg:" + topicMsg);
             ipcBus.request(topicName, topicMsg, function (topic, content, peerName) {
-                processMainToView.receivedRequestNotify(topic, topicMsg, content, peerName);
+                processMainToView.postRequestMessageDone(topic, topicMsg, content, peerName);
             });
         }
 
@@ -175,7 +175,7 @@ var NodeProcess = (function () {
     function NodeProcess(processId) {
         var nodeInstance = new NodeInstance();
         // Listen view messages
-        var processMainFromView = new ProcessConnector("node", processId, ipcMain);
+        var processMainFromView = new ProcessConnector("node", ipcMain, processId);
         processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
@@ -192,7 +192,7 @@ var NodeProcess = (function () {
                 preload: preloadFile
             }
         });
-        var processMainToView = new ProcessConnector("node", processId, nodeWindow.webContents);
+        var processMainToView = new ProcessConnector("node", nodeWindow.webContents, processId);
         nodeWindow.loadURL("file://" + path.join(__dirname, "CommonView.html"));
         nodeWindow.on("close", function () {
             nodeInstance.process.kill();
@@ -216,16 +216,16 @@ var NodeProcess = (function () {
             if (msgJSON.hasOwnProperty("action")) {
                 switch (msgJSON["action"]) {
                     case "receivedRequest":
-                        processMainToView.receivedRequestNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["response"], msgJSON["args"]["peerName"]);
+                        processMainToView.postRequestMessageDone(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["response"], msgJSON["args"]["peerName"]);
                         break;
                     case "receivedSend":
-                        processMainToView.receivedSendNotify(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["topicToReply"]);
+                        processMainToView.postSendMessageDone(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["topicToReply"]);
                         break;
                     case "subscribe":
-                        processMainToView.sendSubscribeNotify(msgJSON["topic"]);
+                        processMainToView.postSubscribeDone(msgJSON["topic"]);
                         break;
                     case "unsubscribe":
-                        processMainToView.sendUnsubscribeNotify(msgJSON["topic"]);
+                        processMainToView.postUnsubscribeDone(msgJSON["topic"]);
                         break;
                 }
             }
@@ -247,7 +247,7 @@ var NodeProcess = (function () {
                     topic: topicName
                 };
             nodeInstance.process.send(JSON.stringify(msgJSON));
-            processMainToView.sendUnsubscribeNotify(topicName);
+            processMainToView.postUnsubscribeDone(topicName);
         };
 
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
