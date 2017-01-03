@@ -95,8 +95,8 @@ Subscribe to the specified topic. Each time a message is received on this topic,
 handler is called with the data related to the message.
 Ex:
 
-    function HelloHandler(topic, content) {
-       console.log("Received Hello! from '" + content.name + "'")
+    function HelloHandler(topic, content, peerName) {
+       console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)
     }
     ipcBus.subscribe("Hello!", HelloHandler)
 
@@ -116,6 +116,18 @@ Ex:
     }        
 
     ipcBus.request("compute", "2*PI*9", processRequestResult )
+
+To manage such request, the potential clients must check the  ***replyTopic*** parameter
+
+    function ComputeHandler(topic, content, peerName, replyTopic) {
+       console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)
+       if ((replyTopic === null) && (replyTopic !== undefined)) {
+           ipcBus.send(replyTopic, eval(content))
+       }
+    }
+
+    ipcBus.subscribe("compute", ComputeHandler)
+
 
 #### unsubscribe(topic, handler)
 Unsubscribe from the specified topic. handler won't be called anymore when
