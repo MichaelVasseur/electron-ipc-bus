@@ -21,7 +21,7 @@ class IpcBusBridge {
         this._ipcObj = require("electron").ipcMain;
         this._topicRendererRefs = new IpcBusUtils.TopicConnectionMap();
         this._webContents = require("electron").webContents;
-        this._lambdaListenerHandler = (msgTopic: string, msgContent: any, msgPeer: string) => this.rendererSubscribeHandler(msgTopic, msgContent, msgPeer);
+        this._lambdaListenerHandler = (msgTopic: string, msgContent: any, msgPeer: string, msgReplyTopic?: string) => this.rendererSubscribeHandler(msgTopic, msgContent, msgPeer, msgReplyTopic);
 
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, (event: any, topic: string) => this.onSubscribe(event, topic));
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, (event: any, topic: string) => this.onUnsubscribe(event, topic));
@@ -31,14 +31,14 @@ class IpcBusBridge {
         console.log("[IPCBus:Bridge] Installed");
     }
 
-    rendererSubscribeHandler(msgTopic: string, msgContent: any, msgPeer: string): void {
+    rendererSubscribeHandler(msgTopic: string, msgContent: any, msgPeer: string, msgReplyTopic?: string): void {
         console.log("[IPCBus:Bridge] message received on '" + msgTopic + "'");
         this._topicRendererRefs.forEachTopic(msgTopic, (peerNames: Map<string, number>, webContentsId: any, topic: string) => {
             const peerName = "Renderer_" + webContentsId;
             console.log("[IPCBus:Bridge] Forward message received on '" + topic + "' to peer #" + peerName);
             let webContents = this._webContents.fromId(webContentsId);
             if (webContents != null) {
-                webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, msgTopic, msgContent, msgPeer);
+                webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, msgTopic, msgContent, msgPeer, msgReplyTopic);
             }
         });
     }

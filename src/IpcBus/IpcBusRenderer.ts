@@ -13,18 +13,18 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
     constructor() {
         super();
         this._ipcObj = require("electron").ipcRenderer;
-        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrContent: any, contentOrPeer: any, peerOrUndefined: any) => this._onReceive(eventOrTopic, topicOrContent, contentOrPeer, peerOrUndefined));
+        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onReceive(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined));
     }
 
-    private _onReceive(eventOrTopic: any, topicOrContent: any, contentOrPeer: any, peerOrUndefined: any): void {
+    private _onReceive(eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
-        if (peerOrUndefined === undefined) {
-            console.log("[IPCBus:Client] Received message on '" + eventOrTopic + "'");
-            EventEmitter.prototype.emit.call(this, eventOrTopic, eventOrTopic, topicOrContent, contentOrPeer);
+        if (eventOrTopic instanceof EventEmitter) {
+            console.log("[IPCBus:Renderer] Received message on '" + topicOrPayload + "'");
+            EventEmitter.prototype.emit.call(this, topicOrPayload, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
         }
         else {
-            console.log("[IPCBus:Client] Received message on '" + topicOrContent + "'");
-            EventEmitter.prototype.emit.call(this, topicOrContent, topicOrContent, contentOrPeer, peerOrUndefined);
+            console.log("[IPCBus:Renderer] Received message on '" + eventOrTopic + "'");
+            EventEmitter.prototype.emit.call(this, eventOrTopic, eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic);
         }
     }
 
@@ -52,33 +52,12 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
     }
 
     request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number): void {
-        if (this._connected !== true) {
-            throw new Error("Please connect first");
-        }
-
-        if (timeoutDelay == null) {
-            timeoutDelay = 2000;
-        }
-
-        // Prepare reply's handler, we have to change the replyTopic to topic
-        const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
-            console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-            requestCallback(topic, content, peerName);
-        };
-
-        const replyTopic = IpcBusUtils.GenerateReplyTopic();
-        this.subscribe(replyTopic, localRequestCallback);
-
-        // Execute request
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic);
-
-        // Clean-up
-        setTimeout(() => {
-            this.unsubscribe(replyTopic, localRequestCallback);
-        }, timeoutDelay);
+        this.requestPromise(topic, data, timeoutDelay).then((RequestArgs: IpcBusInterfaces.IpcBusRequestArgs) => {
+            requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
+        });
     }
 
-    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusRequestArgs> {
+    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestArgs> {
         if (this._connected !== true) {
             throw new Error("Please connect first");
         }
@@ -87,7 +66,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
             timeoutDelay = 2000;
         }
 
-        let p = new Promise<IpcBusRequestArgs>((resolve, reject) => {
+        let p = new Promise<IpcBusInterfaces.IpcBusRequestArgs>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
                 console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);

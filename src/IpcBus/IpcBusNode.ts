@@ -36,7 +36,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
                         const msgTopic = data.args[0];
                         const msgContent = data.args[1];
                         const msgPeerName = data.args[2];
-                        console.log("[IPCBus:Client] Emit message received on topic '" + msgTopic + "' from peer #" + msgPeerName);
+                        console.log("[IPCBus:Node] Emit message received on topic '" + msgTopic + "' from peer #" + msgPeerName);
                         EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgPeerName);
                         break;
                     }
@@ -45,10 +45,10 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
                     {
                         const msgTopic = data.args[0];
                         const msgContent = data.args[1];
-                        const msgReplyTopic = data.args[2];
-                        const msgPeerName = data.args[3];
-                        console.log("[IPCBus:Client] Emit request received on topic '" + msgTopic + "' from peer #" + msgPeerName);
-                        EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgReplyTopic, msgPeerName);
+                        const msgPeerName = data.args[2];
+                        const msgReplyTopic = data.args[3];
+                        console.log("[IPCBus:Node] Emit request received on topic '" + msgTopic + "' from peer #" + msgPeerName);
+                        EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgPeerName, msgReplyTopic);
                         break;
                     }
             }
@@ -73,27 +73,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
     }
 
     request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number) {
-        if (timeoutDelay === undefined) {
-            timeoutDelay = 2000; // 2s by default
-        }
-
-        // Prepare reply's handler, we have to change the replyTopic to topic
-        const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
-            console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-            requestCallback(topic, content, peerName);
-        };
-
-        // Set reply's topic 
-        const replyTopic = IpcBusUtils.GenerateReplyTopic();
-        this.subscribe(replyTopic, localRequestCallback);
-
-        // Execute request
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
-
-        // Clean-up
-        setTimeout(() => {
-           this.unsubscribe(replyTopic, localRequestCallback);
-        }, timeoutDelay);
+        this.requestPromise(topic, data, timeoutDelay).then((RequestArgs) => {
+            requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
+        });
     }
 
     requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestArgs> {
@@ -113,7 +95,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
             this.subscribe(replyTopic, localRequestCallback);
 
             // Execute request
-            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, replyTopic, this._peerName, this._busConn);
+            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, this._peerName, replyTopic, this._busConn);
 
             // Clean-up
             setTimeout(() => {

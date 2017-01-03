@@ -75,14 +75,14 @@ ProcessConnector = (function () {
             });
         }
 
-        this.postSendMessageDone = function _postSendMessageDone(topicName, topicMsg, topicToReply) {
-            _ipc.send(buildChannel("sendMessage-done"), { topic: topicName, msg: topicMsg, topicToReply: topicToReply });
+        this.postReceivedMessage = function _postReceivedMessage(topicName, topicMsg, peerName, topicToReply) {
+            _ipc.send(buildChannel("receivedMessage"), { topic: topicName, msg: topicMsg, peerName: peerName, topicToReply: topicToReply });
         }
 
-        this.onSendMessageDone = function _onSendMessageDone(callback) {
-            _ipc.on(buildChannel("sendMessage-done"), function (event, data) {
+        this.OnReceivedMessage = function _OnReceivedMessage(callback) {
+            _ipc.on(buildChannel("receivedMessage"), function (event, data) {
                 const response = (data !== undefined) ? data : event;
-                callback(response["topic"], response["msg"], response["topicToReply"]);
+                callback(response["topic"], response["msg"], response["peerName"], response["topicToReply"]);
             });
         }
 
@@ -97,12 +97,12 @@ ProcessConnector = (function () {
             });
         }
 
-        this.postRequestMessageDone = function _postRequestMessageDone(topicName, topicMsg, topicResponse, peerName) {
-            _ipc.send(buildChannel("requestMessage-done"), { topic: topicName, msg: topicMsg, peerName: peerName, response: topicResponse });
+        this.postRequestResult = function _postRequestResult(topicName, topicMsg, topicResponse, peerName) {
+            _ipc.send(buildChannel("receivedRequest"), { topic: topicName, msg: topicMsg, peerName: peerName, response: topicResponse });
         }
 
-        this.onRequestMessageDone = function _oonRequestMessageDone(callback) {
-            _ipc.on(buildChannel("requestMessage-done"), function (event, data) {
+        this.OnRequestResult = function _oOnRequestResult(callback) {
+            _ipc.on(buildChannel("receivedRequest"), function (event, data) {
                 const response = (data !== undefined) ? data : event;
                 callback(response["topic"], response["msg"], response["response"], response["peerName"]);
             });

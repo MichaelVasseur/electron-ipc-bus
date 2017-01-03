@@ -103,9 +103,9 @@ var MainProcess = (function () {
             }
         }
 
-        function onIPCElectron_ReceivedMessage(topicName, topicMsg, topicToReply) {
+        function onIPCElectron_ReceivedMessage(topicName, topicMsg, peerName, topicToReply) {
             console.log("Master - onIPCElectron_ReceivedMessage - topic:" + topicName + " data:" + topicMsg);
-            processMainToView.postSendMessageDone(topicName, topicMsg, topicToReply);
+            processMainToView.postReceivedMessage(topicName, topicMsg, peerName, topicToReply);
         }
 
         function onIPCElectron_Subscribe(topicName) {
@@ -128,7 +128,7 @@ var MainProcess = (function () {
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log("Master - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
             ipcBus.request(topicName, topicMsg, function (topic, content, peerName) {
-                processMainToView.postRequestMessageDone(topic, topicMsg, content, peerName);
+                processMainToView.postRequestResult(topic, topicMsg, content, peerName);
             });
         }
 
@@ -228,10 +228,10 @@ var NodeProcess = (function () {
             if (msgJSON.hasOwnProperty("action")) {
                 switch (msgJSON["action"]) {
                     case "receivedRequest":
-                        processMainToView.postRequestMessageDone(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["response"], msgJSON["args"]["peerName"]);
+                        processMainToView.postRequestResult(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["response"], msgJSON["args"]["peerName"]);
                         break;
                     case "receivedSend":
-                        processMainToView.postSendMessageDone(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["topicToReply"]);
+                        processMainToView.postReceivedMessage(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["peerName"], msgJSON["args"]["topicToReply"]);
                         break;
                     case "subscribe":
                         processMainToView.postSubscribeDone(msgJSON["topic"]);

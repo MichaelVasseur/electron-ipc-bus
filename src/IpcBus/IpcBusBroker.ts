@@ -92,13 +92,13 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
                     {
                         const msgTopic = data.args[0] as string;
                         const msgContent = data.args[1] as string;
-                        const msgReplyTopic = data.args[2] as string;
-                        const msgPeerName = data.args[3] as string;
+                        const msgPeerName = data.args[2] as string;
+                        const msgReplyTopic = data.args[3] as string;
                         console.log("[IPCBus:Broker] Received request on topic '" + msgTopic + "' (reply = '" + msgReplyTopic + "') from peer #" + msgPeerName);
 
                         this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, conn: any, topic: string) {
                             // Request data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgReplyTopic, msgPeerName, conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgPeerName, msgReplyTopic, conn);
                         });
                         break;
                     }

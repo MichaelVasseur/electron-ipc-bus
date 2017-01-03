@@ -4,7 +4,7 @@ export interface IpcBusConnectFunc {
 }
 
 export interface IpcBusListenFunc {
-    (topic: string, payload: Object | string, peerName: string): void;
+    (topic: string, payload: Object | string, peerName: string, replyTopic?: string): void;
 }
 
 export interface IpcBusRequestFunc {

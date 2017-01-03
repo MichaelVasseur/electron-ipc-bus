@@ -16,12 +16,12 @@ const ipcBusModule = require("electron-ipc-bus");
 const ipcBus = ipcBusModule.CreateIpcBus();
 
 
-function onTopicMessage(topicName, topicMsg, topicToReply) {
-    console.log("node - topic:" + topicName + " data:" + topicMsg + " reply:" + topicToReply);
+function onTopicMessage(topicName, topicMsg, peerName, topicToReply) {
+    console.log("node - onTopicMessage topic:" + topicName + " data:" + topicMsg + " reply:" + topicToReply);
     var msgJSON =
     {
         action: "receivedSend",
-        args: { topic : topicName, msg : topicMsg, topicToReply : topicToReply}
+        args: { topic : topicName, msg : topicMsg, peerName: peerName, topicToReply : topicToReply}
     };
     process.send(JSON.stringify(msgJSON));
 }
@@ -50,7 +50,7 @@ function doSendOnTopic(msgJSON) {
 function doRequestOnTopic(msgJSON) {
     var args = msgJSON["args"];
     console.log("node - doRequestOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
-    ipcBus.request(args["topic"], args["msg"], function(content, peerName)
+    ipcBus.request(args["topic"], args["msg"], function(topic, content, peerName)
     {   
         msgJSON["action"] = "receivedRequest";
         msgJSON["peerName"] = peerName;

@@ -144,7 +144,7 @@ function onIPCBus_OnRequestPromiseThen(requestPromiseArgs) {
     console.log("onIPCBus_OnRequestPromiseThen : requestPromiseArgs:" + requestPromiseArgs)
     var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
     if (topicRespElt != null) {
-        topicRespElt.value += requestPromiseArgs.payload + " from (" + requestPromiseArgs.peerName + ")";
+        topicRespElt.value = requestPromiseArgs.payload + " from (" + requestPromiseArgs.peerName + ")";
     }
 }
 
@@ -152,7 +152,7 @@ function onIPCBus_OnRequestPromiseCatch(err) {
     console.log("onIPCBus_OnRequestPromiseCatch : err:" + err)
     var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
     if (topicRespElt != null) {
-        topicRespElt.value += "Error:" + err;
+        topicRespElt.value = "Error:" + err;
     }
 }
 
@@ -183,7 +183,7 @@ function doClearTopic(event) {
     topicReceivedElt.value = "";
 }
 
-function onIPC_Received(topicName, msgContent, topicToReply) {
+function onIPC_Received(topicName, msgContent, msgPeer, topicToReply) {
     console.log("onIPCBus_received : msgTopic:" + topicName + " msgContent:" + msgContent)
 
     var SubscriptionsListElt = document.getElementById("ProcessSubscriptions");
@@ -191,7 +191,7 @@ function onIPC_Received(topicName, msgContent, topicToReply) {
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector(".topicAutoReply");
         if (topicToReply != undefined) {
-            msgContent += " from (" + topicToReply + ")";
+            msgContent += " from (" + msgPeer + ")";
             ipcBus.send(topicToReply, topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector(".topicReceived");
@@ -208,16 +208,16 @@ function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
     }
 }
 
-function onIPCBus_ReceivedRequestNotify(msgTopic, msgContent, msgResponse, peerName) {
+function onIPCBus_RequestResult(msgTopic, msgContent, msgResponse, peerName) {
     onIPCBus_ReceivedRequest(msgTopic, msgResponse, peerName);
 }
 
-function onIPCBus_ReceivedSend(msgTopic, msgContent, topicToReply) {
-    onIPC_Received(msgTopic, msgContent, topicToReply);
+function onIPCBus_ReceivedSend(msgTopic, msgContent, msgPeer, topicToReply) {
+    onIPC_Received(msgTopic, msgContent, msgPeer, topicToReply);
 }
 
-function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, topicToReply) {
-    onIPC_Received(msgTopic, msgContent, topicToReply);
+function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, msgPeer, topicToReply) {
+    onIPC_Received(msgTopic, msgContent, msgPeer, topicToReply);
 }
 
 function doQueryBrokerState() {
@@ -249,6 +249,7 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
 
 var processToMonitor = null;
 ipcRenderer.on("initializeWindow", function (event, data) {
+    // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
     const args = (data !== undefined) ? data : event;
     console.log("initializeWindow" + args);
 
@@ -275,8 +276,8 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     if (args["type"] === "browser") {
         processToMonitor.onRequestPromiseThen(onIPCBus_OnRequestPromiseThen);
         processToMonitor.onRequestPromiseCatch(onIPCBus_OnRequestPromiseCatch);
-        processToMonitor.onRequestMessageDone(onIPCBus_ReceivedRequestNotify);
-        processToMonitor.onSendMessageDone(onIPCBus_ReceivedSendNotify);
+        processToMonitor.OnRequestResult(onIPCBus_RequestResult);
+        processToMonitor.OnReceivedMessage(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
 
@@ -298,8 +299,8 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     if (args["type"] === "node") {
         processToMonitor.onRequestPromiseThen(onIPCBus_OnRequestPromiseThen);
         processToMonitor.onRequestPromiseCatch(onIPCBus_OnRequestPromiseCatch);
-        processToMonitor.onRequestMessageDone(onIPCBus_ReceivedRequestNotify);
-        processToMonitor.onSendMessageDone(onIPCBus_ReceivedSendNotify);
+        processToMonitor.OnRequestResult(onIPCBus_RequestResult);
+        processToMonitor.OnReceivedMessage(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
         ipcBus.connect(function () {
