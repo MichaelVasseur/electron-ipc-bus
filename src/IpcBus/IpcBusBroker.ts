@@ -114,7 +114,10 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count });
                             });
                         });
-                        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, msgTopic, queryStateResult, msgPeerName, conn);
+                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, conn: any, topic: string) {
+                            // Send data to subscribed connections
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, queryStateResult, msgPeerName, conn);
+                        });
                         break;
                     }
             }
