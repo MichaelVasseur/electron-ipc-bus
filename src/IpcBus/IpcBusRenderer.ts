@@ -78,7 +78,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         }, timeoutDelay);
     }
 
-    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestPromise> {
+    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusRequestArgs> {
         if (this._connected !== true) {
             throw new Error("Please connect first");
         }
@@ -87,12 +87,12 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
             timeoutDelay = 2000;
         }
 
-        let p = new Promise<IpcBusInterfaces.IpcBusRequestPromise>((resolve, reject) => {
+        let p = new Promise<IpcBusRequestArgs>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
                 console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
                 this.unsubscribe(replyTopic, localRequestCallback);
-                resolve({ topic: topic, payload: content, peerName: peerName});
+                resolve({topic: topic, payload: content, peerName: peerName});
             };
 
             const replyTopic = IpcBusUtils.GenerateReplyTopic();

@@ -96,17 +96,17 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         }, timeoutDelay);
     }
 
-    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestPromise> {
+    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestArgs> {
         if (timeoutDelay == null) {
             timeoutDelay = 2000;
         }
 
-        let p = new Promise<IpcBusInterfaces.IpcBusRequestPromise>((resolve, reject) => {
+        let p = new Promise<IpcBusInterfaces.IpcBusRequestArgs>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
                 console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
                 this.unsubscribe(replyTopic, localRequestCallback);
-                resolve({ topic: topic, payload: content, peerName: peerName});
+                resolve({topic: topic, payload: content, peerName: peerName});
             };
 
             const replyTopic = IpcBusUtils.GenerateReplyTopic();
