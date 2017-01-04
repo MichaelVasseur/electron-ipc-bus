@@ -9,16 +9,15 @@ import * as IpcBusUtils from "./IpcBusUtils";
 // Implementation for Node process
 /** @internal */
 export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.IpcBusClient {
-    protected _busPath: string;
+    private _ipcOptions: IpcBusUtils.IpcOptions;
     protected _baseIpc: BaseIpc;
     protected _peerName: string;
     protected _busConn: any;
 
-    constructor(busPath: string) {
+    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         super();
-        this._busPath = busPath;
+        this._ipcOptions = ipcOptions;
         this._peerName = "Node_" + process.pid;
-
         this._baseIpc = new BaseIpc();
         this._baseIpc.on("data", (data: any, conn: any) => this._onData(data, conn));
     }
@@ -56,7 +55,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
             this._busConn = conn;
             connectCallback("connect", this._busConn);
         });
-        this._baseIpc.connect(this._busPath);
+        this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
     }
 
     close() {

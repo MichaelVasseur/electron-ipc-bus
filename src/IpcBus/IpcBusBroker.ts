@@ -9,11 +9,11 @@ import * as IpcBusUtils from "./IpcBusUtils";
 export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc: BaseIpc;
     private _ipcServer: any = null;
-    private _busPath: string = null;
+    private _ipcOptions: IpcBusUtils.IpcOptions;
     private _subscriptions: IpcBusUtils.TopicConnectionMap;
 
-    constructor(busPath: string) {
-        this._busPath = busPath;
+    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
+        this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
         this._subscriptions = new IpcBusUtils.TopicConnectionMap("BrokerRef");
         this._baseIpc.on("connection", (conn: any, server: any) => this._onConnection(conn, server));
@@ -25,9 +25,9 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
     start() {
         this._baseIpc.once("listening", (server: any) => {
             this._ipcServer = server;
-            console.log("[IPCBus:Broker] Listening for incoming connections on '" + this._busPath + "' ...");
+            console.log("[IPCBus:Broker] Listening for incoming connections on '" + JSON.stringify(this._ipcOptions));
         });
-        this._baseIpc.listen(this._busPath);
+        this._baseIpc.listen(this._ipcOptions.port, this._ipcOptions.host);
     }
 
     stop() {

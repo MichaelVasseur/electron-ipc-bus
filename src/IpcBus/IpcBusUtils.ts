@@ -24,7 +24,7 @@ export function GenerateReplyTopic(): string {
 }
 
 /** @internal */
-export function GetCmdLineArgValue(argName: string): string {
+function GetCmdLineArgValue(argName: string): string {
     for (let i = 0; i < process.argv.length; ++i) {
         if (process.argv[i].startsWith("--" + argName)) {
             const argValue = process.argv[i].split("=")[1];
@@ -32,6 +32,38 @@ export function GetCmdLineArgValue(argName: string): string {
         }
     }
     return null;
+}
+
+export class IpcOptions {
+    port: string;
+    host: string;
+
+    isValid(): boolean {
+        return (this.port != null);
+    }
+};
+
+
+export function GetPortAndHost(busPath: string): IpcOptions {
+    let ipcOptions: IpcOptions = new IpcOptions();
+    if (busPath == null) {
+        busPath = GetCmdLineArgValue("bus-path");
+    }
+    if ((busPath == null) || (busPath.length === 0)) {
+        return ipcOptions;
+    }
+    let parts = busPath.split(":");
+    if (parts.length === 0) {
+        return ipcOptions;
+    }
+    if (parts.length === 1) {
+        ipcOptions.port = parts[0];
+    }
+    if (parts.length === 2) {
+        ipcOptions.host = parts[0];
+        ipcOptions.port = parts[1];
+    }
+    return ipcOptions;
 }
 
 // export interface TopicConnectionMapCB { (peerNames?: Map<string, number>, conn?: any, topic?: string, count?: number): void };

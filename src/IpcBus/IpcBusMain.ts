@@ -108,8 +108,8 @@ class IpcBusBridge {
 export class IpcBusMainClient extends IpcBusNodeClient {
     private _ipcBusBridge: IpcBusBridge;
 
-    constructor(busPath: string) {
-        super(busPath);
+    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
+        super(ipcOptions);
         this._peerName = "Master";
     }
 

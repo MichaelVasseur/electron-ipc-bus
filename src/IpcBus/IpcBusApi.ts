@@ -6,17 +6,12 @@ import { IpcBusBrokerClient } from "./IpcBusBroker";
 import * as IpcBusUtils from "./IpcBusUtils";
 
 export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
-    if (busPath == null) {
-        busPath = IpcBusUtils.GetCmdLineArgValue("bus-path");
-    }
-    else {
-        busPath = busPath;
-    }
-    console.log("CreateIpcBusBroker busPath = " + busPath);
-
     let ipcBusBroker: IpcBusInterfaces.IpcBusBroker = null;
-    if ((busPath != null) && (busPath.length > 0)) {
-        ipcBusBroker = new IpcBusBrokerClient(busPath) as IpcBusInterfaces.IpcBusBroker;
+
+    let ipcOptions = IpcBusUtils.GetPortAndHost(busPath);
+    if (ipcOptions.isValid()) {
+        console.log("CreateIpcBusBroker ipc options = " + JSON.stringify(ipcOptions));
+        ipcBusBroker = new IpcBusBrokerClient(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
     }
     return ipcBusBroker;
 }
@@ -30,13 +25,8 @@ import * as ElectronUtils from "./ElectronUtils";
 let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
 
 function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusInterfaces.IpcBusClient {
-    if (busPath == null) {
-        busPath = IpcBusUtils.GetCmdLineArgValue("bus-path");
-    }
-    else {
-        busPath = busPath;
-    }
-    console.log("CreateIpcBusForProcess process type = " + processType + ", busPath = " + busPath);
+    let ipcOptions = IpcBusUtils.GetPortAndHost(busPath);
+    console.log("CreateIpcBusForProcess process type = " + processType + ", ipc options = " + JSON.stringify(ipcOptions));
 
     if (_ipcBusClient == null) {
         switch (processType) {
@@ -45,15 +35,15 @@ function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusIn
                 break;
 
             case "browser":
-                if ((busPath != null) && (busPath.length > 0)) {
-                    _ipcBusClient = new IpcBusMainClient(busPath) as IpcBusInterfaces.IpcBusClient;
+                if (ipcOptions.isValid()) {
+                    _ipcBusClient = new IpcBusMainClient(ipcOptions) as IpcBusInterfaces.IpcBusClient;
                 }
                 break;
 
             case "node":
             default:
-                if ((busPath != null) && (busPath.length > 0)) {
-                    _ipcBusClient = new IpcBusNodeClient(busPath) as IpcBusInterfaces.IpcBusClient;
+                if (ipcOptions.isValid()) {
+                    _ipcBusClient = new IpcBusNodeClient(ipcOptions) as IpcBusInterfaces.IpcBusClient;
                 }
                 break;
         }
