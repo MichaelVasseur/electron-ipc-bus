@@ -35,7 +35,7 @@ function GetCmdLineArgValue(argName: string): string {
 }
 
 export class IpcOptions {
-    port: string;
+    port: any;
     host: string;
 
     isValid(): boolean {
@@ -43,23 +43,26 @@ export class IpcOptions {
     }
 };
 
-
 export function GetPortAndHost(busPath: string): IpcOptions {
     let ipcOptions: IpcOptions = new IpcOptions();
     if (busPath == null) {
         busPath = GetCmdLineArgValue("bus-path");
     }
+    if (typeof busPath === "number") {
+        ipcOptions.port = busPath;
+        return ipcOptions;
+    }
+    if (typeof busPath !== "string") {
+        return ipcOptions;
+    }
     if ((busPath == null) || (busPath.length === 0)) {
         return ipcOptions;
     }
     let parts = busPath.split(":");
-    if (parts.length === 0) {
-        return ipcOptions;
-    }
     if (parts.length === 1) {
         ipcOptions.port = parts[0];
     }
-    if (parts.length === 2) {
+    else if (parts.length === 2) {
         ipcOptions.host = parts[0];
         ipcOptions.port = parts[1];
     }

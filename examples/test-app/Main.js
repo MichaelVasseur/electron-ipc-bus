@@ -19,7 +19,7 @@ electronApp.commandLine.appendSwitch("host-rules", "MAP * 127.0.0.1");
 
 // Misc
 const uuid = require("uuid");
-const busPath = "/tr-ipc-bus/" + uuid.v4();
+const busPath = 55556; // "/tr-ipc-bus/" + uuid.v4();
 console.log("IPC Bus Path : " + busPath);
 
 // IPC Bus
