@@ -1,32 +1,26 @@
 
-export interface IpcBusConnectFunc {
+export interface IpcBusConnectHandler {
     (eventName: string, conn: any): void;
 }
 
-export interface IpcBusListenFunc {
+export interface IpcBusTopicHandler {
     (topic: string, payload: Object | string, peerName: string, replyTopic?: string): void;
 }
 
-export interface IpcBusRequestFunc {
-    (topic: string, payload: Object | string, peerName: string): void;
-}
-
-export interface IpcBusRequestArgs {
+export interface IpcBusRequestResponse {
     topic: string;
     payload: Object | string;
     peerName: string;
 }
 
-
 export interface IpcBusClient {
-    connect(connectCallback: IpcBusConnectFunc): void;
-    subscribe(topic: string, listenCallback: IpcBusListenFunc): void;
-    send(topic: string, payload: Object | string): void;
-    request(topic: string, payload: Object | string, requestCallback: IpcBusRequestFunc, timeoutDelay: number): void;
-    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusRequestArgs>;
-    unsubscribe(topic: string, listenCallback: IpcBusListenFunc): void;
-    queryBrokerState(topic: string): void;
+    connect(connectCallback: IpcBusConnectHandler): void;
     close(): void;
+    subscribe(topic: string, listenCallback: IpcBusTopicHandler): void;
+    unsubscribe(topic: string, listenCallback: IpcBusTopicHandler): void;
+    send(topic: string, payload: Object | string): void;
+    request(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusRequestResponse>;
+    queryBrokerState(topic: string): void;
 }
 
 export interface IpcBusBroker {

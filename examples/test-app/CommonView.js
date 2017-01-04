@@ -1,9 +1,22 @@
+var processId;
+
 function doNewNodeInstance(event) {
     processToMonitor.send("new-process", "node");
 }
 
 function doNewRendererInstance(event) {
     processToMonitor.send("new-process", "renderer");
+}
+
+var rendererWindow;
+function doNewAffinityRendererInstance(event) {
+    var strWindowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no";
+    rendererWindow = window.open("CommonView.html", "Inner Page of " + processId, strWindowFeatures);
+    // rendererWindow.on("dom-ready", function () {
+    //     rendererWindow.send("initializeWindow", { title: "Renderer", type: "renderer", id: processId, peerName: "Renderer_" + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
+    // });
+    // rendererWindow.postMessage("initializeWindow", { title: "Renderer", type: "renderer", id: processId, peerName: "Renderer_" + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
+    // window.CreateInnerPage(processId);
 }
 
 function getProcessElt() {
@@ -20,7 +33,6 @@ function getTopicName(elt) {
     }
     return getTopicName(elt.parentElement);
 }
-
 
 function doSubscribeToTopic(event) {
     console.log("doSubscribeToTopic:" + event);
@@ -60,7 +72,6 @@ function onIPCElectron_SubscribeNotify(topicName) {
     var topicAutoReplyElt = topicItemElt.querySelector(".topicAutoReply");
     topicAutoReplyElt.value = topicName + " - AutoReply";
 
-
     //    subscriptionsListElt.appendChild(topicItemElt);
     topicItemElt.style.display = "block";
 
@@ -94,25 +105,28 @@ function onIPCElectron_UnsubscribeNotify(topicName) {
     console.log("topicName : " + topicName + " - unsubscribe");
 }
 
-function doRequestMessageToTopic(event) {
-    console.log("doRequestMessageToTopic:" + event);
+// function doRequestMessageToTopic(event) {
+//     console.log("doRequestMessageToTopic:" + event);
 
-    var target = event.target;
-    var topicItemElt = target.parentElement;
-    var topicNameElt = topicItemElt.querySelector(".topicRequestName");
-    var topicName = topicNameElt.value;
+//     var target = event.target;
+//     var topicItemElt = target.parentElement;
+//     var topicNameElt = topicItemElt.querySelector(".topicRequestName");
+//     var topicName = topicNameElt.value;
 
-    var topicMsgElt = topicItemElt.querySelector(".topicRequestMsg");
-    var topicMsg = topicMsgElt.value;
+//     var topicMsgElt = topicItemElt.querySelector(".topicRequestMsg");
+//     var topicMsg = topicMsgElt.value;
 
-    var args = { topic: topicName, msg: topicMsg };
-    if (processToMonitor.Type() == "renderer") {
-        ipcBus.request(topicName, topicMsg, onIPCBus_ReceivedRequest, 1000);
-    }
-    else {
-        processToMonitor.postRequestMessage(topicName, topicMsg);
-    }
-}
+//     var topicRespElt = document.querySelector(".topicRequestResponse");
+//     topicRespElt.value = "";
+
+//     var args = { topic: topicName, msg: topicMsg };
+//     if (processToMonitor.Type() == "renderer") {
+//         ipcBus.request(topicName, topicMsg, onIPCBus_ReceivedRequest, 1000);
+//     }
+//     else {
+//         processToMonitor.postRequestMessage(topicName, topicMsg);
+//     }
+// }
 
 function doRequestPromiseMessageToTopic(event) {
     console.log("doRequestMessageToTopic:" + event);
@@ -125,11 +139,14 @@ function doRequestPromiseMessageToTopic(event) {
     var topicMsgElt = topicItemElt.querySelector(".topicRequestPromiseMsg");
     var topicMsg = topicMsgElt.value;
 
+    var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
+    topicRespElt.value = "";
+
     var args = { topic: topicName, msg: topicMsg };
     if (processToMonitor.Type() == "renderer") {
         let p = ipcBus.requestPromise(topicName, topicMsg, 1000)
-            .then((requestPromiseArgs) => {
-                onIPCBus_OnRequestPromiseThen(requestPromiseArgs);
+            .then((requestPromiseResponse) => {
+                onIPCBus_OnRequestPromiseThen(requestPromiseResponse);
             })
             .catch((err) => {
                 onIPCBus_OnRequestPromiseCatch(err);
@@ -140,11 +157,12 @@ function doRequestPromiseMessageToTopic(event) {
     }
 }
 
-function onIPCBus_OnRequestPromiseThen(requestPromiseArgs) {
-    console.log("onIPCBus_OnRequestPromiseThen : requestPromiseArgs:" + requestPromiseArgs)
+function onIPCBus_OnRequestPromiseThen(requestPromiseResponse) {
+    console.log("onIPCBus_OnRequestPromiseThen : requestPromiseArgs:" + requestPromiseResponse)
     var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
     if (topicRespElt != null) {
-        topicRespElt.value = requestPromiseArgs.payload + " from (" + requestPromiseArgs.peerName + ")";
+        topicRespElt.style.color = "black";
+        topicRespElt.value = requestPromiseResponse.payload + " from (" + requestPromiseResponse.peerName + ")";
     }
 }
 
@@ -152,6 +170,7 @@ function onIPCBus_OnRequestPromiseCatch(err) {
     console.log("onIPCBus_OnRequestPromiseCatch : err:" + err)
     var topicRespElt = document.querySelector(".topicRequestPromiseResponse");
     if (topicRespElt != null) {
+        topicRespElt.style.color = "red";
         topicRespElt.value = "Error:" + err;
     }
 }
@@ -266,11 +285,13 @@ ipcRenderer.on("initializeWindow", function (event, data) {
     var processMonitorDefaultSend = processMonitorElt.querySelector(".topicSendMsg");
     processMonitorDefaultSend.value = "SendFrom:" + args["peerName"];
 
-    var processMonitorDefaultRequest = processMonitorElt.querySelector(".topicRequestMsg");
-    processMonitorDefaultRequest.value = "RequestFrom:" + args["peerName"];
+    // var processMonitorDefaultRequest = processMonitorElt.querySelector(".topicRequestMsg");
+    // processMonitorDefaultRequest.value = "RequestFrom:" + args["peerName"];
 
     var processMonitorDefaultRequestPromise = processMonitorElt.querySelector(".topicRequestPromiseMsg");
     processMonitorDefaultRequestPromise.value = "PromiseFrom:" + args["peerName"];
+
+    processId = args["id"];
 
     processToMonitor = new ProcessConnector(args["type"], ipcRenderer, args["id"]);
     if (args["type"] === "browser") {
@@ -281,7 +302,7 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
 
-        var processToolbarElt = document.getElementById("ProcessToolbar");
+        var processToolbarElt = document.getElementById("ProcessBrowserToolbar");
         processToolbarElt.style.display = "block";
 
         var processBrokerStateElt = document.getElementById("ProcessBrokerState");
@@ -293,6 +314,9 @@ ipcRenderer.on("initializeWindow", function (event, data) {
         });
     }
     if (args["type"] === "renderer") {
+        var processToolbarElt = document.getElementById("ProcessRendererToolbar");
+        processToolbarElt.style.display = "block";
+
         ipcBus.connect(function () {
         });
     }

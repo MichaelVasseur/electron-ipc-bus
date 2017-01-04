@@ -29,7 +29,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
     }
 
     // Set API
-    connect(connectCallback: IpcBusInterfaces.IpcBusConnectFunc): void {
+    connect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler): void {
         if (this._connected === false) {
             throw new Error("Connection is closed");
         }
@@ -44,6 +44,22 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         this._connected = false;
     }
 
+    subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler): void {
+        if (this._connected !== true) {
+            throw new Error("Please connect first");
+        }
+        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, topic);
+    }
+
+    unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler): void {
+        if (this._connected !== true) {
+            throw new Error("Please connect first");
+        }
+        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, topic);
+    }
+
     send(topic: string, data: Object | string): void {
         if (this._connected !== true) {
             throw new Error("Please connect first");
@@ -51,13 +67,13 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, topic, data);
     }
 
-    request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number): void {
-        this.requestPromise(topic, data, timeoutDelay).then((RequestArgs: IpcBusInterfaces.IpcBusRequestArgs) => {
-            requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
-        });
-    }
+    // request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number): void {
+    //     this.requestPromise(topic, data, timeoutDelay).then((RequestArgs: IpcBusInterfaces.IpcBusRequestResponse) => {
+    //         requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
+    //     });
+    // }
 
-    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestArgs> {
+    request(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
         if (this._connected !== true) {
             throw new Error("Please connect first");
         }
@@ -66,24 +82,26 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
             timeoutDelay = 2000;
         }
 
-        let p = new Promise<IpcBusInterfaces.IpcBusRequestArgs>((resolve, reject) => {
+        const generatedTopic = IpcBusUtils.GenerateReplyTopic();
+
+        let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
-            const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
-                console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-                this.unsubscribe(replyTopic, localRequestCallback);
-                resolve({topic: topic, payload: content, peerName: peerName});
+            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic: string, content: Object | string, peerName: string, replyTopic?: string) => {
+                console.log("[IPCBus:Node] Peer #" + peerName + " replied to request on " + generatedTopic + ": " + content);
+                this.unsubscribe(generatedTopic, localRequestCallback);
+                let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content, peerName: peerName};
+                resolve(response);
             };
 
-            const replyTopic = IpcBusUtils.GenerateReplyTopic();
-            this.subscribe(replyTopic, localRequestCallback);
+            this.subscribe(generatedTopic, localRequestCallback);
 
             // Execute request
-            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, replyTopic);
+            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, generatedTopic);
 
             // Clean-up
             setTimeout(() => {
-                if (EventEmitter.prototype.listenerCount.call(this, replyTopic) > 0) {
-                    this.unsubscribe(replyTopic, localRequestCallback);
+                if (EventEmitter.prototype.listenerCount.call(this, generatedTopic) > 0) {
+                    this.unsubscribe(generatedTopic, localRequestCallback);
                     reject("timeout");
                 }
             }, timeoutDelay);
@@ -91,27 +109,10 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         return p;
     }
 
-
     queryBrokerState(topic: string): void {
         if (this._connected !== true) {
             throw new Error("Please connect first");
         }
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, topic);
-    }
-
-    subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusListenFunc): void {
-        if (this._connected !== true) {
-            throw new Error("Please connect first");
-        }
-        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, topic);
-    }
-
-    unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusListenFunc): void {
-        if (this._connected !== true) {
-            throw new Error("Please connect first");
-        }
-        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, topic);
     }
 }

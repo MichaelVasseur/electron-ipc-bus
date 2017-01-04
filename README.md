@@ -41,33 +41,33 @@ Ex:
 ### Initialization in the Main/Browser Node process
  
     const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIpcBusForProcess(ipcBusModule.ProcessType.Main, [, busPath]);
+    const ipcBus = ipcBusModule.CreateIPCBus([busPath]);
 
-The require() loads the module. CreateIpcBusForProcess setups the client with the ***busPath*** that was used to start the broker.
+The require() loads the module. CreateIPCBus setups the client with the ***busPath*** that was used to start the broker.
 If ***busPath*** is not specified, the framework tries to get it from the command line with switch ***--bus-path***.
  
 Ex, busPath set by code:
 
-    const ipcBus = ipcBusModule.CreateIpcBusForProcess(ipcBusModule.ProcessType.Main, '/my-ipc-bus-path');
+    const ipcBus = ipcBusModule.CreateIPCBus('/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIpcBusForProcess(ipcBusModule.ProcessType.Main);
+    const ipcBus = ipcBusModule.CreateIPCBus(ipcBusModule.ProcessType.Main);
 
 ### Initialization in a Node single process
  
 Ex, busPath set by code:
 
-    const ipcBus = ipcBusModule.CreateIpcBusForProcess(ipcBusModule.ProcessType.Node, '/my-ipc-bus-path');
+    const ipcBus = ipcBusModule.CreateIPCBus('/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIpcBusForProcess(ipcBusModule.ProcessType.Node);
+    const ipcBus = ipcBusModule.CreateIPCBus();
 
 ### Initialization in a Renderer (Sandboxed or not) process
 
     const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIpcBusForProcess(ipcBusModule.ProcessType.Renderer);
+    const ipcBus = ipcBusModule.CreateIPCBus();
 
 NOTE : If the renderer is running in sandboxed mode, the code above
 must be run from the ***BrowserWindow***'s preload script. Otherwise, the
@@ -76,19 +76,12 @@ The code below to make the client accessible to the the Web page scripts.
 
     window.ipcBus = ipcBus;
 
-### Experimental
-A single function creates the right Ipc Bus whatever the process (Renderer, Main or Node)
-
-    const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIpcBus([busPath]);
-
-
 ### Common API
 #### connect([handler])
 
 Ex:
    
-    ipcBus.connect(() => console.log("Connected to IPC bus !")) 
+    ipcBus.connect((eventName, conn) => console.log("Connected to IPC bus !")) 
 
 #### subscribe(topic, handler)
 Subscribe to the specified topic. Each time a message is received on this topic,
@@ -106,18 +99,19 @@ Ex:
 
     ipcBus.send("Hello!", { name: "My Name !"})
 
-#### request(topic, content, callback [, timeoutDelay])
-Send a request message on specified topic. ***callback*** is called when the result is available.
+#### request(topic, content, [, timeoutDelay]) : Promise<IpcBusRequestResponse>
+Send a request message on specified topic. promise is settled when a result is available.
 Ex:
 
-    function processRequestResult(topic, result) {
+    ipcBus.request("compute", "2*PI*9")
+        .then(ipcBusRequestResponse) {
+            console.log("topic = " + ipcBusRequestResponse.topic + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.peerName);
+        }
+        .catch(err) {
+            console.log("err = " + err);
+        }
 
-        ...
-    }        
-
-    ipcBus.request("compute", "2*PI*9", processRequestResult )
-
-To manage such request, the potential clients must check the  ***replyTopic*** parameter
+To identify and manage such request, the clients must check the ***replyTopic*** parameter
 
     function ComputeHandler(topic, content, peerName, replyTopic) {
        console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)

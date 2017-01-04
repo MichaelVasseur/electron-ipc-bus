@@ -19,7 +19,7 @@ class IpcBusBridge {
         this._eventEmitter = eventEmitter;
         this._busConn = conn;
         this._ipcObj = require("electron").ipcMain;
-        this._topicRendererRefs = new IpcBusUtils.TopicConnectionMap();
+        this._topicRendererRefs = new IpcBusUtils.TopicConnectionMap("BridgeRef");
         this._webContents = require("electron").webContents;
         this._lambdaListenerHandler = (msgTopic: string, msgContent: any, msgPeer: string, msgReplyTopic?: string) => this.rendererSubscribeHandler(msgTopic, msgContent, msgPeer, msgReplyTopic);
 
@@ -55,7 +55,7 @@ class IpcBusBridge {
             // If it is the first time this renderer is listening this topic, we have to add the callback
             if (count === 1) {
                 EventEmitter.prototype.addListener.call(this._eventEmitter, topic, this._lambdaListenerHandler);
-                console.log("[IPCBus:Bridge] Forward subscribe '" + topic + "' to IPC Broker");
+                console.log("[IPCBus:Bridge] Register callback for '" + topic + "'");
                 webContents.on("destroyed", () => {
                     this.rendererCleanUp(webContentsId);
                 });
@@ -67,7 +67,7 @@ class IpcBusBridge {
     onUnsubscribeCB(topic: string, webContentsId: any, peerName: string, count: number) {
         // If it is the last time this renderer is listening this topic, we have to remove the callback
         if (count === 0) {
-            console.log("[IPCBus:Bridge] Forward unsubscribe '" + topic + "' to IPC Broker");
+            console.log("[IPCBus:Bridge] Unregister callback for '" + topic + "'");
             EventEmitter.prototype.removeListener.call(this._eventEmitter, topic, this._lambdaListenerHandler);
         }
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, this._busConn);
@@ -108,13 +108,13 @@ class IpcBusBridge {
 export class IpcBusMainClient extends IpcBusNodeClient {
     private _ipcBusBridge: IpcBusBridge;
 
-    constructor(busPath?: string) {
+    constructor(busPath: string) {
         super(busPath);
         this._peerName = "Master";
     }
 
     // Set API
-    connect(callback: IpcBusInterfaces.IpcBusConnectFunc) {
+    connect(callback: IpcBusInterfaces.IpcBusConnectHandler) {
         super.connect((eventName: string, conn: any) => {
             this._ipcBusBridge = new IpcBusBridge(this, conn);
             callback(eventName, conn);

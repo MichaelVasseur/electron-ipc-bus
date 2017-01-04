@@ -1,10 +1,9 @@
 node_modules/
-examples/
 build/
 *.tgz
 
 gulpfile.js
-tsconfig.json
+**/tsconfig*.*
 tslint.json
 
 

@@ -12,15 +12,10 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
     private _busPath: string = null;
     private _subscriptions: IpcBusUtils.TopicConnectionMap;
 
-    constructor(busPath?: string) {
-        if (busPath == null) {
-            this._busPath = IpcBusUtils.GetCmdLineArgValue("bus-path");
-        }
-        else {
-            this._busPath = busPath;
-        }
+    constructor(busPath: string) {
+        this._busPath = busPath;
         this._baseIpc = new BaseIpc();
-        this._subscriptions = new IpcBusUtils.TopicConnectionMap();
+        this._subscriptions = new IpcBusUtils.TopicConnectionMap("BrokerRef");
         this._baseIpc.on("connection", (conn: any, server: any) => this._onConnection(conn, server));
         this._baseIpc.on("close", (err: any, conn: any, server: any) => this._onClose(err, conn, server));
         this._baseIpc.on("data", (data: any, conn: any, server: any) => this._onData(data, conn, server));
@@ -61,7 +56,7 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
                     {
                         const msgTopic = data.args[0] as string;
                         const msgPeerName = data.args[1] as string;
-                        console.log("[IPCBus:Broker] Peer #" + msgPeerName + " subscribed to topic '" + msgTopic + "'");
+                        console.log("[IPCBus:Broker] Subscribe to topic '" + msgTopic + "' from peer #" + msgPeerName);
 
                         this._subscriptions.addRef(msgTopic, conn, msgPeerName);
                         break;
@@ -70,7 +65,7 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
                     {
                         const msgTopic = data.args[0] as string;
                         const msgPeerName = data.args[1] as string;
-                        console.log("[IPCBus:Broker] Peer #" + msgPeerName + " unsubscribed from topic '" + msgTopic + "'");
+                        console.log("[IPCBus:Broker] Unsubscribe from topic '" + msgTopic + "' from peer #" + msgPeerName);
 
                         this._subscriptions.release(msgTopic, conn, msgPeerName);
                         break;
@@ -80,7 +75,7 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
                         const msgTopic = data.args[0] as string;
                         const msgContent = data.args[1] as string;
                         const msgPeerName = data.args[2] as string;
-                        console.log("[IPCBus:Broker] Received request on topic '" + msgTopic + "' from peer #" + msgPeerName);
+                        console.log("[IPCBus:Broker] Received send on topic '" + msgTopic + "' from peer #" + msgPeerName);
 
                         this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, conn: any, topic: string) {
                             // Send data to subscribed connections

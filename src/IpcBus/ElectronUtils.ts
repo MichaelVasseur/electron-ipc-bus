@@ -2,24 +2,29 @@
 // Take care to not reference Nodes but Electron only
 
 export function GuessElectronProcessType(): string {
-    let processType: string = process.type;
+    let processType = "node"; // Node by default
+
+    // Will raise an exception in a Node Process
+    let electron = null;
+    try {
+        electron = require("electron");
+    }
+    catch (e) {
+        return processType;
+    }
+
+    processType = process.type;
     // May be null in Sandbox or in Node Process
     if (processType == null) {
-        processType = "node"; // Node by default
-        try {
-            // Will raise an exception in Node Process
-            let ipcRend = require("electron").ipcRenderer;
-            if (ipcRend != null) {
-                processType = "renderer";
-            }
-            else {
-                let ipcMain = require("electron").ipcMain;
-                if (ipcMain != null) {
-                    processType = "browser";
-                }
-            }
+        const ipcRend = electron.ipcRenderer;
+        if (ipcRend != null) {
+            processType = "renderer";
         }
-        catch (e) {
+        else {
+            const ipcMain = electron.ipcMain;
+            if (ipcMain != null) {
+                processType = "browser";
+            }
         }
     }
     return processType;

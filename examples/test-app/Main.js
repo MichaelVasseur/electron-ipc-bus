@@ -56,7 +56,7 @@ var MainProcess = (function () {
 
         // Listen view messages
         var processMainFromView = new ProcessConnector("browser", ipcMain);
-        processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
+        // processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
         processMainFromView.onRequestPromiseMessage(onIPCElectron_RequestPromiseMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
@@ -125,18 +125,18 @@ var MainProcess = (function () {
             ipcBus.send(topicName, topicMsg);
         }
 
-        function onIPCElectron_RequestMessage(topicName, topicMsg) {
-            console.log("Master - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
-            ipcBus.request(topicName, topicMsg, function (topic, content, peerName) {
-                processMainToView.postRequestResult(topic, topicMsg, content, peerName);
-            });
-        }
+        // function onIPCElectron_RequestMessage(topicName, topicMsg) {
+        //     console.log("Master - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
+        //     ipcBus.request(topicName, topicMsg, function (topic, content, peerName) {
+        //         processMainToView.postRequestResult(topic, topicMsg, content, peerName);
+        //     });
+        // }
 
         function onIPCElectron_RequestPromiseMessage(topicName, topicMsg) {
             console.log("Master - onIPCElectron_RequestPromiseMessage : topic:" + topicName + " msg:" + topicMsg);
-            ipcBus.requestPromise(topicName, topicMsg)
-                .then((requestPromiseArgs) => {
-                    processMainToView.postRequestPromiseThen(requestPromiseArgs);
+            ipcBus.request(topicName, topicMsg)
+                .then((requestPromiseResponse) => {
+                    processMainToView.postRequestPromiseThen(requestPromiseResponse);
                 })
                 .catch((err) => {
                     processMainToView.postRequestPromiseCatch(err);
@@ -188,7 +188,8 @@ var NodeProcess = (function () {
         var nodeInstance = new NodeInstance();
         // Listen view messages
         var processMainFromView = new ProcessConnector("node", ipcMain, processId);
-        processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
+        // processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
+        processMainFromView.onRequestPromiseMessage(onIPCElectron_RequestPromiseMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
@@ -227,6 +228,12 @@ var NodeProcess = (function () {
             var msgJSON = JSON.parse(data);
             if (msgJSON.hasOwnProperty("action")) {
                 switch (msgJSON["action"]) {
+                    case "receivedRequestPromiseThen":
+                        processMainToView.postRequestPromiseThen(msgJSON["args"]["requestPromiseResponse"]);
+                        break;
+                    case "receivedRequestPromiseCatch":
+                        processMainToView.postRequestPromiseCatch(msgJSON["args"]["err"]);
+                        break;
                     case "receivedRequest":
                         processMainToView.postRequestResult(msgJSON["args"]["topic"], msgJSON["args"]["msg"], msgJSON["args"]["response"], msgJSON["args"]["peerName"]);
                         break;
@@ -262,10 +269,19 @@ var NodeProcess = (function () {
             processMainToView.postUnsubscribeDone(topicName);
         };
 
-        function onIPCElectron_RequestMessage(topicName, topicMsg) {
+        // function onIPCElectron_RequestMessage(topicName, topicMsg) {
+        //     console.log("Node - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
+        //     var msgJSON = {
+        //             action: "request",
+        //             args: { topic: topicName, msg: topicMsg }
+        //         };
+        //     nodeInstance.process.send(JSON.stringify(msgJSON));
+        // };
+
+        function onIPCElectron_RequestPromiseMessage(topicName, topicMsg) {
             console.log("Node - onIPCElectron_RequestMessage : topic:" + topicName + " msg:" + topicMsg);
             var msgJSON = {
-                    action: "request",
+                    action: "requestPromise",
                     args: { topic: topicName, msg: topicMsg }
                 };
             nodeInstance.process.send(JSON.stringify(msgJSON));

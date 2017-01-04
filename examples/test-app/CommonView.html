@@ -33,9 +33,12 @@
         </div>
     </div>
 
-    <div id="ProcessToolbar" style="display:none">
+    <div id="ProcessBrowserToolbar" style="display:none">
         <input type="button" class="btn btn-primary" onclick="doNewNodeInstance(event)" value="New node process"></<input>
         <input type="button" class="btn btn-primary" onclick="doNewRendererInstance(event)" value="New renderer process"></<input>
+    </div>
+    <div id="ProcessRendererToolbar" style="display:none">
+        <input type="button" class="btn btn-primary" onclick="doNewAffinityRendererInstance(event)" value="New affinity renderer"></<input>
     </div>
     <h3 id="ProcessTitle">Master</h3>
     <div id="ProcessMonitor" class="panel-group" topic-process="fake">
@@ -59,21 +62,6 @@
                         <input class="topicSendMsg form-control" type="text" />
                     </div>
                     <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-                </form>
-                <form class="form-inline topicRequest">
-                    <div class="input-group">
-                        <span class="input-group-addon">Topic</span>
-                        <input class="topicRequestName form-control" type="text" />
-                    </div>
-                    <div class="input-group">
-                        <span class="input-group-addon">Message</span>
-                        <input class="topicRequestMsg form-control" type="text" />
-                    </div>
-                    <div class="input-group">
-                        <span class="input-group-addon">Response</span>
-                        <input class="topicRequestResponse form-control" type="text" readonly/>
-                    </div>
-                    <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Request"></<input>
                 </form>
                 <form class="form-inline topicRequestPromise">
                     <div class="input-group">

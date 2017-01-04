@@ -14,14 +14,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
     protected _peerName: string;
     protected _busConn: any;
 
-    constructor(busPath?: string) {
+    constructor(busPath: string) {
         super();
-        if (busPath == null) {
-            this._busPath = IpcBusUtils.GetCmdLineArgValue("bus-path");
-        }
-        else {
-            this._busPath = busPath;
-        }
+        this._busPath = busPath;
         this._peerName = "Node_" + process.pid;
 
         this._baseIpc = new BaseIpc();
@@ -56,7 +51,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
     }
 
     // Set API
-    connect(connectCallback: IpcBusInterfaces.IpcBusConnectFunc) {
+    connect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler) {
         this._baseIpc.on("connect", (conn: any) => {
             this._busConn = conn;
             connectCallback("connect", this._busConn);
@@ -68,39 +63,51 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         this._busConn.end();
     }
 
+    subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
+        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, this._peerName, this._busConn);
+    }
+
+    unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
+        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, this._peerName, this._busConn);
+    }
+
     send(topic: string, data: Object | string) {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, this._peerName, this._busConn);
     }
 
-    request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number) {
-        this.requestPromise(topic, data, timeoutDelay).then((RequestArgs) => {
-            requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
-        });
-    }
+    // request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number) {
+    //     this.requestPromise(topic, data, timeoutDelay).then((RequestArgs) => {
+    //         requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
+    //     });
+    // }
 
-    requestPromise(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestArgs> {
+    request(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
         if (timeoutDelay == null) {
             timeoutDelay = 2000;
         }
 
-        let p = new Promise<IpcBusInterfaces.IpcBusRequestArgs>((resolve, reject) => {
+        const generatedTopic = IpcBusUtils.GenerateReplyTopic();
+
+        let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
-            const localRequestCallback: IpcBusInterfaces.IpcBusRequestFunc = (replyTopic: string, content: Object | string, peerName: string) => {
-                console.log("Peer #" + peerName + " replied to request on " + replyTopic + ": " + content);
-                this.unsubscribe(replyTopic, localRequestCallback);
-                resolve({topic: topic, payload: content, peerName: peerName});
+            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic: string, content: Object | string, peerName: string, replyTopic?: string) => {
+                console.log("[IPCBus:Node] Peer #" + peerName + " replied to request on " + generatedTopic + ": " + content);
+                this.unsubscribe(generatedTopic, localRequestCallback);
+                let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content, peerName: peerName};
+                resolve(response);
             };
 
-            const replyTopic = IpcBusUtils.GenerateReplyTopic();
-            this.subscribe(replyTopic, localRequestCallback);
+            this.subscribe(generatedTopic, localRequestCallback);
 
             // Execute request
-            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, this._peerName, replyTopic, this._busConn);
+            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, this._peerName, generatedTopic, this._busConn);
 
             // Clean-up
             setTimeout(() => {
-                if (EventEmitter.prototype.listenerCount.call(this, replyTopic) > 0) {
-                    this.unsubscribe(replyTopic, localRequestCallback);
+                if (EventEmitter.prototype.listenerCount.call(this, generatedTopic) > 0) {
+                    this.unsubscribe(generatedTopic, localRequestCallback);
                     reject("timeout");
                 }
             }, timeoutDelay);
@@ -110,16 +117,6 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
 
     queryBrokerState(topic: string) {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, this._peerName, this._busConn);
-    }
-
-    subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusListenFunc) {
-        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, this._peerName, this._busConn);
-    }
-
-    unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusListenFunc) {
-        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, this._peerName, this._busConn);
     }
 }
 

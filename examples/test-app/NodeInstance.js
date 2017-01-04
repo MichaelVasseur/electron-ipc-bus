@@ -47,16 +47,32 @@ function doSendOnTopic(msgJSON) {
     process.send(JSON.stringify(msgJSON));
 }
 
-function doRequestOnTopic(msgJSON) {
+// function doRequestOnTopic(msgJSON) {
+//     var args = msgJSON["args"];
+//     console.log("node - doRequestOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
+//     ipcBus.request(args["topic"], args["msg"], function(topic, content, peerName)
+//     {   
+//         msgJSON["action"] = "receivedRequest";
+//         msgJSON["peerName"] = peerName;
+//         msgJSON["response"] = content;
+//         process.send(JSON.stringify(msgJSON));
+//     });
+// }
+
+function doRequestPromiseOnTopic(msgJSON) {
     var args = msgJSON["args"];
-    console.log("node - doRequestOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
-    ipcBus.request(args["topic"], args["msg"], function(topic, content, peerName)
-    {   
-        msgJSON["action"] = "receivedRequest";
-        msgJSON["peerName"] = peerName;
-        msgJSON["response"] = content;
-        process.send(JSON.stringify(msgJSON));
-    });
+    console.log("node - doRequestPromiseOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
+    ipcBus.request(args["topic"], args["msg"])
+        .then((ipcRequestResponse) => {
+            msgJSON["action"] = "receivedRequestPromiseThen";
+            msgJSON["requestPromiseResponse"] = requestPromiseResponse;
+            process.send(JSON.stringify(msgJSON));
+        })
+        .catch((err) => {
+            msgJSON["action"] = "receivedRequestPromiseCatch";
+            msgJSON["err"] = err;
+            process.send(JSON.stringify(msgJSON));
+        });
 }
 
 
@@ -80,7 +96,8 @@ function dispatchMessage(msg)
             subscribe : doSubscribeTopic,
             unsubscribe : doUnsubscribeTopic,
             send : doSendOnTopic,
-            request : doRequestOnTopic,
+//            request : doRequestOnTopic,
+            requestPromise : doRequestPromiseOnTopic,
             init : doInit
         };
 

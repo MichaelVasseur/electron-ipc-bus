@@ -34,38 +34,39 @@ export function GetCmdLineArgValue(argName: string): string {
     return null;
 }
 
-
 // export interface TopicConnectionMapCB { (peerNames?: Map<string, number>, conn?: any, topic?: string, count?: number): void };
 
 /** @internal */
 export class TopicConnectionMap {
 
-    private topicsMap: Map<string, Map<any, Map<string, number>>>;
+    private _name: string;
+    private _topicsMap: Map<string, Map<any, Map<string, number>>>;
 
-    constructor() {
-        this.topicsMap = new Map<string, Map<any, Map<string, number>>>();
+    constructor(name: string) {
+        this._name = name;
+        this._topicsMap = new Map<string, Map<any, Map<string, number>>>();
     }
 
     private _log(str: string) {
-        console.log("[" + this.constructor.name + "] " + str);
+        console.log("[" + this._name + "] " + str);
     }
 
     private _warn(str: string) {
-        console.warn("[" + this.constructor.name + "] " + str);
+        console.warn("[" + this._name + "] " + str);
     }
 
     private _error(str: string) {
-        console.error("[" + this.constructor.name + "] " + str);
+        console.error("[" + this._name + "] " + str);
     }
 
     public addRef(topic: string, conn: any, peerName: string, callback?: Function) {
         this._log("AddRef: " + topic + " : conn " + conn);
 
-        let connsMap = this.topicsMap.get(topic);
+        let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
             connsMap = new Map<any, Map<string, number>>();
             // This topic has NOT been subscribed yet, add it to the map
-            this.topicsMap.set(topic, connsMap);
+            this._topicsMap.set(topic, connsMap);
             this._log("AddRef: topic '" + topic + "' is added");
         }
         let peerNamesMap = connsMap.get(conn);
@@ -94,7 +95,7 @@ export class TopicConnectionMap {
     private _release(topic: string, conn: any, peerName?: string, callback?: Function) {
         this._log("Release: " + topic + " conn " + conn);
 
-        let connsMap = this.topicsMap.get(topic);
+        let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
             this._warn("Release: topic '" + topic + "' is unknown");
         }
@@ -105,7 +106,7 @@ export class TopicConnectionMap {
             }
             else {
                 if (peerName == null) {
-                    let peerNamesTemp: Array<string> = new Array<string>();
+                    let peerNamesTemp = new Array<string>();
                     for (let peerName of peerNamesMap.keys()) {
                         peerNamesTemp.push(peerName);
                     }
@@ -146,7 +147,7 @@ export class TopicConnectionMap {
                     connsMap.delete(conn);
                     this._log("Release: conn '" + conn + "' is released");
                     if (connsMap.size === 0) {
-                        this.topicsMap.delete(topic);
+                        this._topicsMap.delete(topic);
                         this._log("Release: topic '" + topic + "' is released");
                     }
                 }
@@ -164,8 +165,8 @@ export class TopicConnectionMap {
 
         // Store keys in an intermediate array
         // Not sure iterating and removing at the same time is well supported 
-        let topicsTmp: Array<string> = new Array<string>();
-        for (let topic of this.topicsMap.keys()) {
+        let topicsTmp = new Array<string>();
+        for (let topic of this._topicsMap.keys()) {
             topicsTmp.push(topic);
         }
         for (let topic of topicsTmp) {
@@ -181,7 +182,7 @@ export class TopicConnectionMap {
             return;
         }
 
-        this.topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
+        this._topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
             callback(connsMap, topic);
         });
     }
@@ -194,7 +195,7 @@ export class TopicConnectionMap {
             return;
         }
 
-        let connsMap = this.topicsMap.get(topic);
+        let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
             this._warn("ForEachTopic: Unknown topic '" + topic + "' !");
         }
@@ -214,7 +215,7 @@ export class TopicConnectionMap {
             return;
         }
 
-        this.topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
+        this._topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
             connsMap.forEach(function (peerNames: Map<string, number>, conn: any) {
                 callback(peerNames, conn, topic);
             });
