@@ -48,23 +48,20 @@ export function GetPortAndHost(busPath: string): IpcOptions {
     if (busPath == null) {
         busPath = GetCmdLineArgValue("bus-path");
     }
-    if (typeof busPath === "number") {
-        ipcOptions.port = busPath;
-        return ipcOptions;
-    }
-    if (typeof busPath !== "string") {
-        return ipcOptions;
-    }
-    if ((busPath == null) || (busPath.length === 0)) {
-        return ipcOptions;
-    }
-    let parts = busPath.split(":");
-    if (parts.length === 1) {
-        ipcOptions.port = parts[0];
-    }
-    else if (parts.length === 2) {
-        ipcOptions.host = parts[0];
-        ipcOptions.port = parts[1];
+    if (busPath != null) {
+        if (typeof busPath === "number") {
+            ipcOptions.port = busPath;
+        }
+        else if (typeof busPath === "string") {
+            let parts = busPath.split(":");
+            if (parts.length === 1) {
+                ipcOptions.port = parts[0];
+            }
+            else if (parts.length === 2) {
+                ipcOptions.host = parts[0];
+                ipcOptions.port = parts[1];
+            }
+        }
     }
     return ipcOptions;
 }

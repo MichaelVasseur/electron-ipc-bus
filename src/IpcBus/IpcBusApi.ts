@@ -40,7 +40,6 @@ function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusIn
                 }
                 break;
 
-            case "node":
             default:
                 if (ipcOptions.isValid()) {
                     _ipcBusClient = new IpcBusNodeClient(ipcOptions) as IpcBusInterfaces.IpcBusClient;
