@@ -35,7 +35,7 @@ function GetCmdLineArgValue(argName: string): string {
 }
 
 export class IpcOptions {
-    port: any;
+    port: any;      // with easy ipc, port can be either a number or a string (Function support is hidden).
     host: string;
 
     isValid(): boolean {
@@ -43,7 +43,9 @@ export class IpcOptions {
     }
 };
 
-export function GetPortAndHost(busPath: string): IpcOptions {
+// This method may be called from a pure JS stack.
+// It means we can not trust type and we have to check it.
+export function ExtractIpcOptions(busPath: string): IpcOptions {
     let ipcOptions: IpcOptions = new IpcOptions();
     if (busPath == null) {
         busPath = GetCmdLineArgValue("bus-path");
@@ -233,14 +235,14 @@ export class TopicConnectionMap {
         }
         else {
             connsMap.forEach((peerNames: Map<string, number>, conn: any) => {
-                this._warn("ForEachTopic: '" + topic + "' = " + conn + " (" + peerNames.size + ")");
+                this._log("ForEachTopic: '" + topic + "' = " + conn + " (" + peerNames.size + ")");
                 callback(peerNames, conn, topic);
             });
         }
     }
 
     public forEachConnection(callback: Function) {
-        this._log("ForEachConn");
+        this._log("forEachConnection");
 
         if ((callback instanceof Function) === false) {
             this._error("ForEachConn: No callback provided !");
@@ -249,6 +251,7 @@ export class TopicConnectionMap {
 
         this._topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
             connsMap.forEach(function (peerNames: Map<string, number>, conn: any) {
+                this._log("forEachConnection: '" + topic + "' = " + conn + " (" + peerNames.size + ")");
                 callback(peerNames, conn, topic);
             });
         });
