@@ -76,7 +76,7 @@ export class Logger {
 
     private static _initialize(): boolean {
         Logger.enable(Logger._enable);
-        Logger._init = true;
+        Logger._init = true;    // to prevent ts error on not used parameter
         return true;
     }
 
