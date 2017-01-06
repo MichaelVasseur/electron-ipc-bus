@@ -1,40 +1,40 @@
 
-import * as IpcBusInterfaces from "./IpcBusInterfaces";
-export * from "./IpcBusInterfaces";
+import * as IpcBusInterfaces from './IpcBusInterfaces';
+export * from './IpcBusInterfaces';
 
-import { IpcBusBrokerClient } from "./IpcBusBroker";
-import * as IpcBusUtils from "./IpcBusUtils";
+import { IpcBusBrokerClient } from './IpcBusBroker';
+import * as IpcBusUtils from './IpcBusUtils';
 
 export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
     let ipcBusBroker: IpcBusInterfaces.IpcBusBroker = null;
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
-        console.log("CreateIpcBusBroker ipc options = " + JSON.stringify(ipcOptions));
+        console.log(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
         ipcBusBroker = new IpcBusBrokerClient(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
     }
     return ipcBusBroker;
 }
 
-import { IpcBusNodeClient } from "./IpcBusNode";
-import { IpcBusMainClient } from "./IpcBusMain";
-import { IpcBusRendererClient } from "./IpcBusRenderer";
-import * as ElectronUtils from "./ElectronUtils";
+import { IpcBusNodeClient } from './IpcBusNode';
+import { IpcBusMainClient } from './IpcBusMain';
+import { IpcBusRendererClient } from './IpcBusRenderer';
+import * as ElectronUtils from './ElectronUtils';
 
 // A single instance per process
 let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
 
 function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusInterfaces.IpcBusClient {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
-    console.log("CreateIpcBusForProcess process type = " + processType + ", ipc options = " + JSON.stringify(ipcOptions));
+    console.log(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
 
     if (_ipcBusClient == null) {
         switch (processType) {
-            case "renderer":
+            case 'renderer':
                 _ipcBusClient = new IpcBusRendererClient() as IpcBusInterfaces.IpcBusClient;
                 break;
 
-            case "browser":
+            case 'browser':
                 if (ipcOptions.isValid()) {
                     _ipcBusClient = new IpcBusMainClient(ipcOptions) as IpcBusInterfaces.IpcBusClient;
                 }

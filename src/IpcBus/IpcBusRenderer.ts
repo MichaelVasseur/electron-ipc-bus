@@ -1,8 +1,8 @@
-/// <reference types="node" />
+/// <reference types='node' />
 
-import { EventEmitter } from "events";
-import * as IpcBusInterfaces from "./IpcBusInterfaces";
-import * as IpcBusUtils from "./IpcBusUtils";
+import { EventEmitter } from 'events';
+import * as IpcBusInterfaces from './IpcBusInterfaces';
+import * as IpcBusUtils from './IpcBusUtils';
 
 // Implementation for Renderer process
 /** @internal */
@@ -12,18 +12,18 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     constructor() {
         super();
-        this._ipcObj = require("electron").ipcRenderer;
+        this._ipcObj = require('electron').ipcRenderer;
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onReceive(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined));
     }
 
     private _onReceive(eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (eventOrTopic instanceof EventEmitter) {
-            console.log("[IPCBus:Renderer] Received message on '" + topicOrPayload + "'");
+            console.log(`[IPCBus:Renderer] Received message on '${topicOrPayload}'`);
             EventEmitter.prototype.emit.call(this, topicOrPayload, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
         }
         else {
-            console.log("[IPCBus:Renderer] Received message on '" + eventOrTopic + "'");
+            console.log(`[IPCBus:Renderer] Received message on '${eventOrTopic}'`);
             EventEmitter.prototype.emit.call(this, eventOrTopic, eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic);
         }
     }
@@ -31,12 +31,12 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
     // Set API
     connect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler): void {
         if (this._connected === false) {
-            throw new Error("Connection is closed");
+            throw new Error('Connection is closed');
         }
         // connect can be called multiple times
         this._connected = true;
         setTimeout(() => {
-            connectCallback("connect", -1);
+            connectCallback('connect', -1);
         }, 1);
     }
 
@@ -46,7 +46,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler): void {
         if (this._connected !== true) {
-            throw new Error("Please connect first");
+            throw new Error('Please connect first');
         }
         EventEmitter.prototype.addListener.call(this, topic, listenCallback);
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, topic);
@@ -54,7 +54,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler): void {
         if (this._connected !== true) {
-            throw new Error("Please connect first");
+            throw new Error('Please connect first');
         }
         EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, topic);
@@ -62,7 +62,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     send(topic: string, data: Object | string): void {
         if (this._connected !== true) {
-            throw new Error("Please connect first");
+            throw new Error('Please connect first');
         }
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, topic, data);
     }
@@ -75,7 +75,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     request(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
         if (this._connected !== true) {
-            throw new Error("Please connect first");
+            throw new Error('Please connect first');
         }
 
         if (timeoutDelay == null) {
@@ -87,7 +87,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic: string, content: Object | string, peerName: string, replyTopic?: string) => {
-                console.log("[IPCBus:Node] Peer #" + peerName + " replied to request on " + generatedTopic + ": " + content);
+                console.log(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${content}`);
                 this.unsubscribe(generatedTopic, localRequestCallback);
                 let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content, peerName: peerName};
                 resolve(response);
@@ -102,7 +102,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
             setTimeout(() => {
                 if (EventEmitter.prototype.listenerCount.call(this, generatedTopic) > 0) {
                     this.unsubscribe(generatedTopic, localRequestCallback);
-                    reject("timeout");
+                    reject('timeout');
                 }
             }, timeoutDelay);
         });
@@ -111,7 +111,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     queryBrokerState(topic: string): void {
         if (this._connected !== true) {
-            throw new Error("Please connect first");
+            throw new Error('Please connect first');
         }
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, topic);
     }

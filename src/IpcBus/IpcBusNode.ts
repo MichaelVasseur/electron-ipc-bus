@@ -1,10 +1,10 @@
-/// <reference types="node" />
-/// <reference path="typings/easy-ipc.d.ts"/>
+/// <reference types='node' />
+/// <reference path='typings/easy-ipc.d.ts'/>
 
-import {EventEmitter} from "events";
-import * as BaseIpc from "easy-ipc";
-import * as IpcBusInterfaces from "./IpcBusInterfaces";
-import * as IpcBusUtils from "./IpcBusUtils";
+import {EventEmitter} from 'events';
+import * as BaseIpc from 'easy-ipc';
+import * as IpcBusInterfaces from './IpcBusInterfaces';
+import * as IpcBusUtils from './IpcBusUtils';
 
 // Implementation for Node process
 /** @internal */
@@ -17,9 +17,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         super();
         this._ipcOptions = ipcOptions;
-        this._peerName = "Node_" + process.pid;
+        this._peerName = 'Node_' + process.pid;
         this._baseIpc = new BaseIpc();
-        this._baseIpc.on("data", (data: any, conn: any) => this._onData(data, conn));
+        this._baseIpc.on('data', (data: any, conn: any) => this._onData(data, conn));
     }
 
     protected _onData(data: any, conn: any): void {
@@ -30,7 +30,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
                         const msgTopic = data.args[0];
                         const msgContent = data.args[1];
                         const msgPeerName = data.args[2];
-                        console.log("[IPCBus:Node] Emit message received on topic '" + msgTopic + "' from peer #" + msgPeerName);
+                        console.log(`[IPCBus:Node] Emit message received on topic '${msgTopic}' from peer #${msgPeerName}`);
                         EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgPeerName);
                         break;
                     }
@@ -41,7 +41,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
                         const msgContent = data.args[1];
                         const msgPeerName = data.args[2];
                         const msgReplyTopic = data.args[3];
-                        console.log("[IPCBus:Node] Emit request received on topic '" + msgTopic + "' from peer #" + msgPeerName);
+                        console.log(`[IPCBus:Node] Emit request received on topic '${msgTopic}' from peer #${msgPeerName}`);
                         EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgPeerName, msgReplyTopic);
                         break;
                     }
@@ -51,9 +51,9 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
 
     // Set API
     connect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler) {
-        this._baseIpc.on("connect", (conn: any) => {
+        this._baseIpc.on('connect', (conn: any) => {
             this._busConn = conn;
-            connectCallback("connect", this._busConn);
+            connectCallback('connect', this._busConn);
         });
         this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
     }
@@ -92,7 +92,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic: string, content: Object | string, peerName: string, replyTopic?: string) => {
-                console.log("[IPCBus:Node] Peer #" + peerName + " replied to request on " + generatedTopic + ": " + content);
+                console.log(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${content}`);
                 this.unsubscribe(generatedTopic, localRequestCallback);
                 let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content, peerName: peerName};
                 resolve(response);
@@ -107,7 +107,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
             setTimeout(() => {
                 if (EventEmitter.prototype.listenerCount.call(this, generatedTopic) > 0) {
                     this.unsubscribe(generatedTopic, localRequestCallback);
-                    reject("timeout");
+                    reject('timeout');
                 }
             }, timeoutDelay);
         });
