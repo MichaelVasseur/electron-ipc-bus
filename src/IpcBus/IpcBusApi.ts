@@ -8,7 +8,7 @@ import * as IpcBusUtils from "./IpcBusUtils";
 export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
     let ipcBusBroker: IpcBusInterfaces.IpcBusBroker = null;
 
-    let ipcOptions = IpcBusUtils.GetPortAndHost(busPath);
+    let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
         console.log("CreateIpcBusBroker ipc options = " + JSON.stringify(ipcOptions));
         ipcBusBroker = new IpcBusBrokerClient(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
@@ -25,7 +25,7 @@ import * as ElectronUtils from "./ElectronUtils";
 let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
 
 function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusInterfaces.IpcBusClient {
-    let ipcOptions = IpcBusUtils.GetPortAndHost(busPath);
+    let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     console.log("CreateIpcBusForProcess process type = " + processType + ", ipc options = " + JSON.stringify(ipcOptions));
 
     if (_ipcBusClient == null) {

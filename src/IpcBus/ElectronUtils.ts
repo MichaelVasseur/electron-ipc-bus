@@ -8,7 +8,7 @@ export function GuessElectronProcessType(): string {
         electron = require("electron");
     }
     catch (e) {
-        return null;
+        return null; // Means Node process
     }
 
     let processType = process.type;
