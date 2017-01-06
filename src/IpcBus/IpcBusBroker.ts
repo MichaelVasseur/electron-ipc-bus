@@ -103,8 +103,8 @@ export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
                         const msgPeerName = data.args[1] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] QueryState message reply on topic '${msgTopic}' from peer #${msgPeerName}`);
 
-                        let queryStateResult: any = [];
-                        this._subscriptions.forEachConnection(function (peerNames: Map<string, number>, conn: any, topic: string) {
+                        let queryStateResult: Object[] = [];
+                        this._subscriptions.forEach(function (peerNames: Map<string, number>, conn: any, topic: string) {
                             peerNames.forEach(function (count: number, peerName: string) {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count });
                             });
