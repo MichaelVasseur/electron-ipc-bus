@@ -49,6 +49,7 @@
     "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
     "build-declaration": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
+    "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/index.d.ts",
     "tsc": "tsc",
     "lint": "tslint"
   }

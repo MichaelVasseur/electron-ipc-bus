@@ -5,6 +5,7 @@ export * from './IpcBusInterfaces';
 import { IpcBusBrokerClient } from './IpcBusBroker';
 import * as IpcBusUtils from './IpcBusUtils';
 
+/** @internal */
 export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
     let ipcBusBroker: IpcBusInterfaces.IpcBusBroker = null;
 
@@ -24,6 +25,7 @@ import * as ElectronUtils from './ElectronUtils';
 // A single instance per process
 let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
 
+/** @internal */
 function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusInterfaces.IpcBusClient {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     console.log(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
@@ -50,6 +52,7 @@ function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusIn
     return _ipcBusClient;
 }
 
+/** @internal */
 export function CreateIpcBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
     return CreateIpcBusForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
 }
