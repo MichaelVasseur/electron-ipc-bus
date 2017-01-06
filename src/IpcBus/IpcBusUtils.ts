@@ -110,15 +110,6 @@ export class Logger {
     }
 };
 
-export interface TopicConnectionMapHandler {
-     (topic: string, conn: any, peerName: string, peerNamesCount: number): void;
-};
-
-export interface TopicConnectionMapForEachHandler {
-     (peernNames:Map<string, number>, conn: any, topic: string): void;
-};
-
-
 /** @internal */
 export class TopicConnectionMap {
     private _name: string;
@@ -141,7 +132,7 @@ export class TopicConnectionMap {
        Logger.error(`[${this._name}] ${str}`);
     }
 
-    public addRef(topic: string, conn: any, peerName: string, callback?: TopicConnectionMapHandler) {
+    public addRef(topic: string, conn: any, peerName: string, callback?: TopicConnectionMap.MapHandler) {
         this._info(`AddRef: '${topic}', conn = ${conn}`);
 
         let connsMap = this._topicsMap.get(topic);
@@ -174,7 +165,7 @@ export class TopicConnectionMap {
         }
     }
 
-    private _release(topic: string, conn: any, peerName?: string, callback?: TopicConnectionMapHandler) {
+    private _release(topic: string, conn: any, peerName?: string, callback?: TopicConnectionMap.MapHandler) {
         this._info(`Release: '${topic}', conn = ${conn}`);
 
         let connsMap = this._topicsMap.get(topic);
@@ -238,11 +229,11 @@ export class TopicConnectionMap {
         }
     }
 
-    public release(topic: string, conn: any, peerName: string, callback?: TopicConnectionMapHandler) {
+    public release(topic: string, conn: any, peerName: string, callback?: TopicConnectionMap.MapHandler) {
         this._release(topic, conn, peerName, callback);
     }
 
-    public releaseConnection(conn: any, callback?: TopicConnectionMapHandler) {
+    public releaseConnection(conn: any, callback?: TopicConnectionMap.MapHandler) {
         this._info(`ReleaseConn: conn = ${conn}`);
 
         // Store keys in an intermediate array
@@ -256,7 +247,7 @@ export class TopicConnectionMap {
         }
     }
 
-    public forEachTopic(topic: string, callback: TopicConnectionMapForEachHandler) {
+    public forEachTopic(topic: string, callback: TopicConnectionMap.ForEachHandler) {
         this._info(`ForEachTopic: '${topic}'`);
 
         if ((callback instanceof Function) === false) {
@@ -276,7 +267,7 @@ export class TopicConnectionMap {
         }
     }
 
-    public forEach(callback: TopicConnectionMapForEachHandler) {
+    public forEach(callback: TopicConnectionMap.ForEachHandler) {
         this._info('forEach');
 
         if ((callback instanceof Function) === false) {
@@ -292,3 +283,14 @@ export class TopicConnectionMap {
         });
     }
 }
+
+export namespace TopicConnectionMap {
+    export interface MapHandler {
+        (topic: string, conn: any, peerName: string, peerNamesCount: number): void;
+    };
+
+    export interface ForEachHandler {
+        (peernNames:Map<string, number>, conn: any, topic: string): void;
+    };
+};
+
