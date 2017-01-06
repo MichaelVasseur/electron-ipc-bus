@@ -68,6 +68,48 @@ export function ExtractIpcOptions(busPath: string): IpcOptions {
     return ipcOptions;
 }
 
+/** @internal */
+export class Logger {
+    private static _enable: boolean = false;
+    private static _init: boolean = Logger._initialize();
+
+    private static _initialize(): boolean {
+        Logger.enable(Logger._enable);
+        Logger._init = true;
+        return true;
+    }
+
+    private static _info(msg: string) {
+        console.log(msg);
+    }
+
+    private static _warn(msg: string) {
+        console.warn(msg);
+    }
+
+    private static _error(msg: string) {
+        console.error(msg);
+    }
+
+    static info(msg: string) {}
+    static warn (msg: string) {};
+    static error(msg: string) {};
+
+    static enable(enable: boolean) {
+        Logger._enable = enable;
+        if (enable){
+            Logger.info = Logger._info;
+            Logger.warn = Logger._warn ;
+            Logger.error = Logger._error;
+        }
+        else {
+            Logger.info = function() {};
+            Logger.warn = function() {};
+            Logger.error = function() {};
+        }
+    }
+};
+
 // export interface TopicConnectionMapCB { (peerNames?: Map<string, number>, conn?: any, topic?: string, count?: number): void };
 
 /** @internal */
@@ -81,53 +123,53 @@ export class TopicConnectionMap {
         this._topicsMap = new Map<string, Map<any, Map<string, number>>>();
     }
 
-    private _log(str: string) {
-        console.log(`[${this._name}] ${str}`);
+    private _info(str: string) {
+        Logger.info(`[${this._name}] ${str}`);
     }
 
     private _warn(str: string) {
-        console.warn(`[${this._name}] ${str}`);
+        Logger.warn(`[${this._name}] ${str}`);
     }
 
     private _error(str: string) {
-        console.error(`[${this._name}] ${str}`);
+       Logger.error(`[${this._name}] ${str}`);
     }
 
     public addRef(topic: string, conn: any, peerName: string, callback?: Function) {
-        this._log(`AddRef: '${topic}', conn = ${conn}`);
+        this._info(`AddRef: '${topic}', conn = ${conn}`);
 
         let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
             connsMap = new Map<any, Map<string, number>>();
             // This topic has NOT been subscribed yet, add it to the map
             this._topicsMap.set(topic, connsMap);
-            this._log(`AddRef: topic '${topic}' is added`);
+            this._info(`AddRef: topic '${topic}' is added`);
         }
         let peerNamesMap = connsMap.get(conn);
         if (peerNamesMap == null) {
             // This topic has NOT been already subscribed by this connection
             peerNamesMap = new Map<string, number>();
             connsMap.set(conn, peerNamesMap);
-            this._log(`AddRef: conn = ${conn} is added`);
+            this._info(`AddRef: conn = ${conn} is added`);
         }
         let count = peerNamesMap.get(peerName);
         if (count == null) {
             // This topic has NOT been already subcribed by this peername, by default 1
             count = 1;
-            this._log(`AddRef: peerName #${peerName} is added`);
+            this._info(`AddRef: peerName #${peerName} is added`);
         }
         else {
             ++count;
         }
         peerNamesMap.set(peerName, count);
-        this._log(`AddRef: topic '${topic}', conn = ${conn}, count = ${peerNamesMap.size}`);
+        this._info(`AddRef: topic '${topic}', conn = ${conn}, count = ${peerNamesMap.size}`);
         if ((callback instanceof Function) === true) {
             callback(topic, conn, peerName, peerNamesMap.size);
         }
     }
 
     private _release(topic: string, conn: any, peerName?: string, callback?: Function) {
-        this._log(`Release: '${topic}', conn = ${conn}`);
+        this._info(`Release: '${topic}', conn = ${conn}`);
 
         let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
@@ -170,7 +212,7 @@ export class TopicConnectionMap {
                         } else {
                             // The connection is no more referenced
                             peerNamesMap.delete(peerName);
-                            this._log(`Release: peerName #${peerName} is released`);
+                            this._info(`Release: peerName #${peerName} is released`);
                         }
                     }
                     if ((callback instanceof Function) === true) {
@@ -179,13 +221,13 @@ export class TopicConnectionMap {
                 }
                 if (peerNamesMap.size === 0) {
                     connsMap.delete(conn);
-                    this._log(`Release: conn = ${conn} is released`);
+                    this._info(`Release: conn = ${conn} is released`);
                     if (connsMap.size === 0) {
                         this._topicsMap.delete(topic);
-                        this._log(`Release: topic '${topic}' is released`);
+                        this._info(`Release: topic '${topic}' is released`);
                     }
                 }
-                this._log(`Release: topic '${topic}', conn = ${conn}, count = ${peerNamesMap.size}`);
+                this._info(`Release: topic '${topic}', conn = ${conn}, count = ${peerNamesMap.size}`);
             }
         }
     }
@@ -195,7 +237,7 @@ export class TopicConnectionMap {
     }
 
     public releaseConnection(conn: any, callback?: Function) {
-        this._log(`ReleaseConn: conn = ${conn}`);
+        this._info(`ReleaseConn: conn = ${conn}`);
 
         // Store keys in an intermediate array
         // Not sure iterating and removing at the same time is well supported 
@@ -209,7 +251,7 @@ export class TopicConnectionMap {
     }
 
     public forEach(callback: Function) {
-        this._log('ForEach');
+        this._info('ForEach');
 
         if ((callback instanceof Function) === false) {
             this._error('ForEach: No callback provided !');
@@ -222,7 +264,7 @@ export class TopicConnectionMap {
     }
 
     public forEachTopic(topic: string, callback: Function) {
-        this._log(`ForEachTopic: '${topic}'`);
+        this._info(`ForEachTopic: '${topic}'`);
 
         if ((callback instanceof Function) === false) {
             this._error('ForEachTopic: No callback provided !');
@@ -235,14 +277,14 @@ export class TopicConnectionMap {
         }
         else {
             connsMap.forEach((peerNames: Map<string, number>, conn: any) => {
-                this._log(`ForEachTopic: '${topic}', conn = ${conn} (' + ${peerNames.size} )`);
+                this._info(`ForEachTopic: '${topic}', conn = ${conn} (' + ${peerNames.size} )`);
                 callback(peerNames, conn, topic);
             });
         }
     }
 
     public forEachConnection(callback: Function) {
-        this._log('forEachConnection');
+        this._info('forEachConnection');
 
         if ((callback instanceof Function) === false) {
             this._error('ForEachConn: No callback provided !');
@@ -251,7 +293,7 @@ export class TopicConnectionMap {
 
         this._topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
             connsMap.forEach((peerNames: Map<string, number>, conn: any) => {
-                this._log(`forEachConnection: '${topic}', conn = ${conn} (' + ${peerNames.size} )`);
+                this._info(`forEachConnection: '${topic}', conn = ${conn} (' + ${peerNames.size} )`);
                 callback(peerNames, conn, topic);
             });
         });

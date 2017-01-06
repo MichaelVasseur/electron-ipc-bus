@@ -30,7 +30,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
                         const msgTopic = data.args[0];
                         const msgContent = data.args[1];
                         const msgPeerName = data.args[2];
-                        console.log(`[IPCBus:Node] Emit message received on topic '${msgTopic}' from peer #${msgPeerName}`);
+                        IpcBusUtils.Logger.info(`[IPCBus:Node] Emit message received on topic '${msgTopic}' from peer #${msgPeerName}`);
                         EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgPeerName);
                         break;
                     }
@@ -41,7 +41,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
                         const msgContent = data.args[1];
                         const msgPeerName = data.args[2];
                         const msgReplyTopic = data.args[3];
-                        console.log(`[IPCBus:Node] Emit request received on topic '${msgTopic}' from peer #${msgPeerName}`);
+                        IpcBusUtils.Logger.info(`[IPCBus:Node] Emit request received on topic '${msgTopic}' from peer #${msgPeerName}`);
                         EventEmitter.prototype.emit.call(this, msgTopic, msgTopic, msgContent, msgPeerName, msgReplyTopic);
                         break;
                     }
@@ -92,7 +92,7 @@ export class IpcBusNodeClient extends EventEmitter implements IpcBusInterfaces.I
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic: string, content: Object | string, peerName: string, replyTopic?: string) => {
-                console.log(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${content}`);
+                IpcBusUtils.Logger.info(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${content}`);
                 this.unsubscribe(generatedTopic, localRequestCallback);
                 let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content, peerName: peerName};
                 resolve(response);

@@ -11,7 +11,7 @@ export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBro
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
-        console.log(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
+        IpcBusUtils.Logger.info(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
         ipcBusBroker = new IpcBusBrokerClient(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
     }
     return ipcBusBroker;
@@ -28,7 +28,7 @@ let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
 /** @internal */
 function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusInterfaces.IpcBusClient {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
-    console.log(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
+    IpcBusUtils.Logger.info(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
 
     if (_ipcBusClient == null) {
         switch (processType) {
