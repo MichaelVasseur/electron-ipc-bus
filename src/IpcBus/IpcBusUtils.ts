@@ -34,6 +34,7 @@ function GetCmdLineArgValue(argName: string): string {
     return null;
 }
 
+/** @internal */
 export class IpcOptions {
     port: any;      // with easy ipc, port can be either a number or a string (Function support is hidden).
     host: string;
@@ -97,7 +98,7 @@ export class Logger {
 
     static enable(enable: boolean) {
         Logger._enable = enable;
-        if (enable){
+        if (enable) {
             Logger.info = Logger._info;
             Logger.warn = Logger._warn ;
             Logger.error = Logger._error;
@@ -284,13 +285,14 @@ export class TopicConnectionMap {
     }
 }
 
+/** @internal */
 export namespace TopicConnectionMap {
     export interface MapHandler {
         (topic: string, conn: any, peerName: string, peerNamesCount: number): void;
     };
 
     export interface ForEachHandler {
-        (peernNames:Map<string, number>, conn: any, topic: string): void;
+        (peernNames: Map<string, number>, conn: any, topic: string): void;
     };
 };
 
