@@ -6,6 +6,8 @@
 window.ipcBus = require("electron-ipc-bus").CreateIpcBus();
 window.ipcRenderer = require("electron").ipcRenderer;
 
+// require('electron').remote.getCurrentWindow().id
+
 // const path = require("path");
 // var preloadFile = path.join(__dirname, "BundledBrowserWindowPreload.js");
 // var width = 1000;

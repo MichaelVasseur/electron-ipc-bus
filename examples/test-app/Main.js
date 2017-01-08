@@ -169,28 +169,44 @@ var MainProcess = (function () {
 })();
 
 var RendererProcess = (function () {
-    function RendererProcess(processId, session) {
-        const rendererWindow = new BrowserWindow({
-            width: width, height: 600,
-            webPreferences:
-            {
-                session: session,
-                preload: preloadFile
-            }
-        });
-        rendererWindow.loadURL('file://' + path.join(__dirname, 'CommonView.html'));
-        rendererWindow.webContents.on('dom-ready', function () {
-            rendererWindow.webContents.send('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
-        });
 
-        this.onClose = function _onClose(callback) {
+    function RendererProcess(processId, session) {
+        var rendererWindows = new Map();
+        var callbackClose;
+        var self = this;
+        createWindow();
+
+        function createWindow() {
+            const rendererWindow = new BrowserWindow({
+                width: width, height: 600,
+                webPreferences:
+                {
+                    session: session,
+                    preload: preloadFile
+                }
+            });
+            rendererWindow.loadURL('file://' + path.join(__dirname, 'CommonView.html'));
+            rendererWindow.webContents.on('dom-ready', function () {
+                rendererWindow.webContents.send('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
+            });
+
+            rendererWindows.set(rendererWindow.webContents.id, rendererWindow);
             rendererWindow.on('close', function () {
-                callback(processId);
+                self.rendererWindows.delete(rendererWindow.webContents.id);
+                if (self.rendererWindows.size === 0) {
+                    self.callbackClose();
+                }
             });
         };
 
+        this.onClose = function _onClose(callback) {
+            callbackClose = callback;
+        };
+
         this.term = function _term() {
-            rendererWindow.close();
+            while (rendererWindows.length > 0) {
+                rendererWindows[0].close();
+            }
         };
     };
     return RendererProcess;
@@ -207,7 +223,13 @@ var NodeProcess = (function () {
     }
 
     function NodeProcess(processId) {
-        var nodeInstance = new NodeInstance();
+        var self = this;
+
+        var nodeWindow = null;
+        var processMainToView = null;
+
+        var nodeInstance = null;
+
         // Listen view messages
         var processMainFromView = new ProcessConnector('node', ipcMain, processId);
         // processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
@@ -216,32 +238,45 @@ var NodeProcess = (function () {
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
 
-        // Listen node message
+        // Create node process
+        nodeInstance = new NodeInstance();
         nodeInstance.process.on('message', onIPCProcess_Message);
-
         nodeInstance.process.send(JSON.stringify({ action: 'init', args: { title: 'Node', type: 'node', id: processId } }));
-        const nodeWindow = new BrowserWindow({
+        nodeInstance.process.on('exit', function() {
+            if (nodeWindow) {
+                nodeWindow.close();
+                nodeWindow = null;
+            }
+        });
+
+        // Create node window
+        nodeWindow = new BrowserWindow({
             width: width, height: 600,
             webPreferences:
             {
                 preload: preloadFile
             }
         });
-        var processMainToView = new ProcessConnector('node', nodeWindow.webContents, processId);
+        processMainToView = new ProcessConnector('node', nodeWindow.webContents, processId);
         nodeWindow.loadURL('file://' + path.join(__dirname, 'CommonView.html'));
-        nodeWindow.on('close', function () {
-            nodeInstance.process.kill();
-        });
         nodeWindow.webContents.on('dom-ready', function () {
             nodeWindow.webContents.send('initializeWindow', { title: 'Node', type: 'node', id: processId, peerName: 'Node_' + nodeInstance.process.pid, webContentsId: nodeWindow.webContents.id });
         });
 
+        nodeWindow.on('close', function () {
+            nodeWindow = null;
+            self.term();
+        });
+
         this.term = function _term() {
-            nodeWindow.close();
+            if (nodeInstance) {
+                nodeInstance.process.kill();
+                nodeInstance = null;
+            }
         };
 
         this.onClose = function _onClose(callback) {
-            nodeWindow.on('close', function () {
+            nodeInstance.process.on('exit', function () {
                 callback(processId);
             });
         };
