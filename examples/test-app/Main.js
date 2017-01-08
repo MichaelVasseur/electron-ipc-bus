@@ -88,17 +88,11 @@ var MainProcess = (function () {
             mainWindow.webContents.send('initializeWindow', { title: 'Main', type: 'browser', peerName: 'Main', webContentsId: mainWindow.webContents.id });
         });
 
-        function getSession(sessionId) {
-            var sessionName = 'persist:process' + sessionId;
-            var session = electronSession.fromPartition(sessionName);
-            return session;
-        }
-
         function doNewProcess(processType) {
             var newProcess = null;
             switch (processType) {
                 case 'renderer':
-                    newProcess = new RendererProcess(processId, getSession(processId));
+                    newProcess = new RendererProcess(processId);
                     break;
                 case 'node':
                     newProcess = new NodeProcess(processId);
@@ -113,15 +107,11 @@ var MainProcess = (function () {
             }
         }
 
-        function doNewRenderer(sessionId) {
-            var newProcess = new RendererProcess(processId, getSession(sessionId));
-            if (newProcess != null) {
-                instances.set(processId, newProcess);
-                newProcess.onClose(function (processId) {
-                    instances.delete(processId);
-                });
+        function doNewRenderer(processId) {
+            var rendererProcess = instances.get(processId);
+            if (rendererProcess != null) {
+                rendererProcess.createWindow();
             }
-            ++processId;
         }
 
         function onIPCElectron_ReceivedMessage(topicName, topicMsg, peerName, topicToReply) {
@@ -170,18 +160,14 @@ var MainProcess = (function () {
 
 var RendererProcess = (function () {
 
-    function RendererProcess(processId, session) {
-        var rendererWindows = new Map();
-        var callbackClose;
-        var self = this;
-        createWindow();
-
-        function createWindow() {
+    function RendererProcess(processId) {
+        this.createWindow = function _createWindow() {
             const rendererWindow = new BrowserWindow({
                 width: width, height: 600,
                 webPreferences:
                 {
-                    session: session,
+//                    session: getSession(),
+                    session: 'persist:process' + processId,
                     preload: preloadFile
                 }
             });
@@ -191,8 +177,9 @@ var RendererProcess = (function () {
             });
 
             rendererWindows.set(rendererWindow.webContents.id, rendererWindow);
+            var key = rendererWindow.webContents.id;
             rendererWindow.on('close', function () {
-                self.rendererWindows.delete(rendererWindow.webContents.id);
+                self.rendererWindows.delete(key);
                 if (self.rendererWindows.size === 0) {
                     self.callbackClose();
                 }
@@ -208,6 +195,17 @@ var RendererProcess = (function () {
                 rendererWindows[0].close();
             }
         };
+
+        function getSession() {
+            var sessionName = 'persist:process' + processId;
+            var session = electronSession.fromPartition(sessionName);
+            return session;
+        }
+
+        var rendererWindows = new Map();
+        var callbackClose;
+        var self = this;
+        this.createWindow();
     };
     return RendererProcess;
 })();
