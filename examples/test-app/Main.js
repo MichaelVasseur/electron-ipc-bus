@@ -161,13 +161,14 @@ var MainProcess = (function () {
 var RendererProcess = (function () {
 
     function RendererProcess(processId) {
+        var rendererWindows = new Map();
+        var callbackClose;
         this.createWindow = function _createWindow() {
             const rendererWindow = new BrowserWindow({
                 width: width, height: 600,
                 webPreferences:
                 {
-//                    session: getSession(),
-                    session: 'persist:process' + processId,
+                    session: getSession(),
                     preload: preloadFile
                 }
             });
@@ -178,10 +179,10 @@ var RendererProcess = (function () {
 
             rendererWindows.set(rendererWindow.webContents.id, rendererWindow);
             var key = rendererWindow.webContents.id;
-            rendererWindow.on('close', function () {
-                self.rendererWindows.delete(key);
-                if (self.rendererWindows.size === 0) {
-                    self.callbackClose();
+            rendererWindow.on('close', () => {
+                rendererWindows.delete(key);
+                if (rendererWindows.size === 0) {
+                    callbackClose();
                 }
             });
         };
@@ -202,9 +203,6 @@ var RendererProcess = (function () {
             return session;
         }
 
-        var rendererWindows = new Map();
-        var callbackClose;
-        var self = this;
         this.createWindow();
     };
     return RendererProcess;
