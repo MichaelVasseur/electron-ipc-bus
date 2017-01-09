@@ -287,10 +287,10 @@ var NodeProcess = (function () {
             if (msgJSON.hasOwnProperty('action')) {
                 switch (msgJSON['action']) {
                     case 'receivedRequestThen':
-                        processMainToView.postRequestThen(msgJSON['args']['requestPromiseResponse']);
+                        processMainToView.postRequestThen(msgJSON['requestPromiseResponse']);
                         break;
                     case 'receivedRequestCatch':
-                        processMainToView.postRequestCatch(msgJSON['args']['err']);
+                        processMainToView.postRequestCatch(msgJSON['err']);
                         break;
                     case 'receivedSend':
                         processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName']);

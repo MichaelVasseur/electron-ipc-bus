@@ -18,7 +18,7 @@ export class IpcBusRendererClient implements IpcBusInterfaces.IpcBusClient {
     private _onReceiveBis(topic: any, payload: any, peerName: any, replyTopic?: any): void {
         if (replyTopic) {
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Emit request on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
-            this._ipcObj.emit(this, topic, topic, payload, peerName,
+            this._ipcObj.emit(topic, topic, payload, peerName,
                 (resolve: Object | string) => {
                     this.send(replyTopic, { resolve : resolve });
                 },
