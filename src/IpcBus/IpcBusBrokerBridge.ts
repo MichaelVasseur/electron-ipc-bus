@@ -1,5 +1,4 @@
 /// <reference types='node' />
-/// <reference path='typings/easy-ipc.d.ts'/>
 
 import * as IpcBusUtils from './IpcBusUtils';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
@@ -34,13 +33,14 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
         });
     }
 
+    // Override the base method
     protected _onMessageReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Emit message received on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received message on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
         this._topicRendererRefs.forEachTopic(topic, (peerNames: Map<string, number>, webContentsId: any, topic: string) => {
-            const peerName = 'Renderer_' + webContentsId;
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #${peerName}`);
             let webContents = this._webContents.fromId(webContentsId);
-            if (webContents != null) {
+            if (webContents) {
+                const peerName = 'Renderer_' + webContentsId;
+                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #${peerName}`);
                 webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, topic, payload, peerName, replyTopic);
             }
         });

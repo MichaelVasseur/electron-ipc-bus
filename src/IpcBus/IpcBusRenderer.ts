@@ -6,20 +6,19 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 // Implementation for Renderer process
 /** @internal */
-export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfaces.IpcBusClient {
+export class IpcBusRendererClient implements IpcBusInterfaces.IpcBusClient {
     private _ipcObj: any;
     private _connected?: boolean = null;
 
     constructor() {
-        super();
         this._ipcObj = require('electron').ipcRenderer;
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onReceive(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined));
     }
 
     private _onReceiveBis(topic: any, payload: any, peerName: any, replyTopic?: any): void {
-        IpcBusUtils.Logger.info(`[IPCBus:Renderer] Received message on '${topic}'`);
         if (replyTopic) {
-            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName,
+            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Emit request on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
+            this._ipcObj.emit(this, topic, topic, payload, peerName,
                 (resolve: Object | string) => {
                     this.send(replyTopic, { resolve : resolve });
                 },
@@ -29,7 +28,8 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
             );
         }
         else {
-            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
+            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Emit message on topic '${topic}' from peer #${peerName}`);
+            this._ipcObj.emit(topic, topic, payload, peerName);
         }
     }
 
@@ -62,7 +62,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         if (this._connected !== true) {
             throw new Error('Please connect first');
         }
-        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
+        this._ipcObj.addListener(topic, listenCallback);
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, topic);
     }
 
@@ -70,7 +70,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         if (this._connected !== true) {
             throw new Error('Please connect first');
         }
-        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
+        this._ipcObj.removeListener(topic, listenCallback);
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, topic);
     }
 
@@ -95,17 +95,20 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (localGeneratedTopic, payload, peerName, requestResolve, requestReject) => {
-                IpcBusUtils.Logger.info(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
+                IpcBusUtils.Logger.info(`[IPCBus:Renderer] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
                 let content = payload as any;
                 this.unsubscribe(generatedTopic, localRequestCallback);
                 if (content.hasOwnProperty('resolve')) {
+                    IpcBusUtils.Logger.info(`[IPCBus:Renderer] resolve`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.resolve, peerName: peerName};
                     resolve(response);
                 }
                 else if (content.hasOwnProperty('reject')) {
+                    IpcBusUtils.Logger.info(`[IPCBus:Renderer] reject: ${content.reject}`);
                     reject(content.reject);
                 }
                 else {
+                    IpcBusUtils.Logger.info(`[IPCBus:Renderer] reject: unknown format`);
                     reject('unknown format');
                 }
             };
@@ -117,8 +120,9 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
             // Clean-up
             setTimeout(() => {
-                if (EventEmitter.prototype.listenerCount.call(this, generatedTopic) > 0) {
+                if (this._ipcObj.listenerCount(generatedTopic) > 0) {
                     this.unsubscribe(generatedTopic, localRequestCallback);
+                    IpcBusUtils.Logger.info(`[IPCBus:Renderer] reject: timeout`);
                     reject('timeout');
                 }
             }, timeoutDelay);

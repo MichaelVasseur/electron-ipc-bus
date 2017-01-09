@@ -46,9 +46,9 @@ export class IpcBusBrokerClient extends EventEmitter {
     }
 
     protected _onMessageReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
-        IpcBusUtils.Logger.info(`[IPCBus:Node] Emit message received on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
         if (replyTopic) {
-            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName,
+            IpcBusUtils.Logger.info(`[IPCBus:Node] Emit request received on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
+            this.emit(topic, topic, payload, peerName,
                 (resolve: Object | string) => {
                     this.postSend(replyTopic, { resolve : resolve }, peerName);
                 },
@@ -58,7 +58,8 @@ export class IpcBusBrokerClient extends EventEmitter {
             );
         }
         else {
-            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
+            IpcBusUtils.Logger.info(`[IPCBus:Node] Emit message received on topic '${topic}' from peer #${peerName}`);
+            this.emit(topic, topic, payload, peerName);
         }
     }
 
@@ -76,7 +77,7 @@ export class IpcBusBrokerClient extends EventEmitter {
     }
 
     subscribe(topic: string, peerName: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
-        EventEmitter.prototype.addListener.call(this, topic, listenCallback);
+        this.addListener(topic, listenCallback);
         this.postSubscribe(topic, peerName);
     }
 
@@ -85,7 +86,7 @@ export class IpcBusBrokerClient extends EventEmitter {
     }
 
     unsubscribe(topic: string, peerName: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
-        EventEmitter.prototype.removeListener.call(this, topic, listenCallback);
+        this.removeListener(topic, listenCallback);
         this.postUnsubscribe(topic, peerName);
     }
 
@@ -115,13 +116,16 @@ export class IpcBusBrokerClient extends EventEmitter {
                 this.unsubscribe(generatedTopic, peerName, localRequestCallback);
                 let content = payload as any;
                 if (content.hasOwnProperty('resolve')) {
+                    IpcBusUtils.Logger.info(`[IPCBus:Node] resolve`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.resolve, peerName: peerName};
                     resolve(response);
                 }
                 else if (content.hasOwnProperty('reject')) {
+                    IpcBusUtils.Logger.info(`[IPCBus:Node] reject: ${content.reject}`);
                     reject(content.reject);
                 }
                 else {
+                    IpcBusUtils.Logger.info(`[IPCBus:Node] reject: unknown format`);
                     reject('unknown format');
                 }
             };
@@ -133,8 +137,9 @@ export class IpcBusBrokerClient extends EventEmitter {
 
             // Clean-up
             setTimeout(() => {
-                if (EventEmitter.prototype.listenerCount.call(this, generatedTopic) > 0) {
+                if (this.listenerCount(generatedTopic) > 0) {
                     this.unsubscribe(generatedTopic, peerName, localRequestCallback);
+                    IpcBusUtils.Logger.info(`[IPCBus:Node] reject: timeout`);
                     reject('timeout');
                 }
             }, timeoutDelay);

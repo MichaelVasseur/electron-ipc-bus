@@ -12,6 +12,7 @@ const child_process = require('child_process');
 
 const ipcBusModule = require('electron-ipc-bus');
 const ipcBus = ipcBusModule.CreateIpcBus();
+ipcBusModule.ActivateIpcBusTrace(true);
 
 const peerName = 'Node_' + process.pid;
 

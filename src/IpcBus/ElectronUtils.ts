@@ -12,7 +12,7 @@ export function GuessElectronProcessType(): string {
     }
 
     let processType = process.type;
-    // May be null in Sandbox or in Node Process
+    // May be null in Electron sandbox mode or in a Node Process
     if (processType == null) {
         const ipcRend = electron.ipcRenderer;
         if (ipcRend != null) {

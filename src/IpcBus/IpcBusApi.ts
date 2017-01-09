@@ -22,7 +22,7 @@ import { IpcBusMainClient } from './IpcBusMain';
 import { IpcBusRendererClient } from './IpcBusRenderer';
 import * as ElectronUtils from './ElectronUtils';
 
-// A single instance per process
+// A single instance per process or webpage
 let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
 
 /** @internal */
@@ -55,4 +55,8 @@ function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusIn
 /** @internal */
 export function CreateIpcBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
     return CreateIpcBusForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
+}
+
+export function ActivateIpcBusTrace(enable: boolean): void {
+    IpcBusUtils.Logger.enable(enable);
 }

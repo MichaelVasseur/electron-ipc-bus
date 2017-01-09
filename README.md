@@ -2,6 +2,7 @@
 A safe IPC bus for applications built on Electron. 
 Dispatching of messages is managed by a broker.
 For performance purpose, it is better to instanciate the broker in an independent process node instance.
+This IPC bus works in sandbox mode and in affinity case (several webpages hosted in the same renderer process)
 
 # How to use
 ## Ipc Bus Broker
@@ -14,7 +15,11 @@ If ***busPath*** is not specified, the framework tries to get it from the comman
  
 Ex, busPath set by code:
 
+    // Socket path
     const ipcBusBroker = ipcBusModule.CreateIpcBusBroker('/my-ipc-bus-path');
+
+    // Port number
+    const ipcBusBroker = ipcBusModule.CreateIpcBusBroker(58666);
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
@@ -52,7 +57,7 @@ Ex, busPath set by code:
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIPCBus(ipcBusModule.ProcessType.Main);
+    const ipcBus = ipcBusModule.CreateIPCBus();
 
 ### Initialization in a Node single process
  
@@ -113,10 +118,10 @@ Ex:
 
 To identify and manage such request, the clients must check the ***replyTopic*** parameter
 
-    function ComputeHandler(topic, content, peerName, replyTopic) {
+    function ComputeHandler(topic, content, peerName, resolveCallback, rejectCallback) {
        console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)
-       if ((replyTopic === null) && (replyTopic !== undefined)) {
-           ipcBus.send(replyTopic, eval(content))
+       if (resolveCallback) {
+           resolveCallback(eval(content))
        }
     }
 
@@ -155,11 +160,5 @@ To run the application :
 To run the application in sandboxed mode :
 
     npm run start-sandboxed
-
-
- 
- 
-
- 
 
  

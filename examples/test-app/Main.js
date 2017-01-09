@@ -27,6 +27,7 @@ console.log('IPC Bus Path : ' + busPath);
 const ipcBusModule = require('electron-ipc-bus');
 // const ipcBus = ipcBusModule.CreateIpcBusForClient('browser', busPath);
 const ipcBus = ipcBusModule.CreateIpcBus(busPath);
+ipcBusModule.ActivateIpcBusTrace(true);
 
 // Load node-import without wrapping to variable. 
 require('node-import');
