@@ -8,7 +8,6 @@ node_modules/
 *.VC.db
 *.VC.VC.opendb
 .vs/
-.vscode/
 *.vcxproj
 *.vcxproj.user
 *.vcxproj.filters
