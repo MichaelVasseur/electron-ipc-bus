@@ -77,8 +77,12 @@ var MainProcess = (function () {
             }
         });
         mainWindow.on('close', function () {
-            while (instances.length > 0) {
-                instances[0].term();
+            let keysTmp = [];
+            for (let key of instances.keys()) {
+                keysTmp.push(key);
+            }
+            for (let key of keysTmp) {
+                instances.get(key).term();
             }
         });
 
@@ -189,8 +193,12 @@ var RendererProcess = (function () {
         };
 
         this.term = function _term() {
-            while (rendererWindows.length > 0) {
-                rendererWindows[0].close();
+            let keysTmp = [];
+            for (let key of rendererWindows.keys()) {
+                keysTmp.push(key);
+            }
+            for (let key of keysTmp) {
+                rendererWindows.get(key).close();
             }
         };
 
