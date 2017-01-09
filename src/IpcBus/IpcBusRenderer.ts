@@ -18,10 +18,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
     private _onReceiveBis(topic: any, payload: any, peerName: any, replyTopic?: any): void {
         IpcBusUtils.Logger.info(`[IPCBus:Renderer] Received message on '${topic}'`);
-        if (replyTopic == null) {
-            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
-        }
-        else {
+        if (replyTopic) {
             EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName,
                 (resolve: Object | string) => {
                     this.send(replyTopic, { resolve : resolve });
@@ -30,6 +27,9 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
                     this.send(replyTopic, { reject : err });
                 }
             );
+        }
+        else {
+            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
         }
     }
 
@@ -94,7 +94,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
-            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic, payload, peerName, requestResolve, requestReject) => {
+            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (localGeneratedTopic, payload, peerName, requestResolve, requestReject) => {
                 IpcBusUtils.Logger.info(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
                 let content = payload as any;
                 this.unsubscribe(generatedTopic, localRequestCallback);

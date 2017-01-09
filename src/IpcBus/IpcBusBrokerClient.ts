@@ -28,8 +28,7 @@ export class IpcBusBrokerClient extends EventEmitter {
                         const topic = data.args[0];
                         const payload = data.args[1];
                         const peerName = data.args[2];
-                        IpcBusUtils.Logger.info(`[IPCBus:Node] Emit message received on topic '${topic}' from peer #${peerName}`);
-                        this._onSendReceived(topic, payload, peerName);
+                        this._onMessageReceived(topic, payload, peerName, null);
                         break;
                     }
 
@@ -39,27 +38,28 @@ export class IpcBusBrokerClient extends EventEmitter {
                         const payload = data.args[1];
                         const peerName = data.args[2];
                         const replyTopic = data.args[3];
-                        IpcBusUtils.Logger.info(`[IPCBus:Node] Emit request received on topic '${topic}' from peer #${peerName}`);
-                        this._onRequestReceived(topic, payload, peerName, replyTopic);
+                        this._onMessageReceived(topic, payload, peerName, replyTopic);
                         break;
                     }
             }
         }
     }
 
-    protected _onSendReceived(topic: string, payload: Object| string, peerName: string) {
-        EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
-    }
-
-    protected _onRequestReceived(topic: string, payload: Object| string, peerName: string, replyTopic: string) {
-        EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName,
-            (resolve: Object | string) => {
-                this.postSend(replyTopic, { resolve : resolve }, peerName);
-            },
-            (err: string) => {
-                this.postSend(replyTopic, { reject : err }, peerName);
-            }
-        );
+    protected _onMessageReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
+        IpcBusUtils.Logger.info(`[IPCBus:Node] Emit message received on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
+        if (replyTopic) {
+            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName,
+                (resolve: Object | string) => {
+                    this.postSend(replyTopic, { resolve : resolve }, peerName);
+                },
+                (err: string) => {
+                    this.postSend(replyTopic, { reject : err }, peerName);
+                }
+            );
+        }
+        else {
+            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
+        }
     }
 
     // Set API
@@ -110,7 +110,7 @@ export class IpcBusBrokerClient extends EventEmitter {
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
-            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic, payload, peerName, requestResolve, requestReject) => {
+            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (localGeneratedTopic, payload, peerName, requestResolve, requestReject) => {
                 IpcBusUtils.Logger.info(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
                 this.unsubscribe(generatedTopic, peerName, localRequestCallback);
                 let content = payload as any;

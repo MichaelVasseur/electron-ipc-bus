@@ -75,14 +75,14 @@ ProcessConnector = (function () {
             });
         };
 
-        this.postReceivedMessage = function _postReceivedMessage(topicName, topicMsg, peerName, topicToReply) {
-            _ipc.send(buildChannel('receivedMessage'), { topic: topicName, msg: topicMsg, peerName: peerName, topicToReply: topicToReply });
+        this.postReceivedMessage = function _postReceivedMessage(topicName, topicMsg, peerName) {
+            _ipc.send(buildChannel('receivedMessage'), { topic: topicName, msg: topicMsg, peerName: peerName });
         };
 
         this.OnReceivedMessage = function _OnReceivedMessage(callback) {
             _ipc.on(buildChannel('receivedMessage'), function (event, data) {
                 const response = (data !== undefined) ? data : event;
-                callback(response['topic'], response['msg'], response['peerName'], response['topicToReply']);
+                callback(response['topic'], response['msg'], response['peerName']);
             });
         };
 

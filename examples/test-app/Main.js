@@ -119,7 +119,7 @@ var MainProcess = (function () {
             }
         }
 
-        function onIPCElectron_ReceivedMessage(topicName, topicMsg, peerName, requestResolveCB, rejectResolveCB) {
+        function onIPCElectron_ReceivedMessage(topicName, topicMsg, topicPeerName, requestResolveCB, rejectResolveCB) {
             console.log('Master - onIPCElectron_ReceivedMessage - topic:' + topicName + ' data:' + topicMsg);
             if (requestResolveCB) {
                 requestResolveCB(topicName + ' - AutoReply from #' + peerName);
@@ -292,7 +292,7 @@ var NodeProcess = (function () {
                         processMainToView.postRequestCatch(msgJSON['args']['err']);
                         break;
                     case 'receivedSend':
-                        processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName'], msgJSON['args']['topicToReply']);
+                        processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName']);
                         break;
                     case 'subscribe':
                         processMainToView.postSubscribeDone(msgJSON['topic']);

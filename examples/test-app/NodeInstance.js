@@ -15,14 +15,16 @@ const ipcBus = ipcBusModule.CreateIpcBus();
 
 const peerName = 'Node_' + process.pid;
 
-function onTopicMessage(topicName, topicMsg, peerName, requestResolveCB, rejectResolveCB) {
+function onTopicMessage(topicName, topicMsg, topicPeerName, requestResolveCB, rejectResolveCB) {
     console.log('node - onTopicMessage topic:' + topicName + ' data:' + topicMsg);
     var msgJSON = {
         action: 'receivedSend',
-        args: { topic : topicName, msg : topicMsg, peerName: peerName}
+        args: { topic : topicName, msg : topicMsg, peerName: topicPeerName}
     };
     if (requestResolveCB) {
-        requestResolveCB(topicName + ' - AutoReply from #' + peerName);
+        var autoReply = topicName + ' - AutoReply from #' + peerName;
+        requestResolveCB(autoReply);
+        console.log(autoReply);
     }
     process.send(JSON.stringify(msgJSON));
 }

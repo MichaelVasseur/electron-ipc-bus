@@ -16,7 +16,7 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcOptions);
         this._ipcObj = require('electron').ipcMain;
-        this._topicRendererRefs = new IpcBusUtils.TopicConnectionMap('BrokerBridge');
+        this._topicRendererRefs = new IpcBusUtils.TopicConnectionMap('[IPCBus:Bridge]');
         this._webContents = require('electron').webContents;
 //        this._lambdaListenerHandler = (msgTopic: string, msgContent: any, msgPeer: string, msgReplyTopic?: string) => this.rendererSubscribeHandler(msgTopic, msgContent, msgPeer, msgReplyTopic);
     }
@@ -34,22 +34,14 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
         });
     }
 
-    protected _onSendReceived(topic: string, payload: Object| string, peerName: string) {
-        this.rendererSubscribeHandler(topic, payload, peerName);
-    }
-
-    protected _onRequestReceived(topic: string, payload: Object| string, peerName: string, replyTopic: string) {
-        this.rendererSubscribeHandler(topic, payload, peerName, replyTopic);
-    }
-
-    rendererSubscribeHandler(msgTopic: string, msgContent: any, msgPeer: string,  msgReplyTopic?: string): void {
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] message received on '${msgTopic}'`);
-        this._topicRendererRefs.forEachTopic(msgTopic, (peerNames: Map<string, number>, webContentsId: any, topic: string) => {
+    protected _onMessageReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Emit message received on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
+        this._topicRendererRefs.forEachTopic(topic, (peerNames: Map<string, number>, webContentsId: any, topic: string) => {
             const peerName = 'Renderer_' + webContentsId;
             IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #${peerName}`);
             let webContents = this._webContents.fromId(webContentsId);
             if (webContents != null) {
-                webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, msgTopic, msgContent, msgPeer, msgReplyTopic);
+                webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, topic, payload, peerName, replyTopic);
             }
         });
     }

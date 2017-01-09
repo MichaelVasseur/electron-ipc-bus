@@ -15,7 +15,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
-        this._subscriptions = new IpcBusUtils.TopicConnectionMap('BrokerRef');
+        this._subscriptions = new IpcBusUtils.TopicConnectionMap('[IPCBus:Broker]');
         this._baseIpc.on('connection', (conn: any, server: any) => this._onConnection(conn, server));
         this._baseIpc.on('close', (err: any, conn: any, server: any) => this._onClose(err, conn, server));
         this._baseIpc.on('data', (data: any, conn: any, server: any) => this._onData(data, conn, server));

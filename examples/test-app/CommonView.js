@@ -211,7 +211,7 @@ function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
 }
 
 function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, msgPeer) {
-    onIPC_Received(msgTopic, msgContent, msgPeery);
+    onIPC_Received(msgTopic, msgContent, msgPeer);
 }
 
 function doQueryBrokerState() {
