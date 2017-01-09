@@ -49,7 +49,7 @@ function doSubscribeToTopic(event) {
 
     if (processToMonitor.Type() === 'renderer') {
         ipcBus.connect(function () {
-            ipcBus.subscribe(topicName, onIPCBus_ReceivedSend);
+            ipcBus.subscribe(topicName, onIPC_Received);
             onIPCElectron_SubscribeNotify(topicName);
         });
     }
@@ -91,7 +91,7 @@ function doUnsubscribeFromTopic(event) {
 
     if (processToMonitor.Type() === 'renderer') {
         ipcBus.connect(function () {
-            ipcBus.unsubscribe(topicName, onIPCBus_ReceivedSend);
+            ipcBus.unsubscribe(topicName, onIPC_Received);
             onIPCElectron_UnsubscribeNotify(topicName);
         });
     }
@@ -192,7 +192,7 @@ function onIPC_Received(topicName, msgContent, msgPeer, requestResolveCB, reject
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector('.topicAutoReply');
         if (requestResolveCB != undefined) {
-            msgContent += ' from (' + peerName;
+            msgContent += ' from (' + msgPeer + ')';
 //            ipcBus.send(topicToReply, topicAutoReplyElt.value);
             requestResolveCB(topicAutoReplyElt.value);
         }
@@ -210,12 +210,8 @@ function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
     }
 }
 
-function onIPCBus_ReceivedSend(msgTopic, msgContent, msgPeer, topicToReply) {
-    onIPC_Received(msgTopic, msgContent, msgPeer, topicToReply);
-}
-
-function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, msgPeer, topicToReply) {
-    onIPC_Received(msgTopic, msgContent, msgPeer, topicToReply);
+function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, msgPeer) {
+    onIPC_Received(msgTopic, msgContent, msgPeery);
 }
 
 function doQueryBrokerState() {
