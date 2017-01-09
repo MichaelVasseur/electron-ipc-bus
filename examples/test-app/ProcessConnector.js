@@ -5,24 +5,24 @@ ProcessConnector = (function () {
         var _ipc = arguments[1];
         var _id;
         switch (_type) {
-            case "browser":
+            case 'browser':
                 break;
-            case "renderer":
+            case 'renderer':
                 _id = arguments[2];
                 break;
-            case "node":
+            case 'node':
                 _id = arguments[2];
                 break;
         };
 
         function buildChannel(eventName) {
-            var channel = "ipcbus/" + _type;
+            var channel = 'ipcbus/' + _type;
             if (_id != undefined) {
-                channel += "-" + _id;
+                channel += '-' + _id;
             }
-            channel += "/" + eventName;
+            channel += '/' + eventName;
             return channel;
-        }
+        };
 
         this.Type = function _Type() {
             return _type;
@@ -30,128 +30,106 @@ ProcessConnector = (function () {
 
         this.Id = function _Id() {
             return _id;
-        }
+        };
 
         this.postSubscribe = function _postSubscribe(topicName) {
-            this.send("subscribe", topicName);
-        }
+            this.send('subscribe', topicName);
+        };
 
         this.onSubscribe = function _onSubscribe(callback) {
-            this.on("subscribe", callback);
-        }
+            this.on('subscribe', callback);
+        };
 
         this.postUnsubscribe = function _postUnsubscribe(topicName) {
-            this.send("unsubscribe", topicName);
-        }
+            this.send('unsubscribe', topicName);
+        };
 
         this.onUnsubscribe = function _onUnsubscribe(callback) {
-            this.on("unsubscribe", callback);
-        }
+            this.on('unsubscribe', callback);
+        };
 
         this.postSubscribeDone = function _postSubscribeDone(topicName) {
-            this.send("subscribe-done", topicName);
-        }
+            this.send('subscribe-done', topicName);
+        };
 
         this.onSubscribeDone = function _onSubscribeDone(callback) {
-            this.on("subscribe-done", callback);
-        }
+            this.on('subscribe-done', callback);
+        };
 
         this.postUnsubscribeDone = function _postUnsubscribeDone(topicName) {
-            this.send("unsubscribe-done", topicName);
-        }
+            this.send('unsubscribe-done', topicName);
+        };
 
         this.onUnsubscribeDone = function _onUnsubscribeDone(callback) {
-            this.on("unsubscribe-done", callback);
-        }
+            this.on('unsubscribe-done', callback);
+        };
 
         this.postSendMessage = function _postSendMessage(topicName, topicMsg) {
-            _ipc.send(buildChannel("send"), { topic: topicName, msg: topicMsg });
-        }
+            _ipc.send(buildChannel('send'), { topic: topicName, msg: topicMsg });
+        };
 
         this.onSendMessage = function _onSendMessage(callback) {
-            _ipc.on(buildChannel("send"), function (event, data) {
+            _ipc.on(buildChannel('send'), function (event, data) {
                 const response = (data !== undefined) ? data : event;
-                callback(response["topic"], response["msg"]);
+                callback(response['topic'], response['msg']);
             });
-        }
+        };
 
         this.postReceivedMessage = function _postReceivedMessage(topicName, topicMsg, peerName, topicToReply) {
-            _ipc.send(buildChannel("receivedMessage"), { topic: topicName, msg: topicMsg, peerName: peerName, topicToReply: topicToReply });
-        }
+            _ipc.send(buildChannel('receivedMessage'), { topic: topicName, msg: topicMsg, peerName: peerName, topicToReply: topicToReply });
+        };
 
         this.OnReceivedMessage = function _OnReceivedMessage(callback) {
-            _ipc.on(buildChannel("receivedMessage"), function (event, data) {
+            _ipc.on(buildChannel('receivedMessage'), function (event, data) {
                 const response = (data !== undefined) ? data : event;
-                callback(response["topic"], response["msg"], response["peerName"], response["topicToReply"]);
+                callback(response['topic'], response['msg'], response['peerName'], response['topicToReply']);
             });
-        }
+        };
 
         this.postRequestMessage = function _postRequestMessage(topicName, topicMsg) {
-            _ipc.send(buildChannel("requestMessage"), { topic: topicName, msg: topicMsg });
-        }
+            _ipc.send(buildChannel('requestMessage'), { topic: topicName, msg: topicMsg });
+        };
 
         this.onRequestMessage = function _onRequestMessage(callback) {
-            _ipc.on(buildChannel("requestMessage"), function (event, data) {
+            _ipc.on(buildChannel('requestMessage'), function (event, data) {
                 const response = (data !== undefined) ? data : event;
-                callback(response["topic"], response["msg"]);
+                callback(response['topic'], response['msg']);
             });
-        }
+        };
 
-        this.postRequestResult = function _postRequestResult(topicName, topicMsg, topicResponse, peerName) {
-            _ipc.send(buildChannel("receivedRequest"), { topic: topicName, msg: topicMsg, peerName: peerName, response: topicResponse });
-        }
+        this.postRequestThen = function _postRequestThen(requestPromiseArgs) {
+            _ipc.send(buildChannel('requestMessage-then'), requestPromiseArgs);
+        };
 
-        this.OnRequestResult = function _oOnRequestResult(callback) {
-            _ipc.on(buildChannel("receivedRequest"), function (event, data) {
-                const response = (data !== undefined) ? data : event;
-                callback(response["topic"], response["msg"], response["response"], response["peerName"]);
-            });
-        }
-
-        this.postRequestPromiseMessage = function _postRequestPromiseMessage(topicName, topicMsg) {
-            _ipc.send(buildChannel("requestPromiseMessage"), { topic: topicName, msg: topicMsg });
-        }
-
-        this.onRequestPromiseMessage = function _onRequestPromiseMessage(callback) {
-            _ipc.on(buildChannel("requestPromiseMessage"), function (event, data) {
-                const response = (data !== undefined) ? data : event;
-                callback(response["topic"], response["msg"]);
-            });
-        }
-
-        this.postRequestPromiseThen = function _postRequestPromiseThen(requestPromiseArgs) {
-            _ipc.send(buildChannel("requestPromiseMessage-then"), requestPromiseArgs);
-        }
-
-        this.onRequestPromiseThen = function _onRequestPromiseThen(callback) {
-            _ipc.on(buildChannel("requestPromiseMessage-then"), function (event, data) {
+        this.onRequestThen = function _onRequestThen(callback) {
+            _ipc.on(buildChannel('requestMessage-then'), function (event, data) {
                 const response = (data !== undefined) ? data : event;
                 callback(response);
             });
-        }
+        };
 
-        this.postRequestPromiseCatch = function _postRequestPromiseCatch(err) {
-            _ipc.send(buildChannel("requestPromiseMessage-catch"), err);
-        }
+        this.postRequestCatch = function _postRequestCatch(err) {
+            _ipc.send(buildChannel('requestMessage-catch'), err);
+        };
 
-        this.onRequestPromiseCatch = function _onRequestPromiseCatch(callback) {
-            _ipc.on(buildChannel("requestPromiseMessage-catch"), function (event, data) {
+        this.onRequestCatch = function _onRequestCatch(callback) {
+            _ipc.on(buildChannel('requestMessage-catch'), function (event, data) {
                 const response = (data !== undefined) ? data : event;
                 callback(response);
             });
-        }
+        };
 
 
         this.send = function _send(eventName, data) {
             _ipc.send(buildChannel(eventName), data);
-        }
+        };
 
         this.on = function _on(eventName, callback) {
             _ipc.on(buildChannel(eventName), function (event, data) {
                 const response = (data !== undefined) ? data : event;
                 callback(response);
             });
-        }
+        };
     }
 
     return ProcessConnector;

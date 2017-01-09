@@ -1,92 +1,81 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Electron Test App
 
-"use strict";
+'use strict';
 
-console.log("Starting Node instance ...")
+console.log('Starting Node instance ...')
 
 // Node
-const util = require("util");
-const path = require("path");
-const child_process = require("child_process");
-const Module = require("module")
+const util = require('util');
+const path = require('path');
+const child_process = require('child_process');
 
-const ipcBusModule = require("electron-ipc-bus");
-// const ipcBus = ipcBusModule.CreateIpcBusForClient("node");
+const ipcBusModule = require('electron-ipc-bus');
 const ipcBus = ipcBusModule.CreateIpcBus();
 
+const peerName = 'Node_' + process.pid;
 
-function onTopicMessage(topicName, topicMsg, peerName, topicToReply) {
-    console.log("node - onTopicMessage topic:" + topicName + " data:" + topicMsg + " reply:" + topicToReply);
-    var msgJSON =
-    {
-        action: "receivedSend",
-        args: { topic : topicName, msg : topicMsg, peerName: peerName, topicToReply : topicToReply}
+function onTopicMessage(topicName, topicMsg, peerName, requestResolveCB, rejectResolveCB) {
+    console.log('node - onTopicMessage topic:' + topicName + ' data:' + topicMsg);
+    var msgJSON = {
+        action: 'receivedSend',
+        args: { topic : topicName, msg : topicMsg, peerName: peerName}
     };
+    if (requestResolveCB) {
+        requestResolveCB(topicName + ' - AutoReply from #' + peerName);
+    }
     process.send(JSON.stringify(msgJSON));
 }
 
 function doSubscribeTopic(msgJSON) {
-    var topicName = msgJSON["topic"];
-    console.log("node - doSubscribeTopic:" + topicName);
+    var topicName = msgJSON['topic'];
+    console.log('node - doSubscribeTopic:' + topicName);
     ipcBus.subscribe(topicName, onTopicMessage);
     process.send(JSON.stringify(msgJSON));
 }
 
 function doUnsubscribeTopic(msgJSON) {
-    var topicName = msgJSON["topic"];
-    console.log("node - doUnsubscribeTopic:" + topicName);
+    var topicName = msgJSON['topic'];
+    console.log('node - doUnsubscribeTopic:' + topicName);
     ipcBus.unsubscribe(topicName, onTopicMessage);
     process.send(JSON.stringify(msgJSON));
 }
 
 function doSendOnTopic(msgJSON) {
-    var args = msgJSON["args"];
-    console.log("node - doSendOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
-    ipcBus.send(args["topic"], args["msg"]);
+    var args = msgJSON['args'];
+    console.log('node - doSendOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
+    ipcBus.send(args['topic'], args['msg']);
     process.send(JSON.stringify(msgJSON));
 }
 
-// function doRequestOnTopic(msgJSON) {
-//     var args = msgJSON["args"];
-//     console.log("node - doRequestOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
-//     ipcBus.request(args["topic"], args["msg"], function(topic, content, peerName)
-//     {   
-//         msgJSON["action"] = "receivedRequest";
-//         msgJSON["peerName"] = peerName;
-//         msgJSON["response"] = content;
-//         process.send(JSON.stringify(msgJSON));
-//     });
-// }
-
-function doRequestPromiseOnTopic(msgJSON) {
-    var args = msgJSON["args"];
-    console.log("node - doRequestPromiseOnTopic: topicName:" + args["topic"] + " msg:" + args["msg"]);
-    ipcBus.request(args["topic"], args["msg"])
+function doRequestOnTopic(msgJSON) {
+    var args = msgJSON['args'];
+    console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
+    ipcBus.request(args['topic'], args['msg'])
         .then((ipcRequestResponse) => {
-            msgJSON["action"] = "receivedRequestPromiseThen";
-            msgJSON["requestPromiseResponse"] = requestPromiseResponse;
+            msgJSON['action'] = 'receivedRequestThen';
+            msgJSON['requestPromiseResponse'] = requestPromiseResponse;
             process.send(JSON.stringify(msgJSON));
         })
         .catch((err) => {
-            msgJSON["action"] = "receivedRequestPromiseCatch";
-            msgJSON["err"] = err;
+            msgJSON['action'] = 'receivedRequestCatch';
+            msgJSON['err'] = err;
             process.send(JSON.stringify(msgJSON));
         });
 }
 
 
 function doInit(msgJSON) {
-    var args = msgJSON["args"];
-    console.log("node - doInit: topicName:" + args);
+    var args = msgJSON['args'];
+    console.log('node - doInit: topicName:' + args);
 }
 
 function dispatchMessage(msg)
 {
-    console.log("node - receive message:" + msg);
+    console.log('node - receive message:' + msg);
     if (isConnected == false)
     {
-        console.log("node - delay message:" + msg);
+        console.log('node - delay message:' + msg);
         msgs.push(msg);
     }
     else
@@ -97,15 +86,15 @@ function dispatchMessage(msg)
             unsubscribe : doUnsubscribeTopic,
             send : doSendOnTopic,
 //            request : doRequestOnTopic,
-            requestPromise : doRequestPromiseOnTopic,
+            requestPromise : doRequestOnTopic,
             init : doInit
         };
 
-        console.log("node - execute message:" + msg);
+        console.log('node - execute message:' + msg);
         var msgJSON = JSON.parse(msg);
-        if (actionFcts.hasOwnProperty(msgJSON["action"]))
+        if (actionFcts.hasOwnProperty(msgJSON['action']))
         {
-            actionFcts[msgJSON["action"]](msgJSON);
+            actionFcts[msgJSON['action']](msgJSON);
         }
     }
 }
@@ -115,7 +104,7 @@ var isConnected = false;
 var msgs = [];
 
 ipcBus.connect(function () {
-    console.log("node - connect");
+    console.log('node - connect');
     isConnected = true;
     for(var msg in msgs)
     {
@@ -124,4 +113,4 @@ ipcBus.connect(function () {
     msgs = [];
 })
 
-process.on("message", dispatchMessage);
+process.on('message', dispatchMessage);

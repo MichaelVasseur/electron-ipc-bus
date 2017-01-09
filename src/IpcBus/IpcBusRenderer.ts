@@ -16,15 +16,29 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onReceive(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined));
     }
 
+    private _onReceiveBis(topic: any, payload: any, peerName: any, replyTopic?: any): void {
+        IpcBusUtils.Logger.info(`[IPCBus:Renderer] Received message on '${topic}'`);
+        if (replyTopic == null) {
+            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName);
+        }
+        else {
+            EventEmitter.prototype.emit.call(this, topic, topic, payload, peerName,
+                (resolve: Object | string) => {
+                    this.send(replyTopic, { resolve : resolve });
+                },
+                (err: string) => {
+                    this.send(replyTopic, { reject : err });
+                }
+            );
+        }
+    }
+
     private _onReceive(eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (eventOrTopic instanceof EventEmitter) {
-            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Received message on '${topicOrPayload}'`);
-            EventEmitter.prototype.emit.call(this, topicOrPayload, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
-        }
-        else {
-            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Received message on '${eventOrTopic}'`);
-            EventEmitter.prototype.emit.call(this, eventOrTopic, eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic);
+            this._onReceiveBis(topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
+        } else {
+            this._onReceiveBis(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic);
         }
     }
 
@@ -67,13 +81,7 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, topic, data);
     }
 
-    // request(topic: string, data: Object | string, requestCallback: IpcBusInterfaces.IpcBusRequestFunc, timeoutDelay: number): void {
-    //     this.requestPromise(topic, data, timeoutDelay).then((RequestArgs: IpcBusInterfaces.IpcBusRequestResponse) => {
-    //         requestCallback(RequestArgs.topic, RequestArgs.payload, RequestArgs.peerName);
-    //     });
-    // }
-
-    request(topic: string, data: Object | string, timeoutDelay: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
+    request(topic: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
         if (this._connected !== true) {
             throw new Error('Please connect first');
         }
@@ -86,11 +94,20 @@ export class IpcBusRendererClient extends EventEmitter implements IpcBusInterfac
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             // Prepare reply's handler, we have to change the replyTopic to topic
-            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic: string, content: Object | string, peerName: string, replyTopic?: string) => {
-                IpcBusUtils.Logger.info(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${content}`);
+            const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (topic, payload, peerName, requestResolve, requestReject) => {
+                IpcBusUtils.Logger.info(`[IPCBus:Node] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
+                let content = payload as any;
                 this.unsubscribe(generatedTopic, localRequestCallback);
-                let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content, peerName: peerName};
-                resolve(response);
+                if (content.hasOwnProperty('resolve')) {
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.resolve, peerName: peerName};
+                    resolve(response);
+                }
+                else if (content.hasOwnProperty('reject')) {
+                    reject(content.reject);
+                }
+                else {
+                    reject('unknown format');
+                }
             };
 
             this.subscribe(generatedTopic, localRequestCallback);

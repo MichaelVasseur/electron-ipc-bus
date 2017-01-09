@@ -6,7 +6,7 @@ import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 
 /** @internal */
-export class IpcBusBrokerClient implements IpcBusInterfaces.IpcBusBroker {
+export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc: BaseIpc;
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;

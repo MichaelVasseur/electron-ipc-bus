@@ -2,7 +2,7 @@
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 export * from './IpcBusInterfaces';
 
-import { IpcBusBrokerClient } from './IpcBusBroker';
+import { IpcBusBrokerServer } from './IpcBusBrokerServer';
 import * as IpcBusUtils from './IpcBusUtils';
 
 /** @internal */
@@ -12,7 +12,7 @@ export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBro
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
         IpcBusUtils.Logger.info(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
-        ipcBusBroker = new IpcBusBrokerClient(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
+        ipcBusBroker = new IpcBusBrokerServer(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
     }
     return ipcBusBroker;
 }

@@ -1,4 +1,5 @@
 var processId;
+var peerName;
 
 function doNewNodeProcess(event) {
     processToMaster.send('new-process', 'node');
@@ -109,70 +110,47 @@ function onIPCElectron_UnsubscribeNotify(topicName) {
     console.log('topicName : ' + topicName + ' - unsubscribe');
 }
 
-// function doRequestMessageToTopic(event) {
-//     console.log('doRequestMessageToTopic:' + event);
-
-//     var target = event.target;
-//     var topicItemElt = target.parentElement;
-//     var topicNameElt = topicItemElt.querySelector('.topicRequestName');
-//     var topicName = topicNameElt.value;
-
-//     var topicMsgElt = topicItemElt.querySelector('.topicRequestMsg');
-//     var topicMsg = topicMsgElt.value;
-
-//     var topicRespElt = document.querySelector('.topicRequestResponse');
-//     topicRespElt.value = '';
-
-//     var args = { topic: topicName, msg: topicMsg };
-//     if (processToMonitor.Type() == 'renderer') {
-//         ipcBus.request(topicName, topicMsg, onIPCBus_ReceivedRequest, 1000);
-//     }
-//     else {
-//         processToMonitor.postRequestMessage(topicName, topicMsg);
-//     }
-// }
-
-function doRequestPromiseMessageToTopic(event) {
+function doRequestMessageToTopic(event) {
     console.log('doRequestMessageToTopic:' + event);
 
     var target = event.target;
     var topicItemElt = target.parentElement;
-    var topicNameElt = topicItemElt.querySelector('.topicRequestPromiseName');
+    var topicNameElt = topicItemElt.querySelector('.topicRequestName');
     var topicName = topicNameElt.value;
 
-    var topicMsgElt = topicItemElt.querySelector('.topicRequestPromiseMsg');
+    var topicMsgElt = topicItemElt.querySelector('.topicRequestMsg');
     var topicMsg = topicMsgElt.value;
 
-    var topicRespElt = document.querySelector('.topicRequestPromiseResponse');
+    var topicRespElt = document.querySelector('.topicRequestResponse');
     topicRespElt.value = '';
 
     var args = { topic: topicName, msg: topicMsg };
     if (processToMonitor.Type() == 'renderer') {
-        let p = ipcBus.requestPromise(topicName, topicMsg, 1000)
+        let p = ipcBus.request(topicName, topicMsg, 1000)
             .then((requestPromiseResponse) => {
-                onIPCBus_OnRequestPromiseThen(requestPromiseResponse);
+                onIPCBus_OnRequestThen(requestPromiseResponse);
             })
             .catch((err) => {
-                onIPCBus_OnRequestPromiseCatch(err);
+                onIPCBus_OnRequestCatch(err);
             });
     }
     else {
-        processToMonitor.postRequestPromiseMessage(topicName, topicMsg);
+        processToMonitor.postRequestMessage(topicName, topicMsg);
     }
 }
 
-function onIPCBus_OnRequestPromiseThen(requestPromiseResponse) {
-    console.log('onIPCBus_OnRequestPromiseThen : requestPromiseArgs:' + requestPromiseResponse)
-    var topicRespElt = document.querySelector('.topicRequestPromiseResponse');
+function onIPCBus_OnRequestThen(requestPromiseResponse) {
+    console.log('onIPCBus_OnRequestThen : requestPromiseArgs:' + requestPromiseResponse)
+    var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'black';
         topicRespElt.value = requestPromiseResponse.payload + ' from (' + requestPromiseResponse.peerName + ')';
     }
 }
 
-function onIPCBus_OnRequestPromiseCatch(err) {
-    console.log('onIPCBus_OnRequestPromiseCatch : err:' + err)
-    var topicRespElt = document.querySelector('.topicRequestPromiseResponse');
+function onIPCBus_OnRequestCatch(err) {
+    console.log('onIPCBus_OnRequestCatch : err:' + err)
+    var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'red';
         topicRespElt.value = 'Error:' + err;
@@ -206,16 +184,17 @@ function doClearTopic(event) {
     topicReceivedElt.value = '';
 }
 
-function onIPC_Received(topicName, msgContent, msgPeer, topicToReply) {
+function onIPC_Received(topicName, msgContent, msgPeer, requestResolveCB, rejectResolveCB) {
     console.log('onIPCBus_received : msgTopic:' + topicName + ' msgContent:' + msgContent)
 
     var SubscriptionsListElt = document.getElementById('ProcessSubscriptions');
     var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + topicName);
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector('.topicAutoReply');
-        if (topicToReply != undefined) {
-            msgContent += ' from (' + msgPeer + ')';
-            ipcBus.send(topicToReply, topicAutoReplyElt.value);
+        if (requestResolveCB != undefined) {
+            msgContent += ' from (' + peerName;
+//            ipcBus.send(topicToReply, topicAutoReplyElt.value);
+            requestResolveCB(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
         topicReceivedElt.value += msgContent + '\n';
@@ -229,10 +208,6 @@ function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
     if (topicRespElt != null) {
         topicRespElt.value += msgContent + ' from (' + peerName + ')';
     }
-}
-
-function onIPCBus_RequestResult(msgTopic, msgContent, msgResponse, peerName) {
-    onIPCBus_ReceivedRequest(msgTopic, msgResponse, peerName);
 }
 
 function onIPCBus_ReceivedSend(msgTopic, msgContent, msgPeer, topicToReply) {
@@ -262,10 +237,10 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
         var cell = row.insertCell(0);
         cell.innerHTML = msgContent[i]['topic'];
 
-        var cell = row.insertCell(1);
+        cell = row.insertCell(1);
         cell.innerHTML = msgContent[i]['peerName'];
 
-        var cell = row.insertCell(2);
+        cell = row.insertCell(2);
         cell.innerHTML = msgContent[i]['count'];
     }
 }
@@ -276,11 +251,14 @@ ipcRenderer.on('initializeWindow', function (event, data) {
     const args = (data !== undefined) ? data : event;
     console.log('initializeWindow' + args);
 
+    processId = args['id'];
+    peerName  = args['peerName']; 
+
     var processMonitorElt = document.getElementById('ProcessMonitor');
     processMonitorElt.setAttribute('topic-process', args['type']);
 
     var processTitleElt = document.getElementById('ProcessTitle');
-    processTitleElt.textContent = args['peerName'];
+    processTitleElt.textContent = args['peerName'] + ' (' + processId + ')';
     document.title = processTitleElt.textContent;
 
     var processMonitorDefaultSubscribe = processMonitorElt.querySelector('.topicSubscribeName');
@@ -289,21 +267,15 @@ ipcRenderer.on('initializeWindow', function (event, data) {
     var processMonitorDefaultSend = processMonitorElt.querySelector('.topicSendMsg');
     processMonitorDefaultSend.value = 'SendFrom:' + args['peerName'];
 
-    // var processMonitorDefaultRequest = processMonitorElt.querySelector('.topicRequestMsg');
-    // processMonitorDefaultRequest.value = 'RequestFrom:' + args['peerName'];
-
-    var processMonitorDefaultRequestPromise = processMonitorElt.querySelector('.topicRequestPromiseMsg');
-    processMonitorDefaultRequestPromise.value = 'PromiseFrom:' + args['peerName'];
-
-    processId = args['id'];
+    var processMonitorDefaultRequest = processMonitorElt.querySelector('.topicRequestMsg');
+    processMonitorDefaultRequest.value = 'PromiseFrom:' + args['peerName'];
 
     processToMaster = new ProcessConnector('browser', ipcRenderer);
 
     processToMonitor = new ProcessConnector(args['type'], ipcRenderer, args['id']);
     if (args['type'] === 'browser') {
-        processToMonitor.onRequestPromiseThen(onIPCBus_OnRequestPromiseThen);
-        processToMonitor.onRequestPromiseCatch(onIPCBus_OnRequestPromiseCatch);
-        processToMonitor.OnRequestResult(onIPCBus_RequestResult);
+        processToMonitor.onRequestThen(onIPCBus_OnRequestThen);
+        processToMonitor.onRequestCatch(onIPCBus_OnRequestCatch);
         processToMonitor.OnReceivedMessage(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
@@ -328,9 +300,8 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         });
     }
     if (args['type'] === 'node') {
-        processToMonitor.onRequestPromiseThen(onIPCBus_OnRequestPromiseThen);
-        processToMonitor.onRequestPromiseCatch(onIPCBus_OnRequestPromiseCatch);
-        processToMonitor.OnRequestResult(onIPCBus_RequestResult);
+        processToMonitor.onRequestThen(onIPCBus_OnRequestThen);
+        processToMonitor.onRequestCatch(onIPCBus_OnRequestCatch);
         processToMonitor.OnReceivedMessage(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);

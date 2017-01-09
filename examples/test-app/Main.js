@@ -47,20 +47,22 @@ function spawnNodeInstance(scriptPath) {
 }
 
 // Window const
-var preloadFile = path.join(__dirname, 'BundledBrowserWindowPreload.js');
-var width = 1000;
+const preloadFile = path.join(__dirname, 'BundledBrowserWindowPreload.js');
+const commonViewUrl = 'file://' + path.join(__dirname, 'CommonView.html');
+const width = 1000;
 
 var MainProcess = (function () {
 
+    const peerName = 'Main';
+
     function MainProcess() {
         var self = this;
-        var processId = 0;
+        var processId = 1;
         var instances = new Map;
 
         // Listen view messages
         var processMainFromView = new ProcessConnector('browser', ipcMain);
-        // processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
-        processMainFromView.onRequestPromiseMessage(onIPCElectron_RequestPromiseMessage);
+        processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
@@ -75,17 +77,16 @@ var MainProcess = (function () {
             }
         });
         mainWindow.on('close', function () {
-            instances.forEach(function (value, key, map) {
-                value.term();
-            });
-            instances.clear();
+            while (instances.length > 0) {
+                instances[0].term();
+            }
         });
 
-        mainWindow.loadURL('file://' + path.join(__dirname, 'CommonView.html'));
+        mainWindow.loadURL(commonViewUrl);
 
         var processMainToView = new ProcessConnector('browser', mainWindow.webContents);
         mainWindow.webContents.on('dom-ready', function () {
-            mainWindow.webContents.send('initializeWindow', { title: 'Main', type: 'browser', peerName: 'Main', webContentsId: mainWindow.webContents.id });
+            mainWindow.webContents.send('initializeWindow', { title: 'Main', type: 'browser', id: 0, peerName: peerName, webContentsId: mainWindow.webContents.id });
         });
 
         function doNewProcess(processType) {
@@ -100,8 +101,8 @@ var MainProcess = (function () {
             }
             if (newProcess != null) {
                 instances.set(processId, newProcess);
-                newProcess.onClose(function (processId) {
-                    instances.delete(processId);
+                newProcess.onClose(function (localProcessId) {
+                    instances.delete(localProcessId);
                 });
                 ++processId;
             }
@@ -114,9 +115,12 @@ var MainProcess = (function () {
             }
         }
 
-        function onIPCElectron_ReceivedMessage(topicName, topicMsg, peerName, topicToReply) {
+        function onIPCElectron_ReceivedMessage(topicName, topicMsg, peerName, requestResolveCB, rejectResolveCB) {
             console.log('Master - onIPCElectron_ReceivedMessage - topic:' + topicName + ' data:' + topicMsg);
-            processMainToView.postReceivedMessage(topicName, topicMsg, peerName, topicToReply);
+            if (requestResolveCB) {
+                requestResolveCB(topicName + ' - AutoReply from #' + peerName);
+            }
+            processMainToView.postReceivedMessage(topicName, topicMsg, peerName);
         }
 
         function onIPCElectron_Subscribe(topicName) {
@@ -136,21 +140,14 @@ var MainProcess = (function () {
             ipcBus.send(topicName, topicMsg);
         }
 
-        // function onIPCElectron_RequestMessage(topicName, topicMsg) {
-        //     console.log('Master - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
-        //     ipcBus.request(topicName, topicMsg, function (topic, content, peerName) {
-        //         processMainToView.postRequestResult(topic, topicMsg, content, peerName);
-        //     });
-        // }
-
-        function onIPCElectron_RequestPromiseMessage(topicName, topicMsg) {
-            console.log('Master - onIPCElectron_RequestPromiseMessage : topic:' + topicName + ' msg:' + topicMsg);
+        function onIPCElectron_RequestMessage(topicName, topicMsg) {
+            console.log('Master - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
             ipcBus.request(topicName, topicMsg)
                 .then((requestPromiseResponse) => {
-                    processMainToView.postRequestPromiseThen(requestPromiseResponse);
+                    processMainToView.postRequestThen(requestPromiseResponse);
                 })
                 .catch((err) => {
-                    processMainToView.postRequestPromiseCatch(err);
+                    processMainToView.postRequestCatch(err);
                 });
         }
 
@@ -172,7 +169,7 @@ var RendererProcess = (function () {
                     preload: preloadFile
                 }
             });
-            rendererWindow.loadURL('file://' + path.join(__dirname, 'CommonView.html'));
+            rendererWindow.loadURL(commonViewUrl);
             rendererWindow.webContents.on('dom-ready', function () {
                 rendererWindow.webContents.send('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
             });
@@ -182,7 +179,7 @@ var RendererProcess = (function () {
             rendererWindow.on('close', () => {
                 rendererWindows.delete(key);
                 if (rendererWindows.size === 0) {
-                    callbackClose();
+                    callbackClose(processId);
                 }
             });
         };
@@ -228,8 +225,7 @@ var NodeProcess = (function () {
 
         // Listen view messages
         var processMainFromView = new ProcessConnector('node', ipcMain, processId);
-        // processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
-        processMainFromView.onRequestPromiseMessage(onIPCElectron_RequestPromiseMessage);
+        processMainFromView.onRequestMessage(onIPCElectron_RequestMessage);
         processMainFromView.onSendMessage(onIPCElectron_SendMessage);
         processMainFromView.onSubscribe(onIPCElectron_Subscribe);
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
@@ -254,7 +250,7 @@ var NodeProcess = (function () {
             }
         });
         processMainToView = new ProcessConnector('node', nodeWindow.webContents, processId);
-        nodeWindow.loadURL('file://' + path.join(__dirname, 'CommonView.html'));
+        nodeWindow.loadURL(commonViewUrl);
         nodeWindow.webContents.on('dom-ready', function () {
             nodeWindow.webContents.send('initializeWindow', { title: 'Node', type: 'node', id: processId, peerName: 'Node_' + nodeInstance.process.pid, webContentsId: nodeWindow.webContents.id });
         });
@@ -281,14 +277,11 @@ var NodeProcess = (function () {
             var msgJSON = JSON.parse(data);
             if (msgJSON.hasOwnProperty('action')) {
                 switch (msgJSON['action']) {
-                    case 'receivedRequestPromiseThen':
-                        processMainToView.postRequestPromiseThen(msgJSON['args']['requestPromiseResponse']);
+                    case 'receivedRequestThen':
+                        processMainToView.postRequestThen(msgJSON['args']['requestPromiseResponse']);
                         break;
-                    case 'receivedRequestPromiseCatch':
-                        processMainToView.postRequestPromiseCatch(msgJSON['args']['err']);
-                        break;
-                    case 'receivedRequest':
-                        processMainToView.postRequestResult(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['response'], msgJSON['args']['peerName']);
+                    case 'receivedRequestCatch':
+                        processMainToView.postRequestCatch(msgJSON['args']['err']);
                         break;
                     case 'receivedSend':
                         processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName'], msgJSON['args']['topicToReply']);
@@ -322,16 +315,7 @@ var NodeProcess = (function () {
             processMainToView.postUnsubscribeDone(topicName);
         };
 
-        // function onIPCElectron_RequestMessage(topicName, topicMsg) {
-        //     console.log('Node - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
-        //     var msgJSON = {
-        //             action: 'request',
-        //             args: { topic: topicName, msg: topicMsg }
-        //         };
-        //     nodeInstance.process.send(JSON.stringify(msgJSON));
-        // };
-
-        function onIPCElectron_RequestPromiseMessage(topicName, topicMsg) {
+        function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log('Node - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
             var msgJSON = {
                     action: 'requestPromise',
