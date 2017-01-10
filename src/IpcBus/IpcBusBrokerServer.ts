@@ -1,4 +1,3 @@
-/// <reference types='node' />
 /// <reference path='typings/easy-ipc.d.ts'/>
 
 import * as BaseIpc from 'easy-ipc';

@@ -15,10 +15,10 @@ export class IpcBusMainClient extends IpcBusCommonClient {
     }
 
     // Set API
-    connect(callback: IpcBusInterfaces.IpcBusConnectHandler) {
-        super.connect((eventName: string, conn: any) => {
-            this._ipcBusRendererBridge.connect((eventName: string, conn: any) => {});
-            callback(eventName, conn);
+    connect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler) {
+        super.connect(() => {
+            this._ipcBusRendererBridge.connect(() => {});
+            connectHandler();
         });
     }
 }

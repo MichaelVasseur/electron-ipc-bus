@@ -1,4 +1,4 @@
-/// <reference types='node' />
+/// <reference path='typings/easy-ipc.d.ts'/>
 
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
@@ -46,10 +46,10 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
     }
 
     // Set API
-    ipcConnect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler) {
+    ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler) {
         this._baseIpc.on('connect', (conn: any) => {
             this._busConn = conn;
-            connectCallback('connect', this._busConn);
+            connectHandler();
         });
         this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
     }

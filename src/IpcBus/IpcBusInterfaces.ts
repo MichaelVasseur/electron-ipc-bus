@@ -1,6 +1,6 @@
 
 export interface IpcBusConnectHandler {
-    (eventName: string, conn: any): void;
+    (): void;
 }
 
 export interface IpcBusRequestResolve {
@@ -12,7 +12,7 @@ export interface IpcBusRequestReject {
 }
 
 export interface IpcBusTopicHandler {
-    (topic: string, payload: Object | string, peerName: string, requestPromise?: IpcBusRequestResolve, requestReject?: IpcBusRequestReject): void;
+    (topic: string, payload: Object | string, peerName: string, requestResolve?: IpcBusRequestResolve, requestReject?: IpcBusRequestReject): void;
 }
 
 export interface IpcBusRequestResponse {

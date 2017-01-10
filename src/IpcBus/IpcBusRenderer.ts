@@ -32,13 +32,13 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
     }
 
     // Set API
-    ipcConnect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler): void {
+    ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler): void {
         if (!this._ipcObj) {
             this._ipcObj = require('electron').ipcRenderer;
             this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onFirstMessageReceived(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined));
         }
         setTimeout(() => {
-            connectCallback('connect', -1);
+            connectHandler();
         }, 1);
     }
 

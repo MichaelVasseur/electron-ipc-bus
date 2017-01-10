@@ -14,7 +14,7 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
 
     protected _onDataReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
         if (replyTopic) {
-            IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Emit request received on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
+            IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Emit request received on topic '${topic}' from peer #${peerName} (replyTopic '${replyTopic}')`);
             this.emit(topic, topic, payload, peerName,
                 (resolve: Object | string) => {
                     this.ipcSend(replyTopic, { resolve : resolve }, peerName);
