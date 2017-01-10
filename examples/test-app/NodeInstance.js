@@ -55,7 +55,7 @@ function doRequestOnTopic(msgJSON) {
     var args = msgJSON['args'];
     console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
     ipcBus.request(args['topic'], args['msg'])
-        .then((ipcRequestResponse) => {
+        .then((requestPromiseResponse) => {
             msgJSON['action'] = 'receivedRequestThen';
             msgJSON['requestPromiseResponse'] = requestPromiseResponse;
             process.send(JSON.stringify(msgJSON));
@@ -89,7 +89,7 @@ function dispatchMessage(msg)
             unsubscribe : doUnsubscribeTopic,
             send : doSendOnTopic,
 //            request : doRequestOnTopic,
-            requestPromise : doRequestOnTopic,
+            request : doRequestOnTopic,
             init : doInit
         };
 

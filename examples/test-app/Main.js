@@ -327,7 +327,7 @@ var NodeProcess = (function () {
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log('Node - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
             var msgJSON = {
-                    action: 'requestPromise',
+                    action: 'request',
                     args: { topic: topicName, msg: topicMsg }
                 };
             nodeInstance.process.send(JSON.stringify(msgJSON));
