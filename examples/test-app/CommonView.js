@@ -125,7 +125,7 @@ function doRequestMessageToTopic(event) {
     topicRespElt.value = '';
 
     var args = { topic: topicName, msg: topicMsg };
-    if (processToMonitor.Type() == 'renderer') {
+    if (processToMonitor.Type() === 'renderer') {
         let p = ipcBus.request(topicName, topicMsg)
             .then((requestPromiseResponse) => {
                 onIPCBus_OnRequestThen(requestPromiseResponse);
@@ -169,7 +169,7 @@ function doSendMessageToTopic(event) {
     var topicMsg = topicMsgElt.value;
 
     var args = { topic: topicName, msg: topicMsg };
-    if (processToMonitor.Type() == 'renderer') {
+    if (processToMonitor.Type() === 'renderer') {
         ipcBus.send(topicName, topicMsg);
     }
     else {

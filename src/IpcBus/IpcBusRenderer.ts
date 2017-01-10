@@ -14,7 +14,7 @@ class IpcBusRendererBridge extends EventEmitter {
         this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onFirstMessageReceived(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined));
     }
 
-    private _onMessageReceived(topic: any, payload: any, peerName: any, replyTopic?: any): void {
+    protected _onMessageReceived(topic: any, payload: any, peerName: any, replyTopic?: any): void {
         if (replyTopic) {
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Emit request on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
             this.emit(topic, topic, payload, peerName,
