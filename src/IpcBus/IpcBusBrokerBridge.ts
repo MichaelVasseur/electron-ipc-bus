@@ -20,19 +20,6 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
 //        this._lambdaListenerHandler = (msgTopic: string, msgContent: any, msgPeer: string, msgReplyTopic?: string) => this.rendererSubscribeHandler(msgTopic, msgContent, msgPeer, msgReplyTopic);
     }
 
-    // Set API
-    connect(callback: IpcBusInterfaces.IpcBusConnectHandler) {
-        super.connect((eventName: string, conn: any) => {
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, (event: any, topic: string) => this.onSubscribe(event, topic));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, (event: any, topic: string) => this.onUnsubscribe(event, topic));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND, (event: any, topic: string, data: any) => this.onSend(event, topic, data));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, (event: any, topic: string, data: any, replyTopic: string) => this.onRequest(event, topic, data, replyTopic));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, (event: any, topic: string) => this.onQueryState(event, topic));
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
-            callback(eventName, conn);
-        });
-    }
-
     // Override the base method
     protected _onMessageReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received message on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
@@ -43,6 +30,19 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
                 IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #${peerName}`);
                 webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, topic, payload, peerName, replyTopic);
             }
+        });
+    }
+
+    // Set API
+    connect(callback: IpcBusInterfaces.IpcBusConnectHandler) {
+        super.connect((eventName: string, conn: any) => {
+            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, (event: any, topic: string) => this.onSubscribe(event, topic));
+            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, (event: any, topic: string) => this.onUnsubscribe(event, topic));
+            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND, (event: any, topic: string, data: any) => this.onSend(event, topic, data));
+            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, (event: any, topic: string, data: any, replyTopic: string) => this.onRequest(event, topic, data, replyTopic));
+            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, (event: any, topic: string) => this.onQueryState(event, topic));
+            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
+            callback(eventName, conn);
         });
     }
 
