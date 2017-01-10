@@ -2,9 +2,11 @@ node_modules/
 build/
 src/
 *.tgz
+debug.log
 
 gulpfile.js
 **/tsconfig*.*
 tslint.json
 webpack.*
+**/.vscode
 
