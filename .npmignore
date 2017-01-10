@@ -6,5 +6,5 @@ src/
 gulpfile.js
 **/tsconfig*.*
 tslint.json
-
+webpack.*
 
