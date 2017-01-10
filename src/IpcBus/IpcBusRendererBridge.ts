@@ -2,11 +2,11 @@
 
 import * as IpcBusUtils from './IpcBusUtils';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
-import {IpcBusBrokerClient} from './IpcBusBrokerClient';
-// import {EventEmitter} from 'events';
+import {IpcBusNodeEventEmitter} from './IpcBusNode';
 
+// This class ensures the transfer of data between Broker and Renderer/s using ipcMain
 /** @internal */
-export class IpcBusBrokerBridge extends IpcBusBrokerClient {
+export class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     _ipcObj: any;
     _topicRendererRefs: IpcBusUtils.TopicConnectionMap;
     _webContents: any;
@@ -20,8 +20,8 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
 //        this._lambdaListenerHandler = (msgTopic: string, msgContent: any, msgPeer: string, msgReplyTopic?: string) => this.rendererSubscribeHandler(msgTopic, msgContent, msgPeer, msgReplyTopic);
     }
 
-    // Override the base method
-    protected _onMessageReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
+    // Override the base method, we forward message to renderer/s
+    protected _onDataReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received message on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
         this._topicRendererRefs.forEachTopic(topic, (peerNames: Map<string, number>, webContentsId: any, topic: string) => {
             let webContents = this._webContents.fromId(webContentsId);
@@ -63,7 +63,7 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
                     this.rendererCleanUp(webContentsId);
                 });
             }
-            this.postSubscribe(topic, peerName);
+            this.ipcSubscribe(topic, peerName);
         });
     }
 
@@ -73,7 +73,7 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
         //     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Unregister callback for '${topic}'`);
         //     EventEmitter.prototype.removeListener.call(this, topic, this._lambdaListenerHandler);
         // }
-        this.postUnsubscribe(topic, peerName);
+        this.ipcUnsubscribe(topic, peerName);
     }
 
     onUnsubscribe(event: any, topic: string) {
@@ -87,20 +87,20 @@ export class IpcBusBrokerBridge extends IpcBusBrokerClient {
         const webContents = event.sender;
         const peerName = 'Renderer_' + webContents.id;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${peerName} sent message on '${topic}'`);
-        this.postSend(topic, data, peerName);
+        this.ipcSend(topic, data, peerName);
     }
 
     onRequest(event: any, topic: string, data: any, replyTopic: string): void {
         const webContents = event.sender;
         const peerName = 'Renderer_' + webContents.id;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${peerName} sent request on '${topic}'`);
-        this.postRequest(topic, data, peerName, replyTopic);
+        this.ipcRequest(topic, data, peerName, replyTopic);
     }
 
     onQueryState(event: any, topic: string) {
         const webContents = event.sender;
         const peerName = 'Renderer_' + webContents.id;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${peerName} query Broker state on topic '${topic}'`);
-        this.postQueryBrokerState(topic, peerName);
+        this.ipcQueryBrokerState(topic, peerName);
     }
 }

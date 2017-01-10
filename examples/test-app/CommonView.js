@@ -140,7 +140,7 @@ function doRequestMessageToTopic(event) {
 }
 
 function onIPCBus_OnRequestThen(requestPromiseResponse) {
-    console.log('onIPCBus_OnRequestThen : requestPromiseArgs:' + requestPromiseResponse)
+    console.log('onIPCBus_OnRequestThen : requestPromiseArgs:' + requestPromiseResponse);
     var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'black';
@@ -149,7 +149,7 @@ function onIPCBus_OnRequestThen(requestPromiseResponse) {
 }
 
 function onIPCBus_OnRequestCatch(err) {
-    console.log('onIPCBus_OnRequestCatch : err:' + err)
+    console.log('onIPCBus_OnRequestCatch : err:' + err);
     var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'red';
