@@ -1,8 +1,8 @@
 # electron-ipc-bus
-A safe IPC bus for applications built on Electron. 
+A safe Ipc bus for applications built on Electron. 
 Dispatching of messages is managed by a broker.
 For performance purpose, it is better to instanciate the broker in an independent process node instance.
-This IPC bus works in sandbox mode and in affinity case (several webpages hosted in the same renderer process)
+This Ipc bus works in sandbox mode and in affinity case (several webpages hosted in the same renderer process)
 
 # How to use
 ## Ipc Bus Broker
@@ -46,33 +46,33 @@ Ex:
 ### Initialization in the Main/Browser Node process
  
     const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIPCBus([busPath]);
+    const ipcBus = ipcBusModule.CreateIpcBus([busPath]);
 
-The require() loads the module. CreateIPCBus setups the client with the ***busPath*** that was used to start the broker.
+The require() loads the module. CreateIpcBus setups the client with the ***busPath*** that was used to start the broker.
 If ***busPath*** is not specified, the framework tries to get it from the command line with switch ***--bus-path***.
  
 Ex, busPath set by code:
 
-    const ipcBus = ipcBusModule.CreateIPCBus('/my-ipc-bus-path');
+    const ipcBus = ipcBusModule.CreateIpcBus('/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIPCBus();
+    const ipcBus = ipcBusModule.CreateIpcBus();
 
 ### Initialization in a Node single process
  
 Ex, busPath set by code:
 
-    const ipcBus = ipcBusModule.CreateIPCBus('/my-ipc-bus-path');
+    const ipcBus = ipcBusModule.CreateIpcBus('/my-ipc-bus-path');
 
 Ex, busPath set by command line: electron . --bus-path=***value***
     
-    const ipcBus = ipcBusModule.CreateIPCBus();
+    const ipcBus = ipcBusModule.CreateIpcBus();
 
 ### Initialization in a Renderer (Sandboxed or not) process
 
     const ipcBusModule = require("electron-ipc-bus");
-    const ipcBus = ipcBusModule.CreateIPCBus();
+    const ipcBus = ipcBusModule.CreateIpcBus();
 
 NOTE : If the renderer is running in sandboxed mode, the code above
 must be run from the ***BrowserWindow***'s preload script. Otherwise, the
@@ -86,7 +86,7 @@ The code below to make the client accessible to the the Web page scripts.
 
 Ex:
    
-    ipcBus.connect((eventName, conn) => console.log("Connected to IPC bus !")) 
+    ipcBus.connect((eventName, conn) => console.log("Connected to Ipc bus !")) 
 
 #### subscribe(topic, handler)
 Subscribe to the specified topic. Each time a message is received on this topic,
