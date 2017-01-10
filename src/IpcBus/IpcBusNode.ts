@@ -3,8 +3,8 @@
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
-import {IpcBusCommonEventEmitter} from './IpcBusClient';
-import {IpcBusCommonClient} from './IpcBusClient';
+import { IpcBusCommonEventEmitter } from './IpcBusClient';
+import { IpcBusCommonClient } from './IpcBusClient';
 
 // Implementation for Node process
 /** @internal */

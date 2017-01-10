@@ -4,7 +4,7 @@ export interface IpcBusConnectHandler {
 }
 
 export interface IpcBusRequestResolve {
-    (resolve: Object | string) : void;
+    (payload: Object | string) : void;
 }
 
 export interface IpcBusRequestReject {

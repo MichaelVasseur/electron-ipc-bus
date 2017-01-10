@@ -16,11 +16,14 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
         if (replyTopic) {
             IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Emit request received on topic '${topic}' from peer #${peerName} (replyTopic '${replyTopic}')`);
             this.emit(topic, topic, payload, peerName,
-                (resolve: Object | string) => {
-                    this.ipcSend(replyTopic, { resolve : resolve }, peerName);
+                (payload: Object | string) => {
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: payload, peerName: peerName};
+                    this.ipcSend(replyTopic, {resolve: response}, peerName);
                 },
                 (err: string) => {
-                    this.ipcSend(replyTopic, { reject : err }, peerName);
+//                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: err, peerName: peerName};
+                    let response = err;
+                    this.ipcSend(replyTopic, {reject: response}, peerName);
                 }
             );
         }
@@ -78,8 +81,7 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
                 let content = payload as any;
                 if (content.hasOwnProperty('resolve')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] resolve`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.resolve, peerName: peerName};
-                    resolve(response);
+                    resolve(content.resolve);
                 }
                 else if (content.hasOwnProperty('reject')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: ${content.reject}`);
