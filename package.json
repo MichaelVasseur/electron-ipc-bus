@@ -1,23 +1,56 @@
 {
-    "name": "electron-ipc-bus",
-    "version": "0.3.0", 
-    "description": "Safe IPC bus for Electron",
-	"license": "MIT",
-    "author": "Michael Vasseur <michael.vasseur@thomsonreuters.com>",
-    "contributors": [
-        "Emmanuel Kimmerlin <emmanuel.kimmerlin@thomsonreuters.com>",
-        "Gregory Gatellier <gregory.gatellier@thomsonreuters.com>",
-        "Thomas Moutel <thomas.moutel@thomsonreuters.com>"
-    ],
-	"homepage": "https://github.com/MichaelVasseur/electron-ipc-bus",
-    "repository": {
-        "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git", 
-        "type": "git"
-    }, 
-    "dependencies": {
-        "easy-ipc":"0.2.2",
-        "uuid":"2.0.3"
-    }, 
-    "main": "electron-ipc-bus.js",
-	"types": "electron-ipc-bus.d.ts"
+  "name": "electron-ipc-bus",
+  "version": "0.4.0",
+  "description": "A safe IPC bus for applications built on Electron.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"
+  },
+  "keywords": [],
+  "author": "Michael Vasseur",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MichaelVasseur/electron-ipc-bus/issues"
+  },
+  "homepage": "https://github.com/MichaelVasseur/electron-ipc-bus#readme",
+  "maintainers": [
+    {
+      "name": "Michael Vasseur",
+      "email": "michael.vasseur@thomsonreuters.com"
+    },
+    {
+      "name": "Emmanuel Kimmerlin",
+      "email": "emmanuel.kimmerlin@thomsonreuters.com"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Thomas Moutel",
+      "email": "thomas.moutel@thomsonreuters.com"
+    }
+  ],
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "dependencies": {
+    "@types/node": "^0.0.3",
+    "easy-ipc": "^0.2.2"
+  },
+  "devDependencies": {
+    "del": "^2.2.2",
+    "del-cli": "^0.2.1",
+    "tslint": "^4.1.1",
+    "tslint-microsoft-contrib": "^2.0.10",
+    "typescript": "^2.1.4",
+    "typings": "^2.0.0"
+  },
+  "scripts": {
+    "clean": "del-cli ./lib ./build ./dist",
+    "build": "npm run build-js && npm run build-declaration",
+    "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
+    "build-declaration": "tsc -p ./tsconfig/tsconfig-declaration.json",
+    "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
+    "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/index.d.ts",
+    "tsc": "tsc",
+    "lint": "tslint"
+  }
 }

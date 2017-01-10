@@ -1,2 +1,10 @@
-test-app
+node_modules/
+build/
+src/
 *.tgz
+
+gulpfile.js
+**/tsconfig*.*
+tslint.json
+
+

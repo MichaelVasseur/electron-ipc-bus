@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "types" : ["node"],
+		"module": "commonjs",
+		"moduleResolution": "node",
+//        "lib": ["dom", "es2015.promise", "es5"],
+		"target": "es6",        
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "alwaysStrict" : true,
+        "noFallthroughCasesInSwitch" : true,
+        "noUnusedLocals" : true,
+//        "noUnusedParameters" : true,
+//        "inlineSources": true,
+//        "inlineSourceMap": true,
+        "stripInternal": true,
+        "sourceMap": true,
+        "outDir" : "../lib"
+    }
+}

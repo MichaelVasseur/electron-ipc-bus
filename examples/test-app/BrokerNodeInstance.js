@@ -5,10 +5,9 @@
 
 console.log("Starting IPC Broker instance ...")
 
-const Module = require('module')
-const path = require('path')
-
-const ipcBroker = require("../electron-ipc-bus")("broker")
+const ipcBusModule = require("electron-ipc-bus");
+const ipcBroker = ipcBusModule.CreateIpcBusBroker();
+ipcBusModule.ActivateIpcBusTrace(true);
 
 ipcBroker.start()
 process.send({ event: "ready" });

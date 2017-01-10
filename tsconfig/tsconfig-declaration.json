@@ -1,0 +1,11 @@
+{
+    "extends": "./tsconfig-base",
+    "compilerOptions": {
+        "declaration": true,
+        "noResolve": false,
+        "noEmitOnError": false
+    },
+	"files": [
+		"../src/index.ts"
+	]
+}
