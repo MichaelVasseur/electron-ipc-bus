@@ -31,6 +31,9 @@
   ],
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "publishConfig": {
+        "registry": "https://bams-sami.int.thomsonreuters.com/artifactory/default.npm.local/UniversalContainer/"
+    },
   "dependencies": {
     "@types/node": "^0.0.3",
     "easy-ipc": "^0.2.2"
