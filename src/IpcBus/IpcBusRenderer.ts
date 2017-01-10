@@ -43,7 +43,10 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
     }
 
     ipcClose(): void {
-        this._ipcObj = null;
+        if (this._ipcObj) {
+            this._ipcObj.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE);
+            this._ipcObj = null;
+        }
     }
 
     ipcSubscribe(topic: string, peerName: string): void {

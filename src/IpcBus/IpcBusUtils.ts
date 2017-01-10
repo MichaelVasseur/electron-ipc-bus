@@ -292,7 +292,7 @@ export namespace TopicConnectionMap {
     };
 
     export interface ForEachHandler {
-        (peernNames: Map<string, number>, conn: any, topic: string): void;
+        (peerNames: Map<string, number>, conn: any, topic: string): void;
     };
 };
 
