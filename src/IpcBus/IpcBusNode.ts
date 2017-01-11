@@ -13,8 +13,8 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
     private _baseIpc: BaseIpc;
     private _busConn: any;
 
-    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
-        super();
+    constructor(peerName: string, ipcOptions: IpcBusUtils.IpcOptions) {
+        super(peerName);
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
         this._baseIpc.on('data', (data: any, conn: any) => this._onData(data, conn));
@@ -83,7 +83,7 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
 /** @internal */
 export class IpcBusNodeClient extends IpcBusCommonClient {
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
-        super('Node_' + process.pid, new IpcBusNodeEventEmitter(ipcOptions));
+        super(new IpcBusNodeEventEmitter('Node_' + process.pid, ipcOptions));
     }
 }
 

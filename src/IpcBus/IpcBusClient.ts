@@ -7,9 +7,15 @@ import * as IpcBusUtils from './IpcBusUtils';
 // This class implements the transaction between an EventEmitter and an ipc client : BrokerServer (easy-ipc) or Electron (ipcRenderer/ipcMain)
 /** @internal */
 export abstract class IpcBusCommonEventEmitter extends EventEmitter {
+    protected _peerName: string;
 
-    constructor() {
+    constructor(peerName: string) {
         super();
+        this._peerName = peerName;
+    }
+
+   PeerName(): string {
+        return this._peerName;
     }
 
     protected _onDataReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
@@ -17,13 +23,10 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
             IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Emit request received on topic '${topic}' from peer #${peerName} (replyTopic '${replyTopic}')`);
             this.emit(topic, topic, payload, peerName,
                 (payload: Object | string) => {
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: payload, peerName: peerName};
-                    this.ipcSend(replyTopic, {resolve: response}, peerName);
+                    this.ipcSend(replyTopic, { resolve : payload }, this._peerName);
                 },
                 (err: string) => {
-//                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: err, peerName: peerName};
-                    let response = err;
-                    this.ipcSend(replyTopic, {reject: response}, peerName);
+                    this.ipcSend(replyTopic, { reject : err }, this._peerName);
                 }
             );
         }
@@ -48,20 +51,21 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
 
     subscribe(topic: string, peerName: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
         this.addListener(topic, listenCallback);
-        this.ipcSubscribe(topic, peerName);
+        this.ipcSubscribe(topic, peerName || this._peerName);
     }
 
     abstract ipcSubscribe(topic: string, peerName: string): void;
 
     unsubscribe(topic: string, peerName: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
         this.removeListener(topic, listenCallback);
-        this.ipcUnsubscribe(topic, peerName);
+        this.ipcUnsubscribe(topic, peerName || this._peerName);
     }
 
     abstract ipcUnsubscribe(topic: string, peerName: string): void;
 
+    // for performance purpose we do not call sendFromPeer but ipcSend directly
     send(topic: string, data: Object | string, peerName: string) {
-        this.ipcSend(topic, data, peerName);
+        this.ipcSend(topic, data, peerName || this._peerName);
     }
 
     abstract ipcSend(topic: string, data: Object | string, peerName: string): void;
@@ -70,6 +74,8 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
         if (timeoutDelay == null) {
             timeoutDelay = 2000;
         }
+
+        peerName = peerName || this._peerName;
 
         const generatedTopic = IpcBusUtils.GenerateReplyTopic();
 
@@ -81,7 +87,8 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
                 let content = payload as any;
                 if (content.hasOwnProperty('resolve')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] resolve`);
-                    resolve(content.resolve);
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.resolve, peerName: peerName};
+                    resolve(response);
                 }
                 else if (content.hasOwnProperty('reject')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: ${content.reject}`);
@@ -113,7 +120,7 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
     abstract ipcRequest(topic: string, data: Object | string, peerName: string, replyTopic: string): void;
 
     queryBrokerState(topic: string, peerName: string) {
-        this.ipcQueryBrokerState(topic, peerName);
+        this.ipcQueryBrokerState(topic, peerName || this._peerName);
     }
 
     abstract ipcQueryBrokerState(topic: string, peerName: string): void;
@@ -122,12 +129,14 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
 // Implementation for a common IpcBusClient
 /** @internal */
 export class IpcBusCommonClient implements IpcBusInterfaces.IpcBusClient {
-    protected _peerName: string;
     protected _ipcBusEventEmitter: IpcBusCommonEventEmitter;
 
-    constructor(peerName: string, ipcBusEventEmitter: IpcBusCommonEventEmitter) {
-        this._peerName = peerName;
+    constructor(ipcBusEventEmitter: IpcBusCommonEventEmitter) {
         this._ipcBusEventEmitter = ipcBusEventEmitter;
+    }
+
+    PeerName(): string {
+        return this._ipcBusEventEmitter.PeerName();
     }
 
     // Set API
@@ -140,23 +149,23 @@ export class IpcBusCommonClient implements IpcBusInterfaces.IpcBusClient {
     }
 
     subscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
-        this._ipcBusEventEmitter.subscribe(topic, this._peerName, listenCallback);
+        this._ipcBusEventEmitter.subscribe(topic, null, listenCallback);
     }
 
     unsubscribe(topic: string, listenCallback: IpcBusInterfaces.IpcBusTopicHandler) {
-        this._ipcBusEventEmitter.unsubscribe(topic, this._peerName, listenCallback);
+        this._ipcBusEventEmitter.unsubscribe(topic, null, listenCallback);
     }
 
     send(topic: string, data: Object | string) {
-        this._ipcBusEventEmitter.send(topic, data, this._peerName);
+        this._ipcBusEventEmitter.send(topic, data, null);
     }
 
     request(topic: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        return this._ipcBusEventEmitter.request(topic, data, this._peerName, timeoutDelay);
+        return this._ipcBusEventEmitter.request(topic, data, null, timeoutDelay);
     }
 
     queryBrokerState(topic: string) {
-        this._ipcBusEventEmitter.queryBrokerState(topic, this._peerName);
+        this._ipcBusEventEmitter.queryBrokerState(topic, null);
     }
 }
 
