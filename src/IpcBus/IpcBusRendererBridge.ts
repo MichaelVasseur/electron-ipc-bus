@@ -58,7 +58,7 @@ export class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     onHandshake(event: any): void {
         const webContents = event.sender;
         const peerName = 'Renderer_' + webContents.id;
-        // Have to store the webContentsId as webContents is undefined when destroyed 
+        // Have to store the webContentsId as webContents is undefined when destroyed !!!
         let webContentsId = webContents.id;
         webContents.addListener('destroyed', () => {
             this.rendererCleanUp(webContentsId);

@@ -22,34 +22,33 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
             this._peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._peerName}`);
             this._lambda = (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onDataReceived(topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
-            this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, this._lambda);
         } else {
             this._peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._peerName}`);
             this._lambda = (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onDataReceived(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic);
-            this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, this._lambda);
         }
-
+        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, this._lambda);
     };
+
+    private _ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler): void {
+        this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
+            connectHandler();
+        });
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
+    }
 
     // Set API
     ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler): void {
-        if (!this._ipcObj) {
+        if (this._ipcObj) {
+            this._ipcConnect(connectHandler);
+        }
+        else {
             this._ipcObj = require('electron').ipcRenderer;
             this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (eventOrPeerName: any, peerNameOrUndefined: any) => {
                 this._onHandshake(eventOrPeerName, peerNameOrUndefined);
-                this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
-                    connectHandler();
-                });
-                this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
+                this._ipcConnect(connectHandler);
             });
             this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
-        }
-        else {
-            this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
-                connectHandler();
-            });
-            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
         }
     }
 
