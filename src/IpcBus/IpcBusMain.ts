@@ -10,7 +10,7 @@ export class IpcBusMainClient extends IpcBusCommonClient {
     private _ipcBusRendererBridge: IpcBusRendererBridge;
 
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
-        super('Master', new IpcBusNodeEventEmitter(ipcOptions));
+        super(new IpcBusNodeEventEmitter('Master', ipcOptions));
         this._ipcBusRendererBridge = new IpcBusRendererBridge(ipcOptions);
     }
 

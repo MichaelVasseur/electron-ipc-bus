@@ -9,4 +9,6 @@ gulpfile.js
 tslint.json
 webpack.*
 **/.vscode
+.npmignore
+.gitignore
 
