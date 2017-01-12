@@ -112,8 +112,8 @@ Ex:
         .then(ipcBusRequestResponse) {
             console.log("topic = " + ipcBusRequestResponse.topic + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.peerName);
         }
-        .catch(err) {
-            console.log("err = " + err);
+        .catch(ipcBusRequestResponse) {
+            console.log("err = " + ipcBusRequestResponse.payload);
         }
 
 To identify and manage such request, the clients must check the ***resolveCallback*** parameter

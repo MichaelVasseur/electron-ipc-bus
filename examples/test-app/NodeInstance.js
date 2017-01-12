@@ -60,9 +60,9 @@ function doRequestOnTopic(msgJSON) {
             msgJSON['requestPromiseResponse'] = requestPromiseResponse;
             process.send(JSON.stringify(msgJSON));
         })
-        .catch((err) => {
+        .catch((requestPromiseResponse) => {
             msgJSON['action'] = 'receivedRequestCatch';
-            msgJSON['err'] = err;
+            msgJSON['requestPromiseResponse'] = requestPromiseResponse;
             process.send(JSON.stringify(msgJSON));
         });
 }

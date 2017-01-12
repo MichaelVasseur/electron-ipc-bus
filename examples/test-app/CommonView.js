@@ -130,8 +130,8 @@ function doRequestMessageToTopic(event) {
             .then((requestPromiseResponse) => {
                 onIPCBus_OnRequestThen(requestPromiseResponse);
             })
-            .catch((err) => {
-                onIPCBus_OnRequestCatch(err);
+            .catch((requestPromiseResponse) => {
+                onIPCBus_OnRequestCatch(requestPromiseResponse);
             });
     }
     else {
@@ -148,12 +148,12 @@ function onIPCBus_OnRequestThen(requestPromiseResponse) {
     }
 }
 
-function onIPCBus_OnRequestCatch(err) {
-    console.log('onIPCBus_OnRequestCatch : err:' + err);
+function onIPCBus_OnRequestCatch(requestPromiseResponse) {
+    console.log('onIPCBus_OnRequestCatch : err:' + requestPromiseResponse.payload);
     var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'red';
-        topicRespElt.value = 'Error:' + err;
+        topicRespElt.value = 'Error:' + requestPromiseResponse.payload;
     }
 }
 

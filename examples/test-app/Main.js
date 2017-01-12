@@ -151,8 +151,8 @@ var MainProcess = (function () {
                 .then((requestPromiseResponse) => {
                     processMainToView.postRequestThen(requestPromiseResponse);
                 })
-                .catch((err) => {
-                    processMainToView.postRequestCatch(err);
+                .catch((requestPromiseResponse) => {
+                    processMainToView.postRequestCatch(requestPromiseResponse);
                 });
         }
 
@@ -290,7 +290,7 @@ var NodeProcess = (function () {
                         processMainToView.postRequestThen(msgJSON['requestPromiseResponse']);
                         break;
                     case 'receivedRequestCatch':
-                        processMainToView.postRequestCatch(msgJSON['err']);
+                        processMainToView.postRequestCatch(msgJSON['requestPromiseResponse']);
                         break;
                     case 'receivedSend':
                         processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName']);

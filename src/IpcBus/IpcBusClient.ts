@@ -92,11 +92,13 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
                 }
                 else if (content.hasOwnProperty('reject')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: ${content.reject}`);
-                    reject(content.reject);
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.reject, peerName: peerName};
+                    reject(response);
                 }
                 else {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: unknown format`);
-                    reject('unknown format');
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: 'unknown format', peerName: ''};
+                    reject(response);
                 }
             };
 
@@ -110,7 +112,8 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
                 if (this.listenerCount(generatedTopic) > 0) {
                     this.unsubscribe(generatedTopic, peerName, localRequestCallback);
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: timeout`);
-                    reject('timeout');
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: 'timeout', peerName: ''};
+                    reject(response);
                 }
             }, timeoutDelay);
         });

@@ -108,8 +108,8 @@ ProcessConnector = (function () {
             });
         };
 
-        this.postRequestCatch = function _postRequestCatch(err) {
-            _ipc.send(buildChannel('requestMessage-catch'), err);
+        this.postRequestCatch = function _postRequestCatch(requestPromiseArgs) {
+            _ipc.send(buildChannel('requestMessage-catch'), requestPromiseArgs);
         };
 
         this.onRequestCatch = function _onRequestCatch(callback) {

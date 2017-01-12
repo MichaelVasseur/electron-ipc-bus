@@ -10,7 +10,6 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;
     private _subscriptions: IpcBusUtils.TopicConnectionMap;
-    private _portSocketMap: Map<string, any>;
 
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
@@ -52,7 +51,6 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
 
     private _onClose(err: any, socket: any, server: any): void {
         this._subscriptions.releaseConnection(socket);
-        this._portSocketMap.delete(socket.remotePort);
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Connection closed !`);
     }
 
@@ -84,9 +82,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const msgPeerName = data.args[2] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on topic '${msgTopic}' from peer #${msgPeerName}`);
 
-                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
+                        this._subscriptions.forEachTopic(msgTopic, function (connData, topic) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, msgContent, msgPeerName, socket);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, msgContent, msgPeerName, connData.conn);
                         });
                         break;
                     }
@@ -98,9 +96,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const msgReplyTopic = data.args[3] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on topic '${msgTopic}' (reply = '${msgReplyTopic}') from peer #${msgPeerName}`);
 
-                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
+                        this._subscriptions.forEachTopic(msgTopic, function (connData, topic) {
                             // Request data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgPeerName, msgReplyTopic, socket);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgPeerName, msgReplyTopic, connData.conn);
                         });
                         break;
                     }
@@ -111,14 +109,14 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] QueryState message reply on topic '${msgTopic}' from peer #${msgPeerName}`);
 
                         let queryStateResult: Object[] = [];
-                        this._subscriptions.forEach(function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
-                            peerNames.forEach(function (count: number, peerName: string) {
+                        this._subscriptions.forEach(function (connData, topic) {
+                            connData.peerNames.forEach(function (count: number, peerName: string) {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count });
                             });
                         });
-                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
+                        this._subscriptions.forEachTopic(msgTopic, function (connData, topic) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, queryStateResult, msgPeerName, socket);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, queryStateResult, msgPeerName, connData.conn);
                         });
                         break;
                     }

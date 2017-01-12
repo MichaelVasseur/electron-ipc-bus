@@ -27,10 +27,10 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     // Override the base method, we forward message to renderer/s
     protected _onDataReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received message on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
-        this._topicRendererRefs.forEachTopic(topic, (peerNames: Map<string, number>, webContentsId: string, webContents: any, topic: string) => {
-            const peerName = 'Renderer_' + webContentsId;
+        this._topicRendererRefs.forEachTopic(topic, (connData, topic) => {
+            const peerName = 'Renderer_' + connData.connKey;
             IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #${peerName}`);
-            webContents.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, topic, payload, peerName, replyTopic);
+            connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, topic, payload, peerName, replyTopic);
         });
         super._onDataReceived(topic, payload, peerName, replyTopic);
     }
@@ -52,7 +52,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     }
 
     rendererCleanUp(webContentsId: string): void {
-        this._topicRendererRefs.releaseConnection(webContentsId, (topic: string, webContentsId: string, webContents: any, peerName: string, count: number) => this.onUnsubscribeCB(topic, webContentsId, webContents, peerName, count));
+        this._topicRendererRefs.releaseConnection(webContentsId, (topic, peerName, connData) => this.onUnsubscribeCB(topic, peerName, connData));
     }
 
     onHandshake(event: any): void {
@@ -83,7 +83,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     onSubscribe(event: any, topic: string, peerName: string): void {
         const webContents = event.sender;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${peerName} subscribed to topic '${topic}'`);
-        this._topicRendererRefs.addRef(topic, webContents.id, webContents, peerName, (topic: string, webContentsId: string, webContents: any, peerName: string, count: number) => {
+        this._topicRendererRefs.addRef(topic, webContents.id, webContents, peerName, (topic, peerName, connData) => {
             // If it is the first time this renderer is listening this topic, we have to add the callback
             // if (count === 1) {
             //     EventEmitter.prototype.addListener.call(this, topic, this._lambdaListenerHandler);
@@ -93,7 +93,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
         });
     }
 
-    onUnsubscribeCB(topic: string, webContentsId: string, webContents: any, peerName: string, count: number) {
+    onUnsubscribeCB(topic: string, peerName: string, connData: IpcBusUtils.TopicConnectionMap.ConnectionData) {
         // If it is the last time this renderer is listening this topic, we have to remove the callback
         // if (count === 0) {
         //     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Unregister callback for '${topic}'`);
@@ -105,7 +105,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     onUnsubscribe(event: any, topic: string, peerName: string) {
         const webContents = event.sender;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${peerName} unsubscribed from topic '${topic}'`);
-        this._topicRendererRefs.release(topic, webContents.id, peerName, (topic: string, webContentsId: string, webContents: any, peerName: string, count: number) => this.onUnsubscribeCB(topic, webContentsId, webContents, peerName, count));
+        this._topicRendererRefs.release(topic, webContents.id, peerName, (topic, peerName, connData) => this.onUnsubscribeCB(topic, peerName, connData));
     }
 
     onSend(event: any, topic: string, data: any, peerName: string): void {
