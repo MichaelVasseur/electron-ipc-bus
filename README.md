@@ -116,7 +116,7 @@ Ex:
             console.log("err = " + err);
         }
 
-To identify and manage such request, the clients must check the ***replyTopic*** parameter
+To identify and manage such request, the clients must check the ***resolveCallback*** parameter
 
     function ComputeHandler(topic, content, peerName, resolveCallback, rejectCallback) {
        console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)

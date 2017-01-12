@@ -114,14 +114,19 @@ export class Logger {
     }
 };
 
+class ConnectionData {
+    _conn: any;
+    _peerNamesRef: Map<string, number> = new Map<string, number>();
+}
+
 /** @internal */
 export class TopicConnectionMap {
     private _name: string;
-    private _topicsMap: Map<string, Map<any, Map<string, number>>>;
+    private _topicsMap: Map<string, Map<string, ConnectionData>>;
 
     constructor(name: string) {
         this._name = name;
-        this._topicsMap = new Map<string, Map<any, Map<string, number>>>();
+        this._topicsMap = new Map<string, Map<string, ConnectionData>>();
     }
 
     private _info(str: string) {
@@ -136,24 +141,25 @@ export class TopicConnectionMap {
        Logger.error(`[${this._name}] ${str}`);
     }
 
-    public addRef(topic: string, conn: any, peerName: string, callback?: TopicConnectionMap.MapHandler) {
-        this._info(`AddRef: '${topic}', conn = ${conn}`);
+    public addRef(topic: string, connKey: string, conn: any, peerName: string, callback?: TopicConnectionMap.MapHandler) {
+        this._info(`AddRef: '${topic}', connKey = ${connKey}`);
 
         let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
-            connsMap = new Map<any, Map<string, number>>();
+            connsMap = new Map<string, ConnectionData>();
             // This topic has NOT been subscribed yet, add it to the map
             this._topicsMap.set(topic, connsMap);
             this._info(`AddRef: topic '${topic}' is added`);
         }
-        let peerNamesMap = connsMap.get(conn);
-        if (peerNamesMap == null) {
+        let connData = connsMap.get(connKey);
+        if (connData == null) {
             // This topic has NOT been already subscribed by this connection
-            peerNamesMap = new Map<string, number>();
-            connsMap.set(conn, peerNamesMap);
-            this._info(`AddRef: conn = ${conn} is added`);
+            connData = new ConnectionData();
+            connData._conn = conn;
+            connsMap.set(connKey, connData);
+            this._info(`AddRef: connKey = ${connKey} is added`);
         }
-        let count = peerNamesMap.get(peerName);
+        let count = connData._peerNamesRef.get(peerName);
         if (count == null) {
             // This topic has NOT been already subcribed by this peername, by default 1
             count = 1;
@@ -162,46 +168,46 @@ export class TopicConnectionMap {
         else {
             ++count;
         }
-        peerNamesMap.set(peerName, count);
-        this._info(`AddRef: topic '${topic}', conn = ${conn}, count = ${peerNamesMap.size}`);
+        connData._peerNamesRef.set(peerName, count);
+        this._info(`AddRef: topic '${topic}', connKey = ${connKey}, count = ${connData._peerNamesRef.size}`);
         if ((callback instanceof Function) === true) {
-            callback(topic, conn, peerName, peerNamesMap.size);
+            callback(topic, connKey, conn, peerName, connData._peerNamesRef.size);
         }
     }
 
-    private _release(topic: string, conn: any, peerName?: string, callback?: TopicConnectionMap.MapHandler) {
-        this._info(`Release: '${topic}', conn = ${conn}`);
+    private _release(topic: string, connKey: string, peerName?: string, callback?: TopicConnectionMap.MapHandler) {
+        this._info(`Release: '${topic}', connKey = ${connKey}`);
 
         let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
             this._warn(`Release: '${topic}' is unknown`);
         }
         else {
-            let peerNamesMap = connsMap.get(conn);
-            if (peerNamesMap == null) {
-                this._warn(`Release: conn = ${conn} is unknown`);
+            let connData = connsMap.get(connKey);
+            if (connData == null) {
+                this._warn(`Release: connKey = ${connKey} is unknown`);
             }
             else {
                 if (peerName == null) {
                     let peerNamesTemp = new Array<string>();
-                    for (let peerName of peerNamesMap.keys()) {
+                    for (let peerName of connData._peerNamesRef.keys()) {
                         peerNamesTemp.push(peerName);
                     }
                     // Test callback first to manage performance
                     if ((callback instanceof Function) === true) {
                         for (let peerName of peerNamesTemp) {
-                            peerNamesMap.delete(peerName);
-                            callback(topic, conn, peerName, peerNamesMap.size);
+                            connData._peerNamesRef.delete(peerName);
+                            callback(topic, connKey, connData._conn, peerName, connData._peerNamesRef.size);
                         }
                     }
                     else {
                         for (let peerName of peerNamesTemp) {
-                            peerNamesMap.delete(peerName);
+                            connData._peerNamesRef.delete(peerName);
                         }
                     }
                 }
                 else {
-                    let count = peerNamesMap.get(peerName);
+                    let count = connData._peerNamesRef.get(peerName);
                     if (count == null) {
                         this._warn(`Release: peerName #${peerName} is unknown`);
                     }
@@ -209,36 +215,36 @@ export class TopicConnectionMap {
                         // This connection has subscribed to this topic
                         --count;
                         if (count > 0) {
-                            peerNamesMap.set(peerName, count);
+                            connData._peerNamesRef.set(peerName, count);
                         } else {
                             // The connection is no more referenced
-                            peerNamesMap.delete(peerName);
+                            connData._peerNamesRef.delete(peerName);
                             this._info(`Release: peerName #${peerName} is released`);
                         }
                     }
                     if ((callback instanceof Function) === true) {
-                        callback(topic, conn, peerName, peerNamesMap.size);
+                        callback(topic, connKey, connData._conn, peerName, connData._peerNamesRef.size);
                     }
                 }
-                if (peerNamesMap.size === 0) {
-                    connsMap.delete(conn);
-                    this._info(`Release: conn = ${conn} is released`);
+                if (connData._peerNamesRef.size === 0) {
+                    connsMap.delete(connKey);
+                    this._info(`Release: conn = ${connKey} is released`);
                     if (connsMap.size === 0) {
                         this._topicsMap.delete(topic);
                         this._info(`Release: topic '${topic}' is released`);
                     }
                 }
-                this._info(`Release: topic '${topic}', conn = ${conn}, count = ${peerNamesMap.size}`);
+                this._info(`Release: topic '${topic}', connKey = ${connKey}, count = ${connData._peerNamesRef.size}`);
             }
         }
     }
 
-    public release(topic: string, conn: any, peerName: string, callback?: TopicConnectionMap.MapHandler) {
-        this._release(topic, conn, peerName, callback);
+    public release(topic: string, connKey: string, peerName: string, callback?: TopicConnectionMap.MapHandler) {
+        this._release(topic, connKey, peerName, callback);
     }
 
-    public releaseConnection(conn: any, callback?: TopicConnectionMap.MapHandler) {
-        this._info(`ReleaseConn: conn = ${conn}`);
+    public releaseConnection(connKey: string, callback?: TopicConnectionMap.MapHandler) {
+        this._info(`ReleaseConn: connKey = ${connKey}`);
 
         // Store keys in an intermediate array
         // Not sure iterating and removing at the same time is well supported 
@@ -247,7 +253,7 @@ export class TopicConnectionMap {
             topicsTmp.push(topic);
         }
         for (let topic of topicsTmp) {
-            this._release(topic, conn, null, callback);
+            this._release(topic, connKey, null, callback);
         }
     }
 
@@ -264,9 +270,9 @@ export class TopicConnectionMap {
             this._warn(`ForEachTopic: Unknown topic '${topic}' !`);
         }
         else {
-            connsMap.forEach((peerNames: Map<string, number>, conn: any) => {
-                this._info(`ForEachTopic: '${topic}', conn = ${conn} (' + ${peerNames.size} )`);
-                callback(peerNames, conn, topic);
+            connsMap.forEach((connData, connKey) => {
+                this._info(`ForEachTopic: '${topic}', connKey = ${connKey} (' + ${connData._peerNamesRef.size} )`);
+                callback(connData._peerNamesRef, connKey, connData._conn, topic);
             });
         }
     }
@@ -279,10 +285,10 @@ export class TopicConnectionMap {
             return;
         }
 
-        this._topicsMap.forEach((connsMap: Map<any, Map<string, number>>, topic: string) => {
-            connsMap.forEach((peerNames: Map<string, number>, conn: any) => {
-                this._info(`forEachConnection: '${topic}', conn = ${conn} (' + ${peerNames.size} )`);
-                callback(peerNames, conn, topic);
+        this._topicsMap.forEach((connsMap, topic: string) => {
+            connsMap.forEach((connData, connKey) => {
+                this._info(`forEachConnection: '${topic}', connKey = ${connKey} (' + ${connData._peerNamesRef.size} )`);
+                callback(connData._peerNamesRef, connKey, connData._conn, topic);
             });
         });
     }
@@ -291,11 +297,11 @@ export class TopicConnectionMap {
 /** @internal */
 export namespace TopicConnectionMap {
     export interface MapHandler {
-        (topic: string, conn: any, peerName: string, peerNamesCount: number): void;
+        (topic: string, connKey: string, conn: any, peerName: string, peerNamesCount: number): void;
     };
 
     export interface ForEachHandler {
-        (peerNames: Map<string, number>, conn: any, topic: string): void;
+        (peerNames: Map<string, number>, connKey: string, conn: any, topic: string): void;
     };
 };
 

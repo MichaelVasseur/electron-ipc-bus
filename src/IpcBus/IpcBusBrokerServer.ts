@@ -10,14 +10,15 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;
     private _subscriptions: IpcBusUtils.TopicConnectionMap;
+    private _portSocketMap: Map<string, any>;
 
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
         this._subscriptions = new IpcBusUtils.TopicConnectionMap('[IPCBus:Broker]');
-        this._baseIpc.on('connection', (conn: any, server: any) => this._onConnection(conn, server));
-        this._baseIpc.on('close', (err: any, conn: any, server: any) => this._onClose(err, conn, server));
-        this._baseIpc.on('data', (data: any, conn: any, server: any) => this._onData(data, conn, server));
+        this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
+        this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
+        this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
     }
 
     // Set API
@@ -36,19 +37,26 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
         }
     }
 
-    private _onConnection(conn: any, server: any): void {
+    private _onConnection(socket: any, server: any): void {
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
-        conn.on('error', (err: string) => {
+        IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
+        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.address=' + JSON.stringify(socket.address()));
+        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.localAddress=' + socket.localAddress);
+        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
+        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
+        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remotePort=' + socket.remotePort);
+        socket.on('error', (err: string) => {
             IpcBusUtils.Logger.info(`[IPCBus:Broker] Error on connection: ${err}`);
         });
     }
 
-    private _onClose(err: any, conn: any, server: any): void {
-        this._subscriptions.releaseConnection(conn);
+    private _onClose(err: any, socket: any, server: any): void {
+        this._subscriptions.releaseConnection(socket);
+        this._portSocketMap.delete(socket.remotePort);
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Connection closed !`);
     }
 
-    private _onData(data: any, conn: any, server: any): void {
+    private _onData(data: any, socket: any, server: any): void {
         if (BaseIpc.Cmd.isCmd(data)) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC:
@@ -57,7 +65,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const msgPeerName = data.args[1] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Subscribe to topic '${msgTopic}' from peer #${msgPeerName}`);
 
-                        this._subscriptions.addRef(msgTopic, conn, msgPeerName);
+                        this._subscriptions.addRef(msgTopic, socket.remotePort, socket, msgPeerName);
                         break;
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
@@ -66,7 +74,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const msgPeerName = data.args[1] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from topic '${msgTopic}' from peer #${msgPeerName}`);
 
-                        this._subscriptions.release(msgTopic, conn, msgPeerName);
+                        this._subscriptions.release(msgTopic, socket.remotePort, msgPeerName);
                         break;
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
@@ -76,9 +84,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const msgPeerName = data.args[2] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on topic '${msgTopic}' from peer #${msgPeerName}`);
 
-                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, conn: any, topic: string) {
+                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, msgContent, msgPeerName, conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, msgContent, msgPeerName, socket);
                         });
                         break;
                     }
@@ -90,9 +98,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const msgReplyTopic = data.args[3] as string;
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on topic '${msgTopic}' (reply = '${msgReplyTopic}') from peer #${msgPeerName}`);
 
-                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, conn: any, topic: string) {
+                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
                             // Request data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgPeerName, msgReplyTopic, conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, topic, msgContent, msgPeerName, msgReplyTopic, socket);
                         });
                         break;
                     }
@@ -103,14 +111,14 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] QueryState message reply on topic '${msgTopic}' from peer #${msgPeerName}`);
 
                         let queryStateResult: Object[] = [];
-                        this._subscriptions.forEach(function (peerNames: Map<string, number>, conn: any, topic: string) {
+                        this._subscriptions.forEach(function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
                             peerNames.forEach(function (count: number, peerName: string) {
                                 queryStateResult.push({ topic: topic, peerName: peerName, count: count });
                             });
                         });
-                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, conn: any, topic: string) {
+                        this._subscriptions.forEachTopic(msgTopic, function (peerNames: Map<string, number>, socketRemotePort: string, socket: any, topic: string) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, queryStateResult, msgPeerName, conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, topic, queryStateResult, msgPeerName, socket);
                         });
                         break;
                     }
