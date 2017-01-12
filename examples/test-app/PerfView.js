@@ -7,7 +7,7 @@ function doPerformance(event) {
         payload: 'very light'
     };
     ++transaction;
-    processToMaster.send('start-performance-tests', 255);
+    processToMaster.send('start-performance-tests', 1024 * 1024);
 }
 
 function doClear(event) {

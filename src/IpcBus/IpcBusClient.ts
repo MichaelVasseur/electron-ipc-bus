@@ -82,7 +82,7 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
 
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (localGeneratedTopic, payload, peerName, requestResolve, requestReject) => {
-                IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
+                IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Peer #${peerName} replied to request on ${generatedTopic}`);
                 this.unsubscribe(generatedTopic, peerName, localRequestCallback);
                 let content = payload as any;
                 if (content.hasOwnProperty('resolve')) {
@@ -91,7 +91,7 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
                     resolve(response);
                 }
                 else if (content.hasOwnProperty('reject')) {
-                    IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: ${content.reject}`);
+                    IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {topic: topic, payload: content.reject, peerName: peerName};
                     reject(response);
                 }
@@ -171,4 +171,3 @@ export class IpcBusCommonClient implements IpcBusInterfaces.IpcBusClient {
         this._ipcBusEventEmitter.queryBrokerState(topic, null);
     }
 }
-

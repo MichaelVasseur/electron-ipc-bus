@@ -59,8 +59,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC:
                     {
-                        const msgTopic = data.args[0] as string;
-                        const msgPeerName = data.args[1] as string;
+                        const msgTopic = data.args[0];
+                        const msgPeerName = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Subscribe to topic '${msgTopic}' from peer #${msgPeerName}`);
 
                         this._subscriptions.addRef(msgTopic, socket.remotePort, socket, msgPeerName);
@@ -68,8 +68,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
                     {
-                        const msgTopic = data.args[0] as string;
-                        const msgPeerName = data.args[1] as string;
+                        const msgTopic = data.args[0];
+                        const msgPeerName = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from topic '${msgTopic}' from peer #${msgPeerName}`);
 
                         this._subscriptions.release(msgTopic, socket.remotePort, msgPeerName);
@@ -77,9 +77,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
                     {
-                        const msgTopic = data.args[0] as string;
-                        const msgContent = data.args[1] as string;
-                        const msgPeerName = data.args[2] as string;
+                        const msgTopic = data.args[0];
+                        const msgContent = data.args[1];
+                        const msgPeerName = data.args[2];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on topic '${msgTopic}' from peer #${msgPeerName}`);
 
                         this._subscriptions.forEachTopic(msgTopic, function (connData, topic) {
@@ -90,10 +90,10 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE:
                     {
-                        const msgTopic = data.args[0] as string;
-                        const msgContent = data.args[1] as string;
-                        const msgPeerName = data.args[2] as string;
-                        const msgReplyTopic = data.args[3] as string;
+                        const msgTopic = data.args[0];
+                        const msgContent = data.args[1];
+                        const msgPeerName = data.args[2];
+                        const msgReplyTopic = data.args[3];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on topic '${msgTopic}' (reply = '${msgReplyTopic}') from peer #${msgPeerName}`);
 
                         this._subscriptions.forEachTopic(msgTopic, function (connData, topic) {
@@ -104,8 +104,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE:
                     {
-                        const msgTopic = data.args[0] as string;
-                        const msgPeerName = data.args[1] as string;
+                        const msgTopic = data.args[0];
+                        const msgPeerName = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] QueryState message reply on topic '${msgTopic}' from peer #${msgPeerName}`);
 
                         let queryStateResult: Object[] = [];

@@ -27,8 +27,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     protected _onDataReceived(topic: string, payload: Object| string, peerName: string, replyTopic?: string) {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received message on topic '${topic}' from peer #${peerName} (replyTopic?='${replyTopic}')`);
         this._topicRendererRefs.forEachTopic(topic, (connData, topic) => {
-            const peerName = 'Renderer_' + connData.connKey;
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #${peerName}`);
+            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward message received on '${topic}' to peer #Renderer_${connData.connKey}`);
             connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, topic, payload, peerName, replyTopic);
         });
         super._onDataReceived(topic, payload, peerName, replyTopic);

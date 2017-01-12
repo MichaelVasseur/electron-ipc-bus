@@ -187,16 +187,17 @@ export class TopicConnectionMap {
                     for (let peerName of connData.peerNames.keys()) {
                         peerNamesTemp.push(peerName);
                     }
+                    let len = peerNamesTemp.length;
                     // Test callback first to manage performance
                     if ((callback instanceof Function) === true) {
-                        for (let peerName of peerNamesTemp) {
-                            connData.peerNames.delete(peerName);
-                            callback(topic, peerName, connData);
+                        for (let i = 0; i < len; ++i) {
+                            connData.peerNames.delete(peerNamesTemp[i]);
+                            callback(topic, peerNamesTemp[i], connData);
                         }
                     }
                     else {
-                        for (let peerName of peerNamesTemp) {
-                            connData.peerNames.delete(peerName);
+                        for (let i = 0; i < len; ++i) {
+                            connData.peerNames.delete(peerNamesTemp[i]);
                         }
                     }
                 }
@@ -246,8 +247,9 @@ export class TopicConnectionMap {
         for (let topic of this._topicsMap.keys()) {
             topicsTmp.push(topic);
         }
-        for (let topic of topicsTmp) {
-            this._release(topic, connKey, null, callback);
+        let len = topicsTmp.length;
+        for (let i = 0; i < len; ++i) {
+            this._release(topicsTmp[i], connKey, null, callback);
         }
     }
 

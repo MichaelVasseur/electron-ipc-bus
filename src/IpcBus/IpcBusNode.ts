@@ -23,21 +23,9 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
         if (BaseIpc.Cmd.isCmd(data)) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
-                    {
-                        const topic = data.args[0];
-                        const payload = data.args[1];
-                        const peerName = data.args[2];
-                        this._onDataReceived(topic, payload, peerName, null);
-                        break;
-                    }
-
                 case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
                     {
-                        const topic = data.args[0];
-                        const payload = data.args[1];
-                        const peerName = data.args[2];
-                        const replyTopic = data.args[3];
-                        this._onDataReceived(topic, payload, peerName, replyTopic);
+                        this._onDataReceived.apply(this, data.args);
                         break;
                     }
             }
@@ -94,4 +82,3 @@ export class IpcBusNodeClient extends IpcBusCommonClient {
         super(new IpcBusNodeEventEmitter('Node_' + process.pid, ipcOptions));
     }
 }
-

@@ -25,6 +25,7 @@ function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
     }
     ipcBus.send('test-performance-browser', msgContent);
     ipcBus.send('test-performance-node', msgContent);
+    ipcBus.send('test-performance-renderer', msgContent);
 }
 
 function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
@@ -33,6 +34,7 @@ function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
         type: 'renderer', 
         peerName: ipcBus.peerName
     }
+    msgContent.payload = null;
     ipcBus.send('test-performance-result', msgContent);
 }
 

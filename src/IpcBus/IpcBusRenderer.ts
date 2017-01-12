@@ -1,6 +1,5 @@
 /// <reference types='node' />
 
-// import { EventEmitter } from 'events';
 import * as IpcBusUtils from './IpcBusUtils';
 import {IpcBusCommonEventEmitter} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
@@ -17,7 +16,6 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
 
     private _onHandshake(eventOrPeerName: any, peerNameOrUndefined: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
-//        if (eventOrPeerName instanceof EventEmitter) {
         if (peerNameOrUndefined) {
             this._peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._peerName}`);
