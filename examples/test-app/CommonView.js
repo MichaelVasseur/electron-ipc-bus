@@ -48,9 +48,10 @@ function doSubscribeToTopic(event) {
     var topicName = topicNameElt.value;
 
     if (processToMonitor.Type() === 'renderer') {
-        ipcBus.connect(function () {
-            ipcBus.subscribe(topicName, onIPC_Received);
-            onIPCElectron_SubscribeNotify(topicName);
+        ipcBus.connect()
+            .then(() => {
+                ipcBus.subscribe(topicName, onIPC_Received);
+                onIPCElectron_SubscribeNotify(topicName);
         });
     }
     else {
@@ -282,18 +283,22 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         var processBrokerStateElt = document.getElementById('ProcessBrokerState');
         processBrokerStateElt.style.display = 'block';
 
-        ipcBus.connect(function () {
-            ipcBus.subscribe('brokerStateResults', onIPC_BrokerStatusTopic);
-            doQueryBrokerState();
-        });
+        ipcBus.connect()
+            .then(() => {
+                console.log('renderer : connected to ipcBus');
+                ipcBus.subscribe('brokerStateResults', onIPC_BrokerStatusTopic);
+                doQueryBrokerState();
+            });
     }
     if (args['type'] === 'renderer') {
 
         var processToolbarElt = document.getElementById('ProcessRendererToolbar');
         processToolbarElt.style.display = 'block';
 
-        ipcBus.connect(function () {
-        });
+        ipcBus.connect()
+            .then(() => {
+                console.log('renderer : connected to ipcBus');
+            });
     }
     if (args['type'] === 'node') {
         processToMonitor.onRequestThen(onIPCBus_OnRequestThen);
@@ -301,8 +306,10 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         processToMonitor.OnReceivedMessage(onIPCBus_ReceivedSendNotify);
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
-        ipcBus.connect(function () {
-        });
+        ipcBus.connect()
+            .then(() => {
+                console.log('renderer : connected to ipcBus');
+            });
     }
 });
 

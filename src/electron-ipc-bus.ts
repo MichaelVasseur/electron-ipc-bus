@@ -1,4 +1,3 @@
-export {IpcBusConnectHandler} from './IpcBus/IpcBusInterfaces';
 export {IpcBusRequestResolve} from './IpcBus/IpcBusInterfaces';
 export {IpcBusRequestReject} from './IpcBus/IpcBusInterfaces';
 export {IpcBusTopicHandler} from './IpcBus/IpcBusInterfaces';

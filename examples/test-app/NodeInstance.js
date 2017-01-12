@@ -106,14 +106,15 @@ function dispatchMessage(msg)
 var isConnected = false;
 var msgs = [];
 
-ipcBus.connect(function () {
-    console.log('node - connect');
-    isConnected = true;
-    for(var msg in msgs)
-    {
-        dispatchMessage(msg);
-    }
-    msgs = [];
-})
+ipcBus.connect()
+    .then(() => {
+        console.log('node - connect');
+        isConnected = true;
+        for(var msg in msgs)
+        {
+            dispatchMessage(msg);
+        }
+        msgs = [];
+});
 
 process.on('message', dispatchMessage);

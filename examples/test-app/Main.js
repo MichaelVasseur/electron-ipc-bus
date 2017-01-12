@@ -358,9 +358,10 @@ electronApp.on('ready', function () {
 
         console.log('<MAIN> IPC broker is ready !');
         // Setup IPC Client (and renderer bridge)
-        ipcBus.connect(function () {
-            new MainProcess();
-        });
+        ipcBus.connect()
+            .then(() => {
+                new MainProcess();
+            });
     });
     ipcBrokerInstance.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
     ipcBrokerInstance.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });

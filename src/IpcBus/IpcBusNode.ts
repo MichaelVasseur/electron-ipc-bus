@@ -1,6 +1,5 @@
 /// <reference path='typings/easy-ipc.d.ts'/>
 
-import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
 import { IpcBusCommonEventEmitter } from './IpcBusClient';
@@ -46,12 +45,21 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
     }
 
     // Set API
-    ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler) {
-        this._baseIpc.on('connect', (conn: any) => {
-            this._busConn = conn;
-            connectHandler();
+    ipcConnect(timeoutDelay?: number): Promise<string> {
+        if (timeoutDelay == null) {
+            timeoutDelay = 2000;
+        }
+        let p = new Promise<string>((resolve, reject) => {
+            this._baseIpc.on('connect', (conn: any) => {
+                this._busConn = conn;
+                resolve('connected');
+            });
+            setTimeout(() => {
+                reject('timeout');
+            }, timeoutDelay);
+            this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
         });
-        this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
+        return p;
     }
 
     ipcClose() {

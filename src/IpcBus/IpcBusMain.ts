@@ -1,5 +1,4 @@
 import * as IpcBusUtils from './IpcBusUtils';
-import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 import {IpcBusNodeEventEmitter} from './IpcBusNode';
 import {IpcBusCommonClient} from './IpcBusClient';
@@ -36,19 +35,26 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     }
 
     // Set API
-    connect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler) {
-        super.connect(() => {
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (event: any) => this.onHandshake(event));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, (event: any) => this.onConnect(event));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CLOSE, (event: any) => this.onClose(event));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, (event: any, topic: string, peerName: string) => this.onSubscribe(event, topic, peerName));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, (event: any, topic: string, peerName: string) => this.onUnsubscribe(event, topic, peerName));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND, (event: any, topic: string, data: any, peerName: string) => this.onSend(event, topic, data, peerName));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, (event: any, topic: string, data: any, peerName: string, replyTopic: string) => this.onRequest(event, topic, data, peerName, replyTopic));
-            this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, (event: any, topic: string, peerName: string) => this.onQueryState(event, topic, peerName));
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
-            connectHandler();
+    connect(): Promise<string> {
+        let p = new Promise<string>((resolve, reject) => {
+            super.connect()
+                .then((msg) => {
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (event: any) => this.onHandshake(event));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, (event: any) => this.onConnect(event));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CLOSE, (event: any) => this.onClose(event));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, (event: any, topic: string, peerName: string) => this.onSubscribe(event, topic, peerName));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, (event: any, topic: string, peerName: string) => this.onUnsubscribe(event, topic, peerName));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND, (event: any, topic: string, data: any, peerName: string) => this.onSend(event, topic, data, peerName));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, (event: any, topic: string, data: any, peerName: string, replyTopic: string) => this.onRequest(event, topic, data, peerName, replyTopic));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, (event: any, topic: string, peerName: string) => this.onQueryState(event, topic, peerName));
+                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
+                    resolve(msg);
+                })
+                .catch((err) => {
+                    reject(err);
+                });
         });
+        return p;
     }
 
     rendererCleanUp(webContentsId: string): void {

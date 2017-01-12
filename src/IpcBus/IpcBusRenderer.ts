@@ -1,7 +1,6 @@
 /// <reference types='node' />
 
 import { EventEmitter } from 'events';
-import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 import {IpcBusCommonEventEmitter} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
@@ -30,25 +29,46 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, this._lambda);
     };
 
-    private _ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler): void {
-        this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
-            connectHandler();
+    private _ipcConnect(timeoutDelay: number): Promise<string> {
+        let p = new Promise<string>((resolve, reject) => {
+            this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
+                resolve('connected');
+            });
+            setTimeout(() => {
+                reject('timeout');
+            }, timeoutDelay);
+            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
         });
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
+        return p;
     }
 
     // Set API
-    ipcConnect(connectHandler: IpcBusInterfaces.IpcBusConnectHandler): void {
+    ipcConnect(timeoutDelay?: number): Promise<string> {
+        if (timeoutDelay == null) {
+            timeoutDelay = 2000;
+        }
         if (this._ipcObj) {
-            this._ipcConnect(connectHandler);
+            return this._ipcConnect(timeoutDelay);
         }
         else {
-            this._ipcObj = require('electron').ipcRenderer;
-            this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (eventOrPeerName: any, peerNameOrUndefined: any) => {
-                this._onHandshake(eventOrPeerName, peerNameOrUndefined);
-                this._ipcConnect(connectHandler);
+            let p = new Promise<string>((resolve, reject) => {
+                this._ipcObj = require('electron').ipcRenderer;
+                this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (eventOrPeerName: any, peerNameOrUndefined: any) => {
+                    this._onHandshake(eventOrPeerName, peerNameOrUndefined);
+                    this._ipcConnect(timeoutDelay)
+                        .then((msg) => {
+                            resolve(msg);
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                });
+                setTimeout(() => {
+                    reject('timeout');
+                }, timeoutDelay);
+                this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
             });
-            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
+            return p;
         }
     }
 

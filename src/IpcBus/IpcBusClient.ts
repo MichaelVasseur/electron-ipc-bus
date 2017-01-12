@@ -37,11 +37,11 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
     }
 
     // Set API
-    connect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler) {
-        this.ipcConnect(connectCallback);
+    connect(timeoutDelay?: number): Promise<string> {
+        return this.ipcConnect(timeoutDelay);
     }
 
-    abstract ipcConnect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler): void;
+    abstract ipcConnect(timeoutDelay?: number): Promise<string>;
 
     close() {
         this.ipcClose();
@@ -77,9 +77,9 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
 
         peerName = peerName || this._peerName;
 
-        const generatedTopic = IpcBusUtils.GenerateReplyTopic();
-
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
+            const generatedTopic = IpcBusUtils.GenerateReplyTopic();
+
             // Prepare reply's handler, we have to change the replyTopic to topic
             const localRequestCallback: IpcBusInterfaces.IpcBusTopicHandler = (localGeneratedTopic, payload, peerName, requestResolve, requestReject) => {
                 IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Peer #${peerName} replied to request on ${generatedTopic} : ${payload}`);
@@ -143,8 +143,8 @@ export class IpcBusCommonClient implements IpcBusInterfaces.IpcBusClient {
     }
 
     // Set API
-    connect(connectCallback: IpcBusInterfaces.IpcBusConnectHandler) {
-        this._ipcBusEventEmitter.connect(connectCallback);
+    connect(timeoutDelay?: number): Promise<string> {
+        return this._ipcBusEventEmitter.connect(timeoutDelay);
     }
 
     close() {
