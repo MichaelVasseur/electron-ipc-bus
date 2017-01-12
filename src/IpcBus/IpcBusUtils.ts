@@ -144,26 +144,26 @@ export class TopicConnectionMap {
             connsMap = new Map<string, TopicConnectionMap.ConnectionData>();
             // This topic has NOT been subscribed yet, add it to the map
             this._topicsMap.set(topic, connsMap);
-            this._info(`AddRef: topic '${topic}' is added`);
+            // this._info(`AddRef: topic '${topic}' is added`);
         }
         let connData = connsMap.get(connKey);
         if (connData == null) {
             // This topic has NOT been already subscribed by this connection
             connData = new TopicConnectionMap.ConnectionData(connKey, conn);
             connsMap.set(connKey, connData);
-            this._info(`AddRef: connKey = ${connKey} is added`);
+            // this._info(`AddRef: connKey = ${connKey} is added`);
         }
         let count = connData.peerNames.get(peerName);
         if (count == null) {
             // This topic has NOT been already subcribed by this peername, by default 1
             count = 1;
-            this._info(`AddRef: peerName #${peerName} is added`);
+            // this._info(`AddRef: peerName #${peerName} is added`);
         }
         else {
             ++count;
         }
         connData.peerNames.set(peerName, count);
-        this._info(`AddRef: topic '${topic}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
+        this._info(`AddRef: '${topic}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
         if ((callback instanceof Function) === true) {
             callback(topic, peerName, connData);
         }
@@ -214,7 +214,7 @@ export class TopicConnectionMap {
                         } else {
                             // The connection is no more referenced
                             connData.peerNames.delete(peerName);
-                            this._info(`Release: peerName #${peerName} is released`);
+                            // this._info(`Release: peerName #${peerName} is released`);
                         }
                     }
                     if ((callback instanceof Function) === true) {
@@ -223,13 +223,13 @@ export class TopicConnectionMap {
                 }
                 if (connData.peerNames.size === 0) {
                     connsMap.delete(connKey);
-                    this._info(`Release: conn = ${connKey} is released`);
+                    // this._info(`Release: conn = ${connKey} is released`);
                     if (connsMap.size === 0) {
                         this._topicsMap.delete(topic);
-                        this._info(`Release: topic '${topic}' is released`);
+                        // this._info(`Release: topic '${topic}' is released`);
                     }
                 }
-                this._info(`Release: topic '${topic}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
+                this._info(`Release: '${topic}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
             }
         }
     }
@@ -254,20 +254,20 @@ export class TopicConnectionMap {
     }
 
     public forEachTopic(topic: string, callback: TopicConnectionMap.ForEachHandler) {
-        this._info(`ForEachTopic: '${topic}'`);
+        this._info(`forEachTopic: '${topic}'`);
 
         if ((callback instanceof Function) === false) {
-            this._error('ForEachTopic: No callback provided !');
+            this._error('forEachTopic: No callback provided !');
             return;
         }
 
         let connsMap = this._topicsMap.get(topic);
         if (connsMap == null) {
-            this._warn(`ForEachTopic: Unknown topic '${topic}' !`);
+            this._warn(`forEachTopic: Unknown topic '${topic}' !`);
         }
         else {
             connsMap.forEach((connData, connKey) => {
-                this._info(`ForEachTopic: '${topic}', connKey = ${connKey} (' + ${connData.peerNames.size} )`);
+                this._info(`forEachTopic: '${topic}', connKey = ${connKey} (${connData.peerNames.size})`);
                 callback(connData, topic);
             });
         }
@@ -277,13 +277,13 @@ export class TopicConnectionMap {
         this._info('forEach');
 
         if ((callback instanceof Function) === false) {
-            this._error('ForEach: No callback provided !');
+            this._error('forEach: No callback provided !');
             return;
         }
 
         this._topicsMap.forEach((connsMap, topic: string) => {
             connsMap.forEach((connData, connKey) => {
-                this._info(`forEachConnection: '${topic}', connKey = ${connKey} (' + ${connData.peerNames.size} )`);
+                this._info(`forEach: '${topic}', connKey = ${connKey} (${connData.peerNames.size})`);
                 callback(connData, topic);
             });
         });

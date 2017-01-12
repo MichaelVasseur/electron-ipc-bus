@@ -38,7 +38,6 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
 
     private _onConnection(socket: any, server: any): void {
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
-        IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
         IpcBusUtils.Logger.info('[IPCBus:Broker] socket.address=' + JSON.stringify(socket.address()));
         IpcBusUtils.Logger.info('[IPCBus:Broker] socket.localAddress=' + socket.localAddress);
         IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
