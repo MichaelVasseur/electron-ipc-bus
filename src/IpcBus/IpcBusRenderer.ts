@@ -1,6 +1,6 @@
 /// <reference types='node' />
 
-import { EventEmitter } from 'events';
+// import { EventEmitter } from 'events';
 import * as IpcBusUtils from './IpcBusUtils';
 import {IpcBusCommonEventEmitter} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
@@ -17,7 +17,8 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
 
     private _onHandshake(eventOrPeerName: any, peerNameOrUndefined: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
-        if (eventOrPeerName instanceof EventEmitter) {
+//        if (eventOrPeerName instanceof EventEmitter) {
+        if (peerNameOrUndefined) {
             this._peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._peerName}`);
             this._lambda = (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onDataReceived(topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
@@ -42,7 +43,6 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
         return p;
     }
 
-    // Set API
     ipcConnect(timeoutDelay?: number): Promise<string> {
         if (timeoutDelay == null) {
             timeoutDelay = 2000;

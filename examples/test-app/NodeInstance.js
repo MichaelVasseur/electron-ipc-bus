@@ -102,6 +102,24 @@ function dispatchMessage(msg)
     }
 }
 
+function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
+    msgContent.origin = { 
+        timeStamp: Date.now,
+        type: 'node', 
+        peerName: ipcBus.peerName
+    }
+    ipcBus.send('test-performance-main', msgContent);
+    ipcBus.send('test-performance-renderer', msgContent);
+}
+
+function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
+    msgContent.response = { 
+        timeStamp: Date.now(),
+        type: 'node', 
+        peerName: ipcBus.peerName
+    }
+    ipcBus.send('test-performance-result', msgContent);
+}
 
 var isConnected = false;
 var msgs = [];
@@ -115,6 +133,8 @@ ipcBus.connect()
             dispatchMessage(msg);
         }
         msgs = [];
+        ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
+        ipcBus.subscribe('test-performance-node', onIPCBus_TestPerformance);
 });
 
 process.on('message', dispatchMessage);

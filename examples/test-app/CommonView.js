@@ -13,6 +13,43 @@ function doNewRendererInstance(event) {
     processToMaster.send('new-renderer', processId);
 }
 
+var transaction = 1;
+function doPerformance(event) {
+    var msgContent =
+    {
+        transaction : transaction,
+        payload: 'very light'
+    };
+    ++transaction;
+    ipcBus.send('test-performance-start', msgContent);
+}
+
+function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
+    msgContent.origin = { 
+        timeStamp: Date.now(),
+        type: 'renderer', 
+        peerName: ipcBus.peerName
+    }
+    ipcBus.send('test-performance-main', msgContent);
+    ipcBus.send('test-performance-node', msgContent);
+}
+
+function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
+    msgContent.response = { 
+        timeStamp: Date.now,
+        type: 'renderer', 
+        peerName: ipcBus.peerName
+    }
+    ipcBus.send('test-performance-result', msgContent);
+}
+
+var resultsMap = new Map;
+function onIPCBus_TestPerformanceResult(topicName, msgContent, peerName) {
+    // var results = resultsMap.get(msgContent.transaction);
+    // if (result)
+}
+
+
 var rendererWindow;
 function doNewAffinityRendererInstance(event) {
     var strWindowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no';
@@ -91,7 +128,8 @@ function doUnsubscribeFromTopic(event) {
     var topicName = getTopicName(target);
 
     if (processToMonitor.Type() === 'renderer') {
-        ipcBus.connect(function () {
+        ipcBus.connect()
+        .then(() => {
             ipcBus.unsubscribe(topicName, onIPC_Received);
             onIPCElectron_UnsubscribeNotify(topicName);
         });
@@ -277,27 +315,34 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         processToMonitor.onSubscribeDone(onIPCElectron_SubscribeNotify);
         processToMonitor.onUnsubscribeDone(onIPCElectron_UnsubscribeNotify);
 
-        var processToolbarElt = document.getElementById('ProcessBrowserToolbar');
-        processToolbarElt.style.display = 'block';
+        var processToolbar = document.getElementById('ProcessBrowserToolbar');
+        processToolbar.style.display = 'block';
 
-        var processBrokerStateElt = document.getElementById('ProcessBrokerState');
-        processBrokerStateElt.style.display = 'block';
+        processToolbar = document.getElementById('ProcessBrokerState');
+        processToolbar.style.display = 'block';
+
+        processToolbar = document.getElementById('ProcessPerformance');
+        processToolbar.style.display = 'block';
 
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
                 ipcBus.subscribe('brokerStateResults', onIPC_BrokerStatusTopic);
+                ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
+                ipcBus.subscribe('test-performance-result', onIPCBus_TestPerformanceResult);
                 doQueryBrokerState();
             });
     }
     if (args['type'] === 'renderer') {
 
-        var processToolbarElt = document.getElementById('ProcessRendererToolbar');
-        processToolbarElt.style.display = 'block';
+        var processToolbar = document.getElementById('ProcessRendererToolbar');
+        processToolbar.style.display = 'block';
 
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
+                ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
+                ipcBus.subscribe('test-performance-renderer', onIPCBus_TestPerformance);
             });
     }
     if (args['type'] === 'node') {

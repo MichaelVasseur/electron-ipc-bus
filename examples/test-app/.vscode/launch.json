@@ -1,8 +1,9 @@
 {
 "version": "0.2.0",
     "configurations": [
+
         {
-            "name": "Launch Test tr-apps",
+            "name": "Launch Sandbox Test tr-apps",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}\\Main.js",
@@ -13,6 +14,25 @@
             "runtimeExecutable": "C:\\kobra-local\\tr-electron\\out\\R\\electron.exe",
             "runtimeArgs": [
                 "--enable-sandbox",
+                "--process-per-site",
+                "--remote-debugging-port=8315"
+            ],
+            "env": {},
+            "externalConsole": false,
+            "sourceMaps": false,
+            "outDir": null
+        },
+        {
+            "name": "Launch Standard Test tr-apps",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}\\Main.js",
+            "stopOnEntry": false,
+            "args": [],
+            "cwd": "${workspaceRoot}",
+//            "runtimeExecutable": "${workspaceRoot}\\node_modules\\tr-electron\\dist\\electron.exe",
+            "runtimeExecutable": "C:\\kobra-local\\tr-electron\\out\\R\\electron.exe",
+            "runtimeArgs": [
                 "--process-per-site",
                 "--remote-debugging-port=8315"
             ],

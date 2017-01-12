@@ -17,6 +17,7 @@ export interface IpcBusTopicHandler {
 }
 
 export interface IpcBusClient {
+    readonly peerName: string;
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;
     subscribe(topic: string, topicHandler: IpcBusTopicHandler): void;

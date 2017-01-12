@@ -138,7 +138,7 @@ export class IpcBusCommonClient implements IpcBusInterfaces.IpcBusClient {
         this._ipcBusEventEmitter = ipcBusEventEmitter;
     }
 
-    PeerName(): string {
+    get peerName(): string {
         return this._ipcBusEventEmitter.PeerName();
     }
 

@@ -69,6 +69,8 @@ var MainProcess = (function () {
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
         processMainFromView.on('new-process', doNewProcess);
         processMainFromView.on('new-renderer', doNewRenderer);
+        ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
+        ipcBus.subscribe('test-performance-browser', onIPCBus_TestPerformance);
 
         const mainWindow = new BrowserWindow({
             width: width, height: 800,
@@ -113,7 +115,26 @@ var MainProcess = (function () {
             }
         }
 
-        function doNewRenderer(processId) {
+        function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
+            msgContent.origin = { 
+                timeStamp: Date.now(),
+                type: 'browser', 
+                peerName: ipcBus.peerName
+            }
+            ipcBus.send('test-performance-node', msgContent);
+            ipcBus.send('test-performance-renderer', msgContent);
+        }
+
+        function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
+            msgContent.response = { 
+                timeStamp: Date.now,
+                type: 'browser', 
+                peerName: ipcBus.peerName
+            }
+            ipcBus.send('test-performance-result', msgContent);
+        }
+
+       function doNewRenderer(processId) {
             var rendererProcess = instances.get(processId);
             if (rendererProcess != null) {
                 rendererProcess.createWindow();
