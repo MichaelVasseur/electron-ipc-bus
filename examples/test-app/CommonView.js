@@ -17,6 +17,26 @@ function doOpenPerfView(event) {
     processToMaster.send('new-perf');
 }
 
+function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
+    msgContent.origin = { 
+        timeStamp: Date.now(),
+        type: 'renderer', 
+        peerName: ipcBus.peerName
+    }
+    ipcBus.send('test-performance-browser', msgContent);
+    ipcBus.send('test-performance-node', msgContent);
+}
+
+function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
+    msgContent.response = { 
+        timeStamp: Date.now(),
+        type: 'renderer', 
+        peerName: ipcBus.peerName
+    }
+    ipcBus.send('test-performance-result', msgContent);
+}
+
+
 // var rendererWindow;
 // function doNewAffinityRendererInstance(event) {
 //     var strWindowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no';
