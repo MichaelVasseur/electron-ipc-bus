@@ -6,6 +6,6 @@
         "noEmitOnError": false
     },
 	"files": [
-		"../src/index.ts"
+		"../src/electron-ipc-bus.ts"
 	]
 }

@@ -1,6 +1,6 @@
 {
   "name": "electron-ipc-bus",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
@@ -29,11 +29,11 @@
       "email": "thomas.moutel@thomsonreuters.com"
     }
   ],
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./lib/electron-ipc-bus.js",
+  "types": "./lib/electron-ipc-bus.d.ts",
   "publishConfig": {
-        "registry": "https://bams-emea-sami.int.thomsonreuters.com/artifactory/default.npm.local/UniversalContainer/"
-    },
+    "registry": "https://bams-emea-sami.int.thomsonreuters.com/artifactory/default.npm.local/UniversalContainer/"
+  },
   "dependencies": {
     "@types/node": "^0.0.3",
     "easy-ipc": "^0.2.2"
@@ -41,6 +41,7 @@
   "devDependencies": {
     "del": "^2.2.2",
     "del-cli": "^0.2.1",
+    "dts-bundle": "^0.6.1",
     "tslint": "^4.1.1",
     "tslint-microsoft-contrib": "^2.0.10",
     "typescript": "^2.1.4",
@@ -50,10 +51,11 @@
     "clean": "del-cli ./lib ./build ./dist",
     "build": "npm run build-js && npm run build-declaration",
     "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
-    "build-declaration": "tsc -p ./tsconfig/tsconfig-declaration.json",
+    "build-declaration": "npm run build-declaration-ts && npm run build-declaration-dts-bundle",
+    "build-declaration-ts": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
-    "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/index.d.ts",
+    "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/electron-ipc-bus.d.ts --removeSource",
     "tsc": "tsc",
-    "lint": "tslint"
+    "tslint": "tslint"
   }
 }

@@ -1,18 +1,20 @@
 
-import * as IpcBusInterfaces from './IpcBusInterfaces';
-export * from './IpcBusInterfaces';
+// import * as IpcBusInterfaces from './IpcBusInterfaces';
+import { IpcBusClient } from './IpcBusInterfaces';
+import { IpcBusBroker } from './IpcBusInterfaces';
+// export * from './IpcBusInterfaces';
 
 import { IpcBusBrokerServer } from './IpcBusBrokerServer';
 import * as IpcBusUtils from './IpcBusUtils';
 
 /** @internal */
-export function CreateIpcBusBroker(busPath?: string): IpcBusInterfaces.IpcBusBroker {
-    let ipcBusBroker: IpcBusInterfaces.IpcBusBroker = null;
+export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
+    let ipcBusBroker: IpcBusBroker = null;
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
         IpcBusUtils.Logger.info(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
-        ipcBusBroker = new IpcBusBrokerServer(ipcOptions) as IpcBusInterfaces.IpcBusBroker;
+        ipcBusBroker = new IpcBusBrokerServer(ipcOptions) as IpcBusBroker;
     }
     return ipcBusBroker;
 }
@@ -23,28 +25,28 @@ import { IpcBusRendererClient } from './IpcBusRenderer';
 import * as ElectronUtils from './ElectronUtils';
 
 // A single instance per process or webpage
-let _ipcBusClient: IpcBusInterfaces.IpcBusClient = null;
+let _ipcBusClient: IpcBusClient = null;
 
 /** @internal */
-function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusInterfaces.IpcBusClient {
+function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusClient {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     IpcBusUtils.Logger.info(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
 
     if (_ipcBusClient == null) {
         switch (processType) {
             case 'renderer':
-                _ipcBusClient = new IpcBusRendererClient() as IpcBusInterfaces.IpcBusClient;
+                _ipcBusClient = new IpcBusRendererClient() as IpcBusClient;
                 break;
 
             case 'browser':
                 if (ipcOptions.isValid()) {
-                    _ipcBusClient = new IpcBusMainClient(ipcOptions) as IpcBusInterfaces.IpcBusClient;
+                    _ipcBusClient = new IpcBusMainClient(ipcOptions) as IpcBusClient;
                 }
                 break;
 
             default:
                 if (ipcOptions.isValid()) {
-                    _ipcBusClient = new IpcBusNodeClient(ipcOptions) as IpcBusInterfaces.IpcBusClient;
+                    _ipcBusClient = new IpcBusNodeClient(ipcOptions) as IpcBusClient;
                 }
                 break;
         }
@@ -53,10 +55,11 @@ function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusIn
 }
 
 /** @internal */
-export function CreateIpcBus(busPath?: string): IpcBusInterfaces.IpcBusClient {
+export function _CreateIpcBus(busPath?: string): IpcBusClient {
     return CreateIpcBusForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
 }
 
-export function ActivateIpcBusTrace(enable: boolean): void {
+/** @internal */
+export function _ActivateIpcBusTrace(enable: boolean): void {
     IpcBusUtils.Logger.enable(enable);
 }
