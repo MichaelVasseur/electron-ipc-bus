@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <title>IPC Performance tests</title>
+
+    <!-- Bootstrap -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"-->
+    <!--script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script-->
+
+    <script src="ProcessConnector.js"></script>
+    <script src="PerfView.js"></script>
+</head>
+
+<body>
+    <div id="ProcessPerformance" class="panel panel-default" style="display:block">
+        <div class="panel-heading">Performances
+            <input type="button" class="btn btn-primary" onclick="doPerformance()" value="Run"></input>
+            <input type="button" class="btn btn-primary" onclick="doClear()" value="Clear"></input>
+        </div>
+    <div class="panel-body">
+        <table id="perfResults" class="table" border="1">
+            <tr>
+                <th>From</th>
+                <th>To</th>
+                <th>time (ms)</th>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>

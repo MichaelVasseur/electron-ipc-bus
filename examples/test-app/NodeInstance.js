@@ -104,11 +104,11 @@ function dispatchMessage(msg)
 
 function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
     msgContent.origin = { 
-        timeStamp: Date.now,
+        timeStamp: Date.now(),
         type: 'node', 
         peerName: ipcBus.peerName
     }
-    ipcBus.send('test-performance-main', msgContent);
+    ipcBus.send('test-performance-browser', msgContent);
     ipcBus.send('test-performance-renderer', msgContent);
 }
 

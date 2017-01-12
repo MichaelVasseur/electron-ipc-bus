@@ -13,53 +13,20 @@ function doNewRendererInstance(event) {
     processToMaster.send('new-renderer', processId);
 }
 
-var transaction = 1;
-function doPerformance(event) {
-    var msgContent =
-    {
-        transaction : transaction,
-        payload: 'very light'
-    };
-    ++transaction;
-    ipcBus.send('test-performance-start', msgContent);
+function doOpenPerfView(event) {
+    processToMaster.send('new-perf');
 }
 
-function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
-    msgContent.origin = { 
-        timeStamp: Date.now(),
-        type: 'renderer', 
-        peerName: ipcBus.peerName
-    }
-    ipcBus.send('test-performance-main', msgContent);
-    ipcBus.send('test-performance-node', msgContent);
-}
-
-function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
-    msgContent.response = { 
-        timeStamp: Date.now,
-        type: 'renderer', 
-        peerName: ipcBus.peerName
-    }
-    ipcBus.send('test-performance-result', msgContent);
-}
-
-var resultsMap = new Map;
-function onIPCBus_TestPerformanceResult(topicName, msgContent, peerName) {
-    // var results = resultsMap.get(msgContent.transaction);
-    // if (result)
-}
-
-
-var rendererWindow;
-function doNewAffinityRendererInstance(event) {
-    var strWindowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no';
-    rendererWindow = window.open('CommonView.html', 'Inner Page of ' + processId, strWindowFeatures);
-    // rendererWindow.on('dom-ready', function () {
-    //     rendererWindow.send('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
-    // });
-    // rendererWindow.postMessage('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
-    // window.CreateInnerPage(processId);
-}
+// var rendererWindow;
+// function doNewAffinityRendererInstance(event) {
+//     var strWindowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no';
+//     rendererWindow = window.open('CommonView.html', 'Inner Page of ' + processId, strWindowFeatures);
+//     // rendererWindow.on('dom-ready', function () {
+//     //     rendererWindow.send('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
+//     // });
+//     // rendererWindow.postMessage('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
+//     // window.CreateInnerPage(processId);
+// }
 
 function getProcessElt() {
     return document.getElementById('ProcessMonitor');
@@ -321,15 +288,10 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         processToolbar = document.getElementById('ProcessBrokerState');
         processToolbar.style.display = 'block';
 
-        processToolbar = document.getElementById('ProcessPerformance');
-        processToolbar.style.display = 'block';
-
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
                 ipcBus.subscribe('brokerStateResults', onIPC_BrokerStatusTopic);
-                ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
-                ipcBus.subscribe('test-performance-result', onIPCBus_TestPerformanceResult);
                 doQueryBrokerState();
             });
     }

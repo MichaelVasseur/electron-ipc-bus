@@ -50,6 +50,7 @@ function spawnNodeInstance(scriptPath) {
 // Window const
 const preloadFile = path.join(__dirname, 'BundledBrowserWindowPreload.js');
 const commonViewUrl = 'file://' + path.join(__dirname, 'CommonView.html');
+const perfViewUrl = 'file://' + path.join(__dirname, 'PerfView.html');
 const width = 1000;
 
 var MainProcess = (function () {
@@ -59,6 +60,7 @@ var MainProcess = (function () {
     function MainProcess() {
         var self = this;
         var processId = 1;
+        var perfView = null;
         var instances = new Map;
 
         // Listen view messages
@@ -69,6 +71,8 @@ var MainProcess = (function () {
         processMainFromView.onUnsubscribe(onIPCElectron_Unsubscribe);
         processMainFromView.on('new-process', doNewProcess);
         processMainFromView.on('new-renderer', doNewRenderer);
+        processMainFromView.on('new-perf', doNewPerfView);
+        processMainFromView.on('start-performance-tests', doPerformanceTests)
         ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
         ipcBus.subscribe('test-performance-browser', onIPCBus_TestPerformance);
 
@@ -115,6 +119,12 @@ var MainProcess = (function () {
             }
         }
 
+        function doPerformanceTests(allocateSize) {
+            var msgContent = {};
+            msgContent.payload = Buffer.alloc(allocateSize, 1);
+            ipcBus.send('test-performance-start', msgContent);
+        }
+
         function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
             msgContent.origin = { 
                 timeStamp: Date.now(),
@@ -127,7 +137,7 @@ var MainProcess = (function () {
 
         function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
             msgContent.response = { 
-                timeStamp: Date.now,
+                timeStamp: Date.now(),
                 type: 'browser', 
                 peerName: ipcBus.peerName
             }
@@ -138,6 +148,21 @@ var MainProcess = (function () {
             var rendererProcess = instances.get(processId);
             if (rendererProcess != null) {
                 rendererProcess.createWindow();
+            }
+        }
+
+       function doNewPerfView() {
+            if (perfView){
+            }
+            else {
+                perfView = new BrowserWindow({
+                    width: width, height: 800,
+                    webPreferences:
+                    {
+                        preload: preloadFile
+                    }
+                 });
+                 perfView.loadURL(perfViewUrl);
             }
         }
 
