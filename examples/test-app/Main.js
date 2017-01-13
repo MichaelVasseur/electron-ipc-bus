@@ -120,7 +120,7 @@ var MainProcess = (function () {
             }
         }
 
-       function doNewRenderer(processId) {
+        function doNewRenderer(processId) {
             var rendererProcess = instances.get(processId);
             if (rendererProcess != null) {
                 rendererProcess.createWindow();
@@ -131,8 +131,8 @@ var MainProcess = (function () {
             perfTests.doPerformanceTests(testParams);
         }
 
-       function doNewPerfView() {
-            if (perfView){
+        function doNewPerfView() {
+            if (perfView) {
                 perfView.show();
             }
             else {
@@ -142,8 +142,11 @@ var MainProcess = (function () {
                     {
                         preload: preloadFile
                     }
-                 });
-                 perfView.loadURL(perfViewUrl);
+                });
+                perfView.on('close', () => {
+                    perfView = null;
+                });
+                perfView.loadURL(perfViewUrl);
             }
         }
 
@@ -270,7 +273,7 @@ var NodeProcess = (function () {
         nodeInstance = new NodeInstance();
         nodeInstance.process.on('message', onIPCProcess_Message);
         nodeInstance.process.send(JSON.stringify({ action: 'init', args: { title: 'Node', type: 'node', id: processId } }));
-        nodeInstance.process.on('exit', function() {
+        nodeInstance.process.on('exit', function () {
             if (nodeWindow) {
                 nodeWindow.close();
                 nodeWindow = null;
@@ -335,18 +338,18 @@ var NodeProcess = (function () {
         function onIPCElectron_Subscribe(topicName) {
             console.log('Node - onIPCElectron_Subscribe:' + topicName);
             var msgJSON = {
-                    action: 'subscribe',
-                    topic: topicName
-                };
+                action: 'subscribe',
+                topic: topicName
+            };
             nodeInstance.process.send(JSON.stringify(msgJSON));
         };
 
         function onIPCElectron_Unsubscribe(topicName) {
             console.log('Node - onIPCElectron_Subscribe:' + topicName);
             var msgJSON = {
-                    action: 'unsubscribe',
-                    topic: topicName
-                };
+                action: 'unsubscribe',
+                topic: topicName
+            };
             nodeInstance.process.send(JSON.stringify(msgJSON));
             processMainToView.postUnsubscribeDone(topicName);
         };
@@ -354,18 +357,18 @@ var NodeProcess = (function () {
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log('Node - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
             var msgJSON = {
-                    action: 'request',
-                    args: { topic: topicName, msg: topicMsg }
-                };
+                action: 'request',
+                args: { topic: topicName, msg: topicMsg }
+            };
             nodeInstance.process.send(JSON.stringify(msgJSON));
         };
 
         function onIPCElectron_SendMessage(topicName, topicMsg) {
             console.log('Node - onIPCElectron_SendMessage : topic:' + topicName + ' msg:' + topicMsg);
             var msgJSON = {
-                    action: 'send',
-                    args: { topic: topicName, msg: topicMsg }
-                };
+                action: 'send',
+                args: { topic: topicName, msg: topicMsg }
+            };
             nodeInstance.process.send(JSON.stringify(msgJSON));
         };
     }

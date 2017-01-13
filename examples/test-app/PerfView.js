@@ -15,6 +15,7 @@ function doPerformance(type) {
 
 var testStart = new Map;
 var testStop = new Map;
+var delays = [];
 
 function doClear(event) {
      var table = document.getElementById("perfResults");
@@ -23,6 +24,7 @@ function doClear(event) {
      }
      testStart.clear();
      testStop.clear();
+     delays = [];   
 }
 
 function onIPCBus_TestPerformanceStart(topicName, msgTestStart, peerName) {
@@ -46,6 +48,8 @@ function onIPCBus_TestPerformanceResult(uuid) {
     var msgTestStop = testStop.get(uuid);
     if (msgTestStart && msgTestStop) {
         var delay = msgTestStop.stop.timeStamp - msgTestStart.start.timeStamp;
+        delays.push(delay);
+        delays.sort();
 
         var table = document.getElementById("perfResults");
         var row = table.insertRow(-1);
@@ -56,7 +60,36 @@ function onIPCBus_TestPerformanceResult(uuid) {
         cell0.innerHTML = `${msgTestStart.test.type} (${msgTestStart.test.bufferSize})`;
         cell1.innerHTML = `#${msgTestStart.start.peerName} (${msgTestStart.type})`;
         cell2.innerHTML = `#${msgTestStop.stop.peerName} (${msgTestStop.type})`;
+        cell3.setAttribute('delay', delay);
         cell3.innerHTML = `${delay}`;
+
+        var q = (delays.length / 5);
+
+        for (var i = 1; i < table.rows.length; ++i) {
+            var curRow = table.rows[i];
+            var delay = curRow.cells[3].getAttribute('delay');
+            var q1 = Math.floor(q);
+            if (delay <= delays[q1]) {
+                curRow.className = "success";
+                continue;
+            } 
+            q1 = Math.floor(q * 2);                
+            if (delay <= delays[q1]) {
+                curRow.className = "info";
+                continue;
+            } 
+            q1 = Math.floor(q * 4);                
+            if (delay >= delays[q1]) {
+                curRow.className = "danger";
+                continue;
+            } 
+            q1 = Math.floor(q * 3);                
+            if (delay >= delays[q1]) {
+                curRow.className = "warning";
+                continue;
+            } 
+            curRow.className = "";
+        }
     }
 }
 
