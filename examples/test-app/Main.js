@@ -120,10 +120,6 @@ var MainProcess = (function () {
             }
         }
 
-        function doPerformanceTests(testParams) {
-            perfTests.doPerformanceTests(testParams);
-        }
-
        function doNewRenderer(processId) {
             var rendererProcess = instances.get(processId);
             if (rendererProcess != null) {
@@ -131,8 +127,13 @@ var MainProcess = (function () {
             }
         }
 
+        function doPerformanceTests(testParams) {
+            perfTests.doPerformanceTests(testParams);
+        }
+
        function doNewPerfView() {
             if (perfView){
+                perfView.show();
             }
             else {
                 perfView = new BrowserWindow({

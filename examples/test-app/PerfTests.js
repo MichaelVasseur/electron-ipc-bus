@@ -33,7 +33,19 @@ PerfTests = (function () {
             var uuid = createUuid();
             var uuidPattern = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
             uuid = uuid + uuidPattern.substring(0, 30 - uuid.length)
-            var msgContent = allocateString(uuid, testParams.bufferSize);
+            var payload = allocateString(uuid, testParams.bufferSize);
+
+            var msgContent;
+            if (testParams.type == 'string') {
+                msgContent = payload;
+            }
+            else{
+                msgContent = { 
+                    uuid: uuid, 
+                    payload: payload 
+                };
+            }
+
             var msgTestStart = { 
                 uuid: uuid,
                 test: testParams,
@@ -51,15 +63,22 @@ PerfTests = (function () {
         }
 
         function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
-            var uuid = msgContent.substring(0, 30);
+            var dateNow = Date.now();
+            var uuid;
+            try {
+                uuid = msgContent.substring(0, 30);
+            }
+            catch(e) {
+                uuid = msgContent.uuid;
+            }
             var msgTestStop = { 
                 uuid: uuid,
                 type: _type, 
                 stop: {
+                    timeStamp: dateNow,
                     peerName: _ipcBus.peerName,
                 }
             };
-            msgTestStop.stop.timeStamp = Date.now();
             _ipcBus.send('test-performance-stop', msgTestStop);
         }
 

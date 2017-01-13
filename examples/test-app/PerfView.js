@@ -2,11 +2,11 @@
 
 var processToMaster;
 var transaction = 1;
-function doPerformance(event) {
+function doPerformance(type) {
     var testParams =
     {
         transaction: transaction,
-//        type: 'object',
+        type: type,
         bufferSize: 1024 * 1024
     };
     ++transaction;
@@ -53,7 +53,7 @@ function onIPCBus_TestPerformanceResult(uuid) {
         var cell1 = row.insertCell(-1);
         var cell2 = row.insertCell(-1);
         var cell3 = row.insertCell(-1);
-        cell0.innerHTML = `#${msgTestStart.start.peerName} (${msgTestStart.type})`;
+        cell0.innerHTML = `${msgTestStart.test.type} (${msgTestStart.test.bufferSize})`;
         cell1.innerHTML = `#${msgTestStart.start.peerName} (${msgTestStart.type})`;
         cell2.innerHTML = `#${msgTestStop.stop.peerName} (${msgTestStop.type})`;
         cell3.innerHTML = `${delay}`;
