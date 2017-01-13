@@ -32,6 +32,7 @@ ipcBusModule.ActivateIpcBusTrace(true);
 // Load node-import without wrapping to variable. 
 require('node-import');
 imports('ProcessConnector');
+imports('PerfTests');
 
 // Helpers
 function spawnNodeInstance(scriptPath) {
@@ -73,8 +74,8 @@ var MainProcess = (function () {
         processMainFromView.on('new-renderer', doNewRenderer);
         processMainFromView.on('new-perf', doNewPerfView);
         processMainFromView.on('start-performance-tests', doPerformanceTests)
-        ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
-        ipcBus.subscribe('test-performance-browser', onIPCBus_TestPerformance);
+
+        var perfTests = new PerfTests(ipcBus, 'browser');
 
         const mainWindow = new BrowserWindow({
             width: width, height: 800,
@@ -119,31 +120,8 @@ var MainProcess = (function () {
             }
         }
 
-        function doPerformanceTests(allocateSize) {
-            var msgContent = {};
-            msgContent.payload = Buffer.alloc(allocateSize, 1);
-            ipcBus.send('test-performance-start', msgContent);
-        }
-
-        function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
-            msgContent.origin = { 
-                timeStamp: Date.now(),
-                type: 'browser', 
-                peerName: ipcBus.peerName
-            }
-            ipcBus.send('test-performance-renderer', msgContent);
-            ipcBus.send('test-performance-node', msgContent);
-            ipcBus.send('test-performance-browser', msgContent);
-        }
-
-        function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
-            msgContent.response = { 
-                timeStamp: Date.now(),
-                type: 'browser', 
-                peerName: ipcBus.peerName
-            }
-            msgContent.payload = null;
-            ipcBus.send('test-performance-result', msgContent);
+        function doPerformanceTests(testParams) {
+            perfTests.doPerformanceTests(testParams);
         }
 
        function doNewRenderer(processId) {

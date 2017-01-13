@@ -3,6 +3,10 @@
 
 'use strict';
 
+// Load node-import without wrapping to variable. 
+require('node-import');
+imports('PerfTests');
+
 console.log('Starting Node instance ...')
 
 // Node
@@ -102,29 +106,9 @@ function dispatchMessage(msg)
     }
 }
 
-function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
-    msgContent.origin = { 
-        timeStamp: Date.now(),
-        type: 'node', 
-        peerName: ipcBus.peerName
-    }
-    ipcBus.send('test-performance-renderer', msgContent);
-    ipcBus.send('test-performance-node', msgContent);
-    ipcBus.send('test-performance-browser', msgContent);
-}
-
-function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
-    msgContent.response = { 
-        timeStamp: Date.now(),
-        type: 'node', 
-        peerName: ipcBus.peerName
-    }
-    msgContent.payload = null;
-    ipcBus.send('test-performance-result', msgContent);
-}
-
 var isConnected = false;
 var msgs = [];
+var perfTests;
 
 ipcBus.connect()
     .then(() => {
@@ -135,8 +119,7 @@ ipcBus.connect()
             dispatchMessage(msg);
         }
         msgs = [];
-        ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
-        ipcBus.subscribe('test-performance-node', onIPCBus_TestPerformance);
+        perfTests = new PerfTests(ipcBus, 'node');
 });
 
 process.on('message', dispatchMessage);

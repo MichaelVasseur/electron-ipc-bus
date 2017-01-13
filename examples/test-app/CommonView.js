@@ -1,5 +1,8 @@
+'use strict';
+
 var processId;
 var peerName;
+var processToMaster = null;
 
 function doNewNodeProcess(event) {
     processToMaster.send('new-process', 'node');
@@ -16,28 +19,6 @@ function doNewRendererInstance(event) {
 function doOpenPerfView(event) {
     processToMaster.send('new-perf');
 }
-
-function onIPCBus_TestPerformanceStart(topicName, msgContent, peerName) {
-    msgContent.origin = { 
-        timeStamp: Date.now(),
-        type: 'renderer', 
-        peerName: ipcBus.peerName
-    }
-    ipcBus.send('test-performance-renderer', msgContent);
-    ipcBus.send('test-performance-node', msgContent);
-    ipcBus.send('test-performance-browser', msgContent);
-}
-
-function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
-    msgContent.response = { 
-        timeStamp: Date.now(),
-        type: 'renderer', 
-        peerName: ipcBus.peerName
-    }
-    msgContent.payload = null;
-    ipcBus.send('test-performance-result', msgContent);
-}
-
 
 // var rendererWindow;
 // function doNewAffinityRendererInstance(event) {
@@ -270,6 +251,8 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
 }
 
 var processToMonitor = null;
+var perfTests = null;
+
 ipcRenderer.on('initializeWindow', function (event, data) {
     // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
     const args = (data !== undefined) ? data : event;
@@ -325,8 +308,7 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
-                ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
-                ipcBus.subscribe('test-performance-renderer', onIPCBus_TestPerformance);
+                perfTests = new PerfTests(ipcBus, 'renderer');
             });
     }
     if (args['type'] === 'node') {
