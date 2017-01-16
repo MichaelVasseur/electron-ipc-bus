@@ -43,7 +43,9 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
                 resolve('connected');
             });
             setTimeout(() => {
-                reject('timeout');
+                if (this._busConn == null) {
+                    reject('timeout');
+                }
             }, timeoutDelay);
             this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
         });
@@ -52,6 +54,7 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
 
     ipcClose() {
         this._busConn.end();
+        this._busConn = null;
     }
 
     ipcSubscribe(topic: string, peerName: string) {
