@@ -85,24 +85,24 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
             const generatedChannel = IpcBusUtils.GenerateReplyChannel();
 
             // Prepare reply's handler, we have to change the replyChannel to channel
-            const localRequestCallback: IpcBusInterfaces.IpcBusChannelHandler = (localEvent, payload) => {
+            const localRequestCallback: IpcBusInterfaces.IpcBusChannelHandler = (localIpcBusEvent, payload) => {
                 IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] Peer #${peerName} replied to request on ${generatedChannel}`);
                 this.unsubscribe(generatedChannel, peerName, localRequestCallback);
-                let ipcBusEvent: IpcBusInterfaces.IpcBusEvent = {channel: channel, sender: {peerName: peerName}};
+                localIpcBusEvent.channel = channel;
                 let content = payload as any;
                 if (content.hasOwnProperty('resolve')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] resolve`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: ipcBusEvent, payload: content.resolve};
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, payload: content.resolve};
                     resolve(response);
                 }
                 else if (content.hasOwnProperty('reject')) {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: ipcBusEvent, payload: content.reject};
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, payload: content.reject};
                     reject(response);
                 }
                 else {
                     IpcBusUtils.Logger.info(`[IpcBusCommonEventEmitter] reject: unknown format`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: ipcBusEvent, payload: 'unknown format'};
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, payload: 'unknown format'};
                     reject(response);
                 }
             };
