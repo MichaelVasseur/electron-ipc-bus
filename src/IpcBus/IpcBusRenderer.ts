@@ -3,12 +3,14 @@
 import * as IpcBusUtils from './IpcBusUtils';
 import {IpcBusCommonEventEmitter} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
+import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // Implementation for renderer process
 /** @internal */
 export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
     private _ipcObj: any;
-    private _lambda: Function;
+    private _OnSendData: Function;
+    private _OnRequestData: Function;
 
     constructor() {
         super('Renderer');
@@ -19,13 +21,16 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
         if (peerNameOrUndefined) {
             this._peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._peerName}`);
-            this._lambda = (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onDataReceived(topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic, replyTopicOrUndefined);
+            this._OnSendData = (eventEmitter: any, ...args: any[]) => this._onSendDataReceived(args);
+            this._OnRequestData = (eventEmitter: any, ...args: any[]) => this._onRequestDataReceived(args);
         } else {
             this._peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._peerName}`);
-            this._lambda = (eventOrTopic: any, topicOrPayload: any, payloadOrPeerName: any, peerNameOfReplyTopic: any, replyTopicOrUndefined?: any) => this._onDataReceived(eventOrTopic, topicOrPayload, payloadOrPeerName, peerNameOfReplyTopic);
+            this._OnSendData = (...args: any[]) => this._onSendDataReceived(args);
+            this._OnRequestData = (...args: any[]) => this._onRequestDataReceived(args);
         }
-        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, this._lambda);
+        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_ON_SEND, this._OnSendData);
+        this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_ON_REQUEST, this._OnRequestData);
     };
 
     private _ipcConnect(timeoutDelay: number): Promise<string> {
@@ -72,30 +77,31 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
 
     ipcClose(): void {
         if (this._ipcObj) {
-            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_RECEIVE, this._lambda);
+            this._ipcObj.removeListeneron(IpcBusUtils.IPC_BUS_RENDERER_ON_SEND, this._OnSendData);
+            this._ipcObj.removeListeneron(IpcBusUtils.IPC_BUS_RENDERER_ON_REQUEST, this._OnRequestData);
             this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
             this._ipcObj = null;
         }
     }
 
-    ipcSubscribe(topic: string, peerName: string): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, topic, this._peerName);
+    ipcSubscribe(event: IpcBusInterfaces.IpcBusEvent): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, event);
     }
 
-    ipcUnsubscribe(topic: string, peerName: string): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, topic, this._peerName);
+    ipcUnsubscribe(event: IpcBusInterfaces.IpcBusEvent): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, event);
     }
 
-    ipcSend(topic: string, data: Object | string, peerName: string): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, topic, data, this._peerName);
+    ipcSend(event: IpcBusInterfaces.IpcBusEvent, data: Object | string): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, event, data);
     }
 
-    ipcRequest(topic: string, data: Object | string, peerName: string, replyTopic: string): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, topic, data, this._peerName, replyTopic);
+    ipcRequest(replyChannel: string, event: IpcBusInterfaces.IpcBusEvent, data: Object | string): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, replyChannel, event, data);
     }
 
-    ipcQueryBrokerState(topic: string, peerName: string): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, topic, this._peerName);
+    ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, event);
     }
 }
 

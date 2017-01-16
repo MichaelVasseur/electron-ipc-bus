@@ -4,6 +4,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
 import { IpcBusCommonEventEmitter } from './IpcBusClient';
 import { IpcBusCommonClient } from './IpcBusClient';
+import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // Implementation for Node process
 /** @internal */
@@ -23,9 +24,13 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
         if (BaseIpc.Cmd.isCmd(data)) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
+                    {
+                        this._onSendDataReceived.apply(this, data.args);
+                        break;
+                    }
                 case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
                     {
-                        this._onDataReceived.apply(this, data.args);
+                        this._onRequestDataReceived.apply(this, data.args);
                         break;
                     }
             }
@@ -57,24 +62,24 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
         this._busConn = null;
     }
 
-    ipcSubscribe(topic: string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, peerName, this._busConn);
+    ipcSubscribe(event: IpcBusInterfaces.IpcBusEvent) {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, event, this._busConn);
     }
 
-    ipcUnsubscribe(topic: string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, this._busConn);
+    ipcUnsubscribe(event: IpcBusInterfaces.IpcBusEvent) {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, event, this._busConn);
     }
 
-    ipcSend(topic: string, data: Object | string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, peerName, this._busConn);
+    ipcSend(event: IpcBusInterfaces.IpcBusEvent, data: Object | string) {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, event, data, this._busConn);
     }
 
-    ipcRequest(topic: string, data: Object | string, peerName: string, replyTopic: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, peerName, replyTopic, this._busConn);
+    ipcRequest(replyChannel: string, event: IpcBusInterfaces.IpcBusEvent, data: Object | string) {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, replyChannel, event, data, this._busConn);
     }
 
-    ipcQueryBrokerState(topic: string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, peerName, this._busConn);
+    ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent) {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, event, this._busConn);
     }
 }
 

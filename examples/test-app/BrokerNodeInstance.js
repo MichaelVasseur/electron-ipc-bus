@@ -9,5 +9,5 @@ const ipcBusModule = require("electron-ipc-bus");
 const ipcBroker = ipcBusModule.CreateIpcBusBroker();
 ipcBusModule.ActivateIpcBusTrace(true);
 
-ipcBroker.start()
+ipcBroker.start();
 process.send({ event: "ready" });
