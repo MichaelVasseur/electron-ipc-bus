@@ -57,7 +57,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _onData(data: any, socket: any, server: any): void {
         if (BaseIpc.Cmd.isCmd(data)) {
             switch (data.name) {
-                case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC:
+                case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL:
                     {
                         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[0];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Subscribe to channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
@@ -65,12 +65,18 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         this._subscriptions.addRef(ipcBusEvent.channel, socket.remotePort, socket, ipcBusEvent.sender.peerName);
                         break;
                     }
-                case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC:
+                case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL:
                     {
                         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[0];
+                        const unsubscribeAll: IpcBusInterfaces.IpcBusEvent = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
 
-                        this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.peerName);
+                        if (unsubscribeAll) {
+                            this._subscriptions.releaseAll(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.peerName);
+                        }
+                        else {
+                            this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.peerName);
+                        }
                         break;
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
@@ -80,7 +86,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
 
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
                             // Send data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, data.args, connData.conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, data.args, connData.conn);
                         });
                         break;
                     }
@@ -91,7 +97,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on channel '${ipcBusEvent.channel}' (reply = '${msgReplyChannel}') from peer #${ipcBusEvent.sender.peerName}`);
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
                             // Request data to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, data.args, connData.conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, data.args, connData.conn);
                         });
                         break;
                     }
@@ -110,7 +116,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         let args: any[] = [ipcBusEvent, queryStateResult];
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
                             // Send states to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, args, connData.conn);
+                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, args, connData.conn);
                         });
                         break;
                     }

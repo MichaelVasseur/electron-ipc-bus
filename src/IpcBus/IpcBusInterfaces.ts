@@ -1,3 +1,6 @@
+/// <reference types='node' />
+import events = require('events');
+
 export interface IpcBusRequestResolve {
     (payload: Object | string) : void;
 }
@@ -19,14 +22,15 @@ export interface IpcBusEvent {
 
 export interface IpcBusRequestResponse {
     event: IpcBusEvent;
-    payload: Object | string;
+    payload?: Object | string;
+    err?: string;
 }
 
 export interface IpcBusChannelHandler {
     (event: IpcBusEvent, payload: Object | string): void;
 }
 
-export interface IpcBusClient {
+export interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;

@@ -209,6 +209,23 @@ function onIPC_Received(ipcBusEvent, ipcContent) {
     }
 }
 
+function onIPC_EmitReceived(ipcBusEvent, ipcContent1, ipcContent2, ipcContent3) {
+    console.log('onIPC_EmitReceived : msgTopic:' + ipcBusEvent.channel + ' from #' + ipcBusEvent.sender.peerName)
+
+    var SubscriptionsListElt = document.getElementById('ProcessSubscriptions');
+    var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + ipcBusEvent.channel);
+    if (topicItemElt != null) {
+        var topicAutoReplyElt = topicItemElt.querySelector('.topicAutoReply');
+        if (ipcBusEvent.requestResolve) {
+            ipcBusEvent.requestResolve(topicAutoReplyElt.value);
+        }
+        var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
+        ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
+        topicReceivedElt.value += ipcContent + '\n';
+    }
+}
+
+
 function onIPCBus_ReceivedSendNotify(ipcBusEvent, ipcContent) {
     onIPC_Received(ipcBusEvent, ipcContent);
 }
@@ -230,7 +247,7 @@ function onIPC_BrokerStatusTopic(ipcBusEvent, ipcContent) {
     for (var i = 0; i < ipcContent.length; ++i) {
         var row = statesListElt.insertRow(-1);
         var cell = row.insertCell(0);
-        cell.innerHTML = ipcContent[i]['topic'];
+        cell.innerHTML = ipcContent[i]['channel'];
 
         cell = row.insertCell(1);
         cell.innerHTML = ipcContent[i]['peerName'];
@@ -287,7 +304,7 @@ ipcRenderer.on('initializeWindow', function (event, data) {
             .then(() => {
                 console.log('renderer : connected to ipcBus');
                 ipcBus.subscribe('brokerStateResults', onIPC_BrokerStatusTopic);
-                doQueryBrokerState();
+ //               doQueryBrokerState();
             });
     }
     if (args['type'] === 'renderer') {

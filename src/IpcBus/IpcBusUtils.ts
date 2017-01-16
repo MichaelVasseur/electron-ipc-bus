@@ -8,15 +8,14 @@ export const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND';
 export const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST';
 export const IPC_BUS_RENDERER_EMIT_SEND = 'IPC_BUS_RENDERER_EMIT_SEND';
 export const IPC_BUS_RENDERER_EMIT_REQUEST = 'IPC_BUS_RENDERER_EMIT_REQUEST';
-export const IPC_BUS_RENDERER_ON_SEND = 'IPC_BUS_RENDERER_ON_SEND';
-export const IPC_BUS_RENDERER_ON_REQUEST = 'IPC_BUS_RENDERER_ON_REQUEST';
 export const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE';
 
-export const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeChannel';
-export const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeChannel';
+export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'subscribeChannel';
+export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'unsubscribeChannel';
 export const IPC_BUS_COMMAND_SENDMESSAGE = 'sendMessage';
 export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'requestMessage';
 export const IPC_BUS_COMMAND_QUERYSTATE = 'queryState';
+
 export const IPC_BUS_EVENT_SENDMESSAGE = 'onSendMessage';
 export const IPC_BUS_EVENT_REQUESTMESSAGE = 'onRequestMessage';
 
@@ -172,7 +171,7 @@ export class ChannelConnectionMap {
         }
     }
 
-    private _release(channel: string, connKey: string, peerName?: string, callback?: ChannelConnectionMap.MapHandler) {
+    private _release(channel: string, connKey: string, peerName: string, removeAll: boolean, callback?: ChannelConnectionMap.MapHandler) {
         this._info(`Release: '${channel}', connKey = ${connKey}`);
 
         let connsMap = this._channelsMap.get(channel);
@@ -210,18 +209,23 @@ export class ChannelConnectionMap {
                         this._warn(`Release: peerName #${peerName} is unknown`);
                     }
                     else {
-                        // This connection has subscribed to this channel
-                        --count;
-                        if (count > 0) {
-                            connData.peerNames.set(peerName, count);
-                        } else {
-                            // The connection is no more referenced
+                        if (removeAll) {
                             connData.peerNames.delete(peerName);
-                            // this._info(`Release: peerName #${peerName} is released`);
                         }
-                    }
-                    if ((callback instanceof Function) === true) {
-                        callback(channel, peerName, connData);
+                        else {
+                            // This connection has subscribed to this channel
+                            --count;
+                            if (count > 0) {
+                                connData.peerNames.set(peerName, count);
+                            } else {
+                                // The connection is no more referenced
+                                connData.peerNames.delete(peerName);
+                                // this._info(`Release: peerName #${peerName} is released`);
+                            }
+                        }
+                        if ((callback instanceof Function) === true) {
+                            callback(channel, peerName, connData);
+                        }
                     }
                 }
                 if (connData.peerNames.size === 0) {
@@ -238,7 +242,11 @@ export class ChannelConnectionMap {
     }
 
     public release(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
-        this._release(channel, connKey, peerName, callback);
+        this._release(channel, connKey, peerName, false, callback);
+    }
+
+    public releaseAll(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+        this._release(channel, connKey, peerName, true, callback);
     }
 
     public releaseConnection(connKey: string, callback?: ChannelConnectionMap.MapHandler) {
@@ -252,7 +260,7 @@ export class ChannelConnectionMap {
         }
         let len = channelsTmp.length;
         for (let i = 0; i < len; ++i) {
-            this._release(channelsTmp[i], connKey, null, callback);
+            this._release(channelsTmp[i], connKey, null, false, callback);
         }
     }
 

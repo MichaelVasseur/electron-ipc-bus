@@ -29,7 +29,7 @@ PerfTests = (function () {
             _ipcBus.send('test-performance-run', testParams);
         }
 
-        function onIPCBus_TestPerformanceRun(topicName, testParams, peerName) {
+        function onIPCBus_TestPerformanceRun(ipcBusEvent, testParams) {
             var uuid = createUuid();
             var uuidPattern = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
             uuid = uuid + uuidPattern.substring(0, 30 - uuid.length)
@@ -62,7 +62,7 @@ PerfTests = (function () {
             _ipcBus.send('test-performance-browser', msgContent);
         }
 
-        function onIPCBus_TestPerformance(topicName, msgContent, peerName) {
+        function onIPCBus_TestPerformance(ipcBusEvent, msgContent) {
             var dateNow = Date.now();
             var uuid;
             try {

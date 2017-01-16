@@ -27,7 +27,7 @@ function doClear(event) {
      delays = [];   
 }
 
-function onIPCBus_TestPerformanceStart(topicName, msgTestStart, peerName) {
+function onIPCBus_TestPerformanceStart(ipcBusEvent, msgTestStart) {
     var uuid = msgTestStart.uuid;
     testStart.set(uuid, msgTestStart);
     if (testStop.get(uuid)) {
@@ -35,7 +35,7 @@ function onIPCBus_TestPerformanceStart(topicName, msgTestStart, peerName) {
     }
 }
 
-function onIPCBus_TestPerformanceStop(topicName, msgTestStop, peerName) {
+function onIPCBus_TestPerformanceStop(ipcBusEvent, msgTestStop) {
     var uuid = msgTestStop.uuid;
     testStop.set(uuid, msgTestStop);
     if (testStart.get(uuid)) {
