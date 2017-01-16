@@ -153,7 +153,7 @@ function onIPCBus_OnRequestThen(requestPromiseResponse) {
     var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'black';
-        topicRespElt.value = requestPromiseResponse.payload + ' from (' + requestPromiseResponse.peerName + ')';
+        topicRespElt.value = requestPromiseResponse.payload + ' from (' + requestPromiseResponse.event.sender.peerName + ')';
     }
 }
 
@@ -193,42 +193,32 @@ function doClearTopic(event) {
     topicReceivedElt.value = '';
 }
 
-function onIPC_Received(topicName, msgContent, msgPeer, requestResolveCB, rejectResolveCB) {
-    console.log('onIPCBus_received : msgTopic:' + topicName + ' msgContent:' + msgContent)
+function onIPC_Received(ipcBusEvent, ipcContent) {
+    console.log('onIPCBus_received : msgTopic:' + ipcBusEvent.channel + ' from #' + ipcBusEvent.sender.peerName)
 
     var SubscriptionsListElt = document.getElementById('ProcessSubscriptions');
-    var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + topicName);
+    var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + ipcBusEvent.channel);
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector('.topicAutoReply');
-        if (requestResolveCB != undefined) {
-            msgContent += ' from (' + msgPeer + ')';
-//            ipcBus.send(topicToReply, topicAutoReplyElt.value);
-            requestResolveCB(topicAutoReplyElt.value);
+        if (ipcBusEvent.requestResolve) {
+            ipcBusEvent.requestResolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
-        topicReceivedElt.value += msgContent + '\n';
+        ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
+        topicReceivedElt.value += ipcContent + '\n';
     }
 }
 
-function onIPCBus_ReceivedRequest(topicName, msgContent, peerName) {
-    console.log('onIPCBus_ReceivedRequest : msgTopic:' + topicName + ' msgContent:' + msgContent)
-
-    var topicRespElt = document.querySelector('.topicRequestResponse');
-    if (topicRespElt != null) {
-        topicRespElt.value += msgContent + ' from (' + peerName + ')';
-    }
-}
-
-function onIPCBus_ReceivedSendNotify(msgTopic, msgContent, msgPeer) {
-    onIPC_Received(msgTopic, msgContent, msgPeer);
+function onIPCBus_ReceivedSendNotify(ipcBusEvent, ipcContent) {
+    onIPC_Received(ipcBusEvent, ipcContent);
 }
 
 function doQueryBrokerState() {
     ipcBus.queryBrokerState('brokerStateResults');
 }
 
-function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
-    console.log('queryBrokerState - msgTopic:' + msgTopic + ' msgContent:' + msgContent)
+function onIPC_BrokerStatusTopic(ipcBusEvent, ipcContent) {
+    console.log('queryBrokerState - msgTopic:' + ipcBusEvent.channel + ' msgContent:' + ipcContent)
 
     var statesListElt = document.getElementById('brokerStatesList');
     statesListElt.style.display = 'block';
@@ -237,16 +227,16 @@ function onIPC_BrokerStatusTopic(msgTopic, msgContent) {
     while (statesListElt.rows.length > 1) {
         statesListElt.deleteRow(1);
     }
-    for (var i = 0; i < msgContent.length; ++i) {
+    for (var i = 0; i < ipcContent.length; ++i) {
         var row = statesListElt.insertRow(-1);
         var cell = row.insertCell(0);
-        cell.innerHTML = msgContent[i]['topic'];
+        cell.innerHTML = ipcContent[i]['topic'];
 
         cell = row.insertCell(1);
-        cell.innerHTML = msgContent[i]['peerName'];
+        cell.innerHTML = ipcContent[i]['peerName'];
 
         cell = row.insertCell(2);
-        cell.innerHTML = msgContent[i]['count'];
+        cell.innerHTML = ipcContent[i]['count'];
     }
 }
 

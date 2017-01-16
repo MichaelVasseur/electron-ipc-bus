@@ -150,12 +150,12 @@ var MainProcess = (function () {
             }
         }
 
-        function onIPCElectron_ReceivedMessage(topicName, topicMsg, topicPeerName, requestResolveCB, rejectResolveCB) {
-            console.log('Master - onIPCElectron_ReceivedMessage - topic:' + topicName + ' data:' + topicMsg);
-            if (requestResolveCB) {
-                requestResolveCB(topicName + ' - AutoReply from #' + peerName);
+        function onIPCElectron_ReceivedMessage(ipcEvent, ipcContent) {
+            console.log('Master - ReceivedMessage - topic:' + ipcEvent.channel + 'from #' + ipcEvent.sender.peerName);
+            if (ipcEvent.requestResolve) {
+                ipcEvent.requestResolve(ipcEvent.channel + ' - AutoReply from #' + ipcBus.peerName);
             }
-            processMainToView.postReceivedMessage(topicName, topicMsg, peerName);
+            processMainToView.postReceivedMessage(ipcEvent, ipcContent);
         }
 
         function onIPCElectron_Subscribe(topicName) {

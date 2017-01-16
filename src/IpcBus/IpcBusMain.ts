@@ -25,7 +25,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
     }
 
     // Override the base method, we forward message to renderer/s
-    protected _onSendDataReceived(...args: any[]) {
+    protected _onSendDataReceived(args: any[]) {
         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = args[0];
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
         this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
@@ -35,7 +35,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
         super._onSendDataReceived(args);
     }
 
-    protected _onRequestDataReceived(...args: any[]) {
+    protected _onRequestDataReceived(args: any[]) {
         const replyChannel = args[0];
         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = args[1];
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received request on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName} (replyChannel = '${replyChannel}')`);

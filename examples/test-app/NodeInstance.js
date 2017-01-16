@@ -20,17 +20,17 @@ ipcBusModule.ActivateIpcBusTrace(true);
 
 const peerName = 'Node_' + process.pid;
 
-function onTopicMessage(topicName, topicMsg, topicPeerName, requestResolveCB, rejectResolveCB) {
-    console.log('node - onTopicMessage topic:' + topicName + ' data:' + topicMsg);
-    var msgJSON = {
-        action: 'receivedSend',
-        args: { topic : topicName, msg : topicMsg, peerName: topicPeerName}
-    };
-    if (requestResolveCB) {
-        var autoReply = topicName + ' - AutoReply from #' + peerName;
-        requestResolveCB(autoReply);
+function onTopicMessage(ipcEvent, ipcContent) {
+   console.log('Node - ReceivedMessage - topic:' + ipcEvent.channel + 'from #' + ipcEvent.sender.peerName);
+    if (ipcEvent.requestResolve) {
+        var autoReply = ipcEvent.channel + ' - AutoReply from #' + ipcBus.peerName;
+        ipcEvent.requestResolve(autoReply);
         console.log(autoReply);
     }
+    var msgJSON = {
+        action: 'receivedSend',
+        args: { event : ipcEvent, content : ipcContent}
+    };
     process.send(JSON.stringify(msgJSON));
 }
 

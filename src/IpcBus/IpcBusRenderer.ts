@@ -21,13 +21,13 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
         if (peerNameOrUndefined) {
             this._peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._peerName}`);
-            this._OnSendData = (eventEmitter: any, ...args: any[]) => this._onSendDataReceived(args);
-            this._OnRequestData = (eventEmitter: any, ...args: any[]) => this._onRequestDataReceived(args);
+            this._OnSendData = (eventEmitter: any, args: any[]) => this._onSendDataReceived(args);
+            this._OnRequestData = (eventEmitter: any, args: any[]) => this._onRequestDataReceived(args);
         } else {
             this._peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._peerName}`);
-            this._OnSendData = (...args: any[]) => this._onSendDataReceived(args);
-            this._OnRequestData = (...args: any[]) => this._onRequestDataReceived(args);
+            this._OnSendData = (args: any[]) => this._onSendDataReceived(args);
+            this._OnRequestData = (args: any[]) => this._onRequestDataReceived(args);
         }
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_ON_SEND, this._OnSendData);
         this._ipcObj.on(IpcBusUtils.IPC_BUS_RENDERER_ON_REQUEST, this._OnRequestData);

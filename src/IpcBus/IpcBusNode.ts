@@ -23,14 +23,14 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
     protected _onData(data: any, conn: any): void {
         if (BaseIpc.Cmd.isCmd(data)) {
             switch (data.name) {
-                case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
+                case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
                     {
-                        this._onSendDataReceived.apply(this, data.args);
+                        this._onSendDataReceived(data.args[0]);
                         break;
                     }
-                case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
+                case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE:
                     {
-                        this._onRequestDataReceived.apply(this, data.args);
+                        this._onRequestDataReceived(data.args[0]);
                         break;
                     }
             }
@@ -48,9 +48,7 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
                 resolve('connected');
             });
             setTimeout(() => {
-                if (this._busConn == null) {
-                    reject('timeout');
-                }
+                reject('timeout');
             }, timeoutDelay);
             this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
         });
