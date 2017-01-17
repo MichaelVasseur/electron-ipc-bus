@@ -125,7 +125,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                             });
                         });
 
-                        let args: any[] = [{channel: ipcBusEvent.channel, sender: {peerName: 'Broker'}}, queryStateResult];
+                        let args: any[] = [{}, {channel: ipcBusEvent.channel, sender: {peerName: 'Broker'}}, queryStateResult];
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
                             // Send states to subscribed connections
                             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, args, connData.conn);
