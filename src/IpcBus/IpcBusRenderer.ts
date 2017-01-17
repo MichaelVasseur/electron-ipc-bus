@@ -24,13 +24,13 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         if (peerNameOrUndefined) {
             peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${peerName}`);
-            this._onIpcEventReceived = (eventEmitter: any, name: string, args: any[]) => this._onEventReceived(name, args);
+            this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         } else {
             peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${peerName}`);
-            this._onIpcEventReceived = (name: string, args: any[]) =>  this._onEventReceived(name, args);
+            this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
-        this._onEventReceived(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, [peerName]);
+        this._onEventReceived(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, {}, {channel: '', sender: { peerName: peerName}}, []);
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
     };
@@ -119,14 +119,14 @@ export class IpcBusRendererClient extends IpcBusCommonClient {
         super('renderer', new IpcBusIpcRendererTransport());
     }
 
-    protected _onEventReceived(name: string, args: any[]) {
+    protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
             case IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE:
-                this._peerName = args[0];
+                this._peerName = ipcBusEvent.sender.peerName;
                 IpcBusUtils.Logger.info(`[IPCBus:Renderer] #${this.peerName}`);
                 break;
             default :
-                super._onEventReceived(name, args);
+                super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
                 break;
         }
     }

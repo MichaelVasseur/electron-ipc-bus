@@ -20,7 +20,7 @@ export class IpcBusSocketTransport extends IpcBusTransport {
         this._baseIpc = new BaseIpc();
         this._baseIpc.on('data', (data: any) => {
             if (BaseIpc.Cmd.isCmd(data)) {
-                this._onEventReceived(data.name, data.args[0]);
+                this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
             }
         });
     }
@@ -61,11 +61,11 @@ export class IpcBusSocketTransport extends IpcBusTransport {
     }
 
     ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
-        BaseIpc.Cmd.exec.apply(this, [IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent].concat(args).concat([this._busConn]));
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent, args, this._busConn);
     }
 
     ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
-        BaseIpc.Cmd.exec.apply(this, [IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent].concat(args).concat([this._busConn]));
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args, this._busConn);
     }
 
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent) {
