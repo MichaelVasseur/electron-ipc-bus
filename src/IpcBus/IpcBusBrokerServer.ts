@@ -3,7 +3,7 @@
 import * as BaseIpc from 'easy-ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
-import {IpcBusData} from "./IpcBusClient";
+import {IpcBusData} from './IpcBusClient';
 // import * as util from 'util';
 
 /** @internal */
@@ -83,7 +83,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
 
                         if (unsubscribeAll) {
-                            this._subscriptions.releaseAll(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.peerName);
+                            this._subscriptions.releasePeerName(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.peerName);
                         }
                         else {
                             this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.peerName);
@@ -92,7 +92,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
                     {
-                        // const ipcBusData: IpcBusData = args[0];
+                        // const ipcBusData: IpcBusData = data.args[0];
                         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
 
@@ -125,7 +125,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                             });
                         });
 
-                        let args: any[] = [ipcBusEvent, queryStateResult];
+                        let args: any[] = [{channel: ipcBusEvent.channel, sender: {peerName: 'Broker'}}, queryStateResult];
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
                             // Send states to subscribed connections
                             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, args, connData.conn);

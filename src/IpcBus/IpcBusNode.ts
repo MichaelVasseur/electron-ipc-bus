@@ -18,13 +18,11 @@ export class IpcBusSocketTransport extends IpcBusTransport {
         super();
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
-        this._baseIpc.on('data', (data: any, conn: any) => this._onEvent(data, conn));
-    }
-
-    protected _onEvent(data: any, conn: any): void {
-        if (BaseIpc.Cmd.isCmd(data)) {
-            this._onEventReceived(data.name, data.args[0]);
-        }
+        this._baseIpc.on('data', (data: any) => {
+            if (BaseIpc.Cmd.isCmd(data)) {
+                this._onEventReceived(data.name, data.args[0]);
+            }
+        });
     }
 
     // Set API

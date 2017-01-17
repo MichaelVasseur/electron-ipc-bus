@@ -252,7 +252,7 @@ export class ChannelConnectionMap {
         this._release(channel, connKey, peerName, false, callback);
     }
 
-    public releaseAll(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+    public releasePeerName(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
         this._release(channel, connKey, peerName, true, callback);
     }
 

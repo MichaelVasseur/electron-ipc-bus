@@ -25,6 +25,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
 
     // Override the base method, we forward message to renderer/s
     protected _onEventReceived(name: string, args: any[]) {
+        // const ipcBusData: IpcBusData = args[0];
         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = args[1];
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
         this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
@@ -67,8 +68,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
 
     rendererCleanUp(webContentsId: string): void {
         this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
-            let ipcBusEvent: IpcBusInterfaces.IpcBusEvent = {channel: channel, sender: {peerName: peerName}};
-            this.onUnsubscribeCB(ipcBusEvent, connData)
+            this.onUnsubscribeCB({channel: channel, sender: {peerName: peerName}}, connData);
         });
     }
 
@@ -115,7 +115,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         const webContents = event.sender;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} unsubscribed from channel '${ipcBusEvent.channel}'`);
         if (removeAll) {
-            this._channelRendererRefs.releaseAll(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName
+            this._channelRendererRefs.releasePeerName(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName
                 , (channel, peerName, connData) => this.onUnsubscribeCB(ipcBusEvent, connData));
         }
         else {

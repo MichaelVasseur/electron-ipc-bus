@@ -28,7 +28,7 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         } else {
             peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${peerName}`);
-            this._onIpcEventReceived = (name: string, args: any[]) =>  this._onEventReceived( name, args);
+            this._onIpcEventReceived = (name: string, args: any[]) =>  this._onEventReceived(name, args);
         }
         this._onEventReceived(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, [peerName]);
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
@@ -125,8 +125,10 @@ export class IpcBusRendererClient extends IpcBusCommonClient {
                 this._peerName = args[0];
                 IpcBusUtils.Logger.info(`[IPCBus:Renderer] #${this.peerName}`);
                 break;
+            default :
+                super._onEventReceived(name, args);
+                break;
         }
-        super._onEventReceived(name, args);
     }
 
 }
