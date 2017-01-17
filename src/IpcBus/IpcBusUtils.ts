@@ -210,6 +210,13 @@ export class ChannelConnectionMap {
                     }
                     else {
                         if (removeAll) {
+                            if ((callback instanceof Function) === true) {
+                                while (count > 0) {
+                                    --count;
+                                     connData.peerNames.set(peerName, count);
+                                     callback(channel, peerName, connData);
+                                }
+                            }
                             connData.peerNames.delete(peerName);
                         }
                         else {
@@ -222,9 +229,9 @@ export class ChannelConnectionMap {
                                 connData.peerNames.delete(peerName);
                                 // this._info(`Release: peerName #${peerName} is released`);
                             }
-                        }
-                        if ((callback instanceof Function) === true) {
-                            callback(channel, peerName, connData);
+                            if ((callback instanceof Function) === true) {
+                                callback(channel, peerName, connData);
+                            }
                         }
                     }
                 }

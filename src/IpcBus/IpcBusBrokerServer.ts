@@ -22,12 +22,22 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     }
 
     // Set API
-    start() {
-        this._baseIpc.once('listening', (server: any) => {
-            this._ipcServer = server;
-            IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
+    start(timeoutDelay?: number): Promise<string> {
+        if (timeoutDelay == null) {
+            timeoutDelay = 2000;
+        }
+        let p = new Promise<string>((resolve, reject) => {
+            this._baseIpc.once('listening', (server: any) => {
+                this._ipcServer = server;
+                IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
+                resolve('started');
+            });
+            setTimeout(() => {
+                reject('timeout');
+            }, timeoutDelay);
+            this._baseIpc.listen(this._ipcOptions.port, this._ipcOptions.host);
         });
-        this._baseIpc.listen(this._ipcOptions.port, this._ipcOptions.host);
+        return p;
     }
 
     stop() {

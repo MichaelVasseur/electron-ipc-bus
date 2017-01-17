@@ -42,7 +42,7 @@ export interface IpcBusClient extends events.EventEmitter {
 }
 
 export interface IpcBusBroker {
-    start(): void;
+    start(timeoutDelay?: number): Promise<string>;
     stop(): void;
 }
 

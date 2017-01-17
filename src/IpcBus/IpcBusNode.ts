@@ -2,13 +2,13 @@
 
 import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
-import { IpcBusCommonEventEmitter } from './IpcBusClient';
+import { IpcBusTransport } from './IpcBusClient';
 import { IpcBusCommonClient } from './IpcBusClient';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // Implementation for Node process
 /** @internal */
-export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
+export class IpcBusSocketTransport extends IpcBusTransport {
     private _ipcOptions: IpcBusUtils.IpcOptions;
     private _baseIpc: BaseIpc;
     private _busConn: any;
@@ -78,6 +78,6 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
 /** @internal */
 export class IpcBusNodeClient extends IpcBusCommonClient {
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
-        super('Node_' + process.pid, new IpcBusNodeEventEmitter(ipcOptions));
+        super('Node_' + process.pid, new IpcBusSocketTransport(ipcOptions));
     }
 }
