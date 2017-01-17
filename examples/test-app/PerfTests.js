@@ -40,17 +40,6 @@ var PerfTests = function _PerfTests(type) {
         uuid = uuid + uuidPattern.substring(0, 30 - uuid.length)
         var payload = allocateString(uuid, testParams.bufferSize);
 
-        var msgContent;
-        if (testParams.type == 'string') {
-            msgContent = payload;
-        }
-        else{
-            msgContent = { 
-                uuid: uuid, 
-                payload: payload 
-            };
-        }
-
         var msgTestStart = { 
             uuid: uuid,
             test: testParams,
@@ -59,12 +48,43 @@ var PerfTests = function _PerfTests(type) {
                 peerName: _ipcBus.peerName,
             }
         };
+
+        var msgContent;
+        if (testParams.type == 'string') {
+            msgContent = payload;
+        }
+        else if (testParams.type == 'object')
+        {
+            msgContent = { 
+                uuid: uuid, 
+                payload: payload 
+            };
+        }
+        else if (testParams.type == 'emit')
+        {
+            msgContent = [];
+            msgContent.push({ 
+                uuid: uuid, 
+                payload: payload 
+            });
+            msgContent.push('string');
+            msgContent.push(2.22);
+            msgContent.push(true);
+        }
+
         msgTestStart.start.timeStamp = Date.now();
         _ipcBus.send('test-performance-start', msgTestStart);
 
-        _ipcBus.send('test-performance-renderer', msgContent);
-        _ipcBus.send('test-performance-node', msgContent);
-        _ipcBus.send('test-performance-browser', msgContent);
+        if (testParams.type == 'emit') {
+            _ipcBus.emit.apply(_ipcBus, ['test-performance-renderer'].concat(msgContent));
+            _ipcBus.emit.apply(_ipcBus, ['test-performance-node'].concat(msgContent));
+            _ipcBus.emit.apply(_ipcBus, ['test-performance-browser'].concat(msgContent));
+        }
+        else {
+            _ipcBus.send('test-performance-renderer', msgContent);
+            _ipcBus.send('test-performance-node', msgContent);
+            _ipcBus.send('test-performance-browser', msgContent);
+        }
     }
 
     function onIPCBus_TestPerformance(ipcBusEvent, msgContent) {
