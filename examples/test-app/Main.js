@@ -324,7 +324,7 @@ var NodeProcess = (function () {
                         processMainToView.postRequestCatch(msgJSON['requestPromiseResponse']);
                         break;
                     case 'receivedSend':
-                        processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName']);
+                        processMainToView.postReceivedMessage(msgJSON['args']['event'], msgJSON['args']['content']);
                         break;
                     case 'subscribe':
                         processMainToView.postSubscribeDone(msgJSON['topic']);

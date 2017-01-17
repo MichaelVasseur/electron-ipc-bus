@@ -6,6 +6,15 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 // This class implements the transaction between an EventEmitter and an ipc client : BrokerServer (easy-ipc) or Electron (ipcRenderer/ipcMain)
 /** @internal */
+
+export class IpcBusEventInternal implements IpcBusInterfaces.IpcBusEvent {
+    channel: string;
+    requestResolve?: IpcBusInterfaces.IpcBusRequestResolve;
+    requestReject?: IpcBusInterfaces.IpcBusRequestReject;
+    sender: IpcBusInterfaces.IpcBusSender;
+    replyChannel?: string;
+}
+
 export abstract class IpcBusTransport {
     public onEventHandler: Function;
 
@@ -20,8 +29,8 @@ export abstract class IpcBusTransport {
     abstract ipcUnsubscribe(ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void;
     abstract ipcUnsubscribeAll(ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void;
 
-    abstract ipcSend(ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void;
-    abstract ipcRequest(replyChannel: string, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void;
+    abstract ipcSend(ipcBusEvent: IpcBusEventInternal, args: any[]): void;
+    abstract ipcRequest(ipcBusEvent: IpcBusEventInternal, args: any[]): void;
 
     abstract ipcQueryBrokerState(ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void;
 }
@@ -56,17 +65,15 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     private _onRequestEventReceived(args: any[]): void {
-        const replyChannel = args[0];
-        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = args[1];
-        IpcBusUtils.Logger.info(`[IpcBusTransport] Emit request received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName} (replyChannel '${replyChannel}')`);
+        const ipcBusEvent: IpcBusEventInternal = args[0];
+        IpcBusUtils.Logger.info(`[IpcBusTransport] Emit request received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName} (replyChannel '${ipcBusEvent.replyChannel}')`);
         ipcBusEvent.requestResolve = (payload: Object | string) => {
-            this._ipcBusEventEmitter.ipcSend({channel: replyChannel, sender: {peerName: this._peerName}}, [{ resolve : payload }]);
+            this._ipcBusEventEmitter.ipcSend({channel: ipcBusEvent.replyChannel, sender: {peerName: this._peerName}}, [{ resolve : payload }]);
         };
         ipcBusEvent.requestReject =  (err: string) => {
-            this._ipcBusEventEmitter.ipcSend({channel: replyChannel, sender: {peerName: this._peerName}}, [{ reject : err }]);
+            this._ipcBusEventEmitter.ipcSend({channel: ipcBusEvent.replyChannel, sender: {peerName: this._peerName}}, [{ reject : err }]);
         };
-        // Remove replyChannel
-        let argsEmit: any[] = [ipcBusEvent.channel].concat(args.slice(1));
+        let argsEmit: any[] = [ipcBusEvent.channel].concat(args);
         super.emit.apply(this, argsEmit);
     }
 
@@ -90,7 +97,7 @@ export class IpcBusCommonClient extends EventEmitter
                 IpcBusUtils.Logger.info(`[IpcBusTransport] Peer #${localIpcBusEvent.sender.peerName} replied to request on ${generatedChannel}`);
                 this.unsubscribe(generatedChannel, localRequestCallback);
                 localIpcBusEvent.channel = channel;
-                let content = payload[0] as any;
+                let content = payload as any;
                 if (content.hasOwnProperty('resolve')) {
                     IpcBusUtils.Logger.info(`[IpcBusTransport] resolve`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, payload: content.resolve};
@@ -111,7 +118,7 @@ export class IpcBusCommonClient extends EventEmitter
             this.subscribe(generatedChannel, localRequestCallback);
 
             // Execute request
-            this._ipcBusEventEmitter.ipcRequest(generatedChannel, {channel: channel, sender: {peerName: this._peerName}}, args);
+            this._ipcBusEventEmitter.ipcRequest({channel: channel, replyChannel: generatedChannel, sender: {peerName: this._peerName}}, args);
 
             // Clean-up
             setTimeout(() => {
@@ -148,9 +155,6 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     request(channel: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        if (timeoutDelay == null) {
-            timeoutDelay = 2000;
-        }
         return this._request(channel, timeoutDelay, [data]);
     }
 

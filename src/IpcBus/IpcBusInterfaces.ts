@@ -15,9 +15,9 @@ export interface IpcBusSender {
 
 export interface IpcBusEvent {
     channel: string;
-    sender: IpcBusSender;
     requestResolve?: IpcBusRequestResolve;
     requestReject?: IpcBusRequestReject;
+    sender: IpcBusSender;
 }
 
 export interface IpcBusRequestResponse {

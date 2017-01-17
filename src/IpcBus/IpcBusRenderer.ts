@@ -1,8 +1,11 @@
 /// <reference types='node' />
 
 import * as IpcBusUtils from './IpcBusUtils';
+
 import {IpcBusTransport} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
+import {IpcBusEventInternal} from './IpcBusClient';
+
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // Implementation for renderer process
@@ -95,12 +98,12 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, event, true);
     }
 
-    ipcSend(event: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+    ipcSend(event: IpcBusEventInternal, args: any[]): void {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, event, args);
     }
 
-    ipcRequest(replyChannel: string, event: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, replyChannel, event, args);
+    ipcRequest(event: IpcBusEventInternal, args: any[]): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, event, args);
     }
 
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent): void {
