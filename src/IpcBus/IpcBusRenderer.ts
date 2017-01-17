@@ -130,5 +130,4 @@ export class IpcBusRendererClient extends IpcBusCommonClient {
                 break;
         }
     }
-
 }
