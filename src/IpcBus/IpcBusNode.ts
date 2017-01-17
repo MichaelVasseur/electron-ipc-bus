@@ -4,7 +4,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
 import {IpcBusTransport} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
-import {IpcBusEventInternal} from './IpcBusClient';
+import {IpcBusData} from './IpcBusClient';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // Implementation for Node process
@@ -62,12 +62,12 @@ export class IpcBusSocketTransport extends IpcBusTransport {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, true, this._busConn);
     }
 
-    ipcSend(event: IpcBusEventInternal, args: any[]) {
-        BaseIpc.Cmd.exec.apply(this, [IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, event].concat(args).concat([this._busConn]));
+    ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+        BaseIpc.Cmd.exec.apply(this, [IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent].concat(args).concat([this._busConn]));
     }
 
-    ipcRequest( event: IpcBusEventInternal, args: any[]) {
-        BaseIpc.Cmd.exec.apply(this, [IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, event].concat(args).concat([this._busConn]));
+    ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+        BaseIpc.Cmd.exec.apply(this, [IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent].concat(args).concat([this._busConn]));
     }
 
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent) {

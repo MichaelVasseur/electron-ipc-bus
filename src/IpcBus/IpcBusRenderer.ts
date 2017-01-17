@@ -4,7 +4,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 import {IpcBusTransport} from './IpcBusClient';
 import {IpcBusCommonClient} from './IpcBusClient';
-import {IpcBusEventInternal} from './IpcBusClient';
+import {IpcBusData} from './IpcBusClient';
 
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
@@ -98,12 +98,12 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, event, true);
     }
 
-    ipcSend(event: IpcBusEventInternal, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, event, args);
+    ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, ipcBusData, ipcBusEvent, args);
     }
 
-    ipcRequest(event: IpcBusEventInternal, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, event, args);
+    ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, ipcBusData, ipcBusEvent, args);
     }
 
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent): void {

@@ -3,7 +3,7 @@
 import * as BaseIpc from 'easy-ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
-import {IpcBusEventInternal} from './IpcBusClient';
+import {IpcBusData} from "./IpcBusClient";
 // import * as util from 'util';
 
 /** @internal */
@@ -92,7 +92,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
                     {
-                        const ipcBusEvent: IpcBusEventInternal = data.args[0];
+                        // const ipcBusData: IpcBusData = args[0];
+                        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
 
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
@@ -103,8 +104,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     }
                 case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE:
                     {
-                        const ipcBusEvent: IpcBusEventInternal = data.args[0];
-                        IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusEvent.replyChannel}') from peer #${ipcBusEvent.sender.peerName}`);
+                        const ipcBusData: IpcBusData = data.args[0];
+                        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                        IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.peerName}`);
                         this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
                             // Request data to subscribed connections
                             BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, data.args, connData.conn);

@@ -2,7 +2,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 import {IpcBusSocketTransport} from './IpcBusNode';
 import {IpcBusCommonClient} from './IpcBusClient';
-import {IpcBusEventInternal} from './IpcBusClient';
+import {IpcBusData} from './IpcBusClient';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // This class ensures the transfer of data between Broker and Renderer/s using ipcMain
@@ -25,7 +25,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
 
     // Override the base method, we forward message to renderer/s
     protected _onEventReceived(name: string, args: any[]) {
-        const ipcBusEvent: IpcBusEventInternal = args[0];
+        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = args[1];
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
         this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
             IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send received on '${channel}' to peer #Renderer_${connData.connKey}`);
@@ -50,9 +50,9 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE
                         , (event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, removeAll: boolean) => this.onUnsubscribe(event, ipcBusEvent, removeAll));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND
-                        , (event: any, ipcBusEvent: IpcBusEventInternal, data: any) => this.onSend(event, ipcBusEvent, data));
+                        , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any) => this.onSend(event, ipcBusData, ipcBusEvent, data));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST
-                        , (event: any, ipcBusEvent: IpcBusEventInternal, data: any, ) => this.onRequest(event, ipcBusEvent, data));
+                        , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any, ) => this.onRequest(event, ipcBusData, ipcBusEvent, data));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE
                         , (event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) => this.onQueryState(event, ipcBusEvent));
                     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
@@ -124,14 +124,14 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         }
     }
 
-    onSend(event: any, ipcBusEvent: IpcBusEventInternal, args: any[]): void {
+    onSend(event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} sent message on '${ipcBusEvent.channel}'`);
-        this.ipcSend(ipcBusEvent, args);
+        this.ipcSend(ipcBusData, ipcBusEvent, args);
     }
 
-    onRequest(event: any, ipcBusEvent: IpcBusEventInternal, args: any[]): void {
+    onRequest(event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} sent request on '${ipcBusEvent.channel}'`);
-        this.ipcRequest(ipcBusEvent, args);
+        this.ipcRequest(ipcBusData, ipcBusEvent, args);
     }
 
     onQueryState(event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) {
