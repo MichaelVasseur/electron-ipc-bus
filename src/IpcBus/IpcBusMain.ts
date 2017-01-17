@@ -46,15 +46,15 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
                         , (event: any) => this.onConnect(event));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CLOSE
                         , (event: any) => this.onClose(event));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL
                         , (event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) => this.onSubscribe(event, ipcBusEvent));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL
                         , (event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, removeAll: boolean) => this.onUnsubscribe(event, ipcBusEvent, removeAll));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_SEND
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE
                         , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any) => this.onSend(event, ipcBusData, ipcBusEvent, data));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_REQUEST
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE
                         , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any, ) => this.onRequest(event, ipcBusData, ipcBusEvent, data));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE
                         , (event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) => this.onQueryState(event, ipcBusEvent));
                     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
                     resolve(msg);

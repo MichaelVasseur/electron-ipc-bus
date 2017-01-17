@@ -87,27 +87,27 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
     }
 
     ipcSubscribe(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SUBSCRIBE, event);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, event);
     }
 
     ipcUnsubscribe(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, event, false);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, false);
     }
 
     ipcUnsubscribeAll(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_UNSUBSCRIBE, event, true);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, true);
     }
 
     ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_SEND, ipcBusData, ipcBusEvent, args);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent, args);
     }
 
     ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_REQUEST, ipcBusData, ipcBusEvent, args);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args);
     }
 
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_QUERYSTATE, event);
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, event);
     }
 }
 

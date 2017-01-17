@@ -34,7 +34,7 @@ var PerfTests = function _PerfTests(type) {
         _ipcBusModule.ActivateIpcBusTrace(activateTrace);
     }
 
-    function onIPCBus_TestPerformanceRun(ipcBusEvent, testParams) {
+    function testPerformance(type, testParams) {
         var uuid = createUuid();
         var uuidPattern = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
         uuid = uuid + uuidPattern.substring(0, 30 - uuid.length)
@@ -73,18 +73,19 @@ var PerfTests = function _PerfTests(type) {
         }
 
         msgTestStart.start.timeStamp = Date.now();
-        _ipcBus.send('test-performance-start', msgTestStart);
-
         if (testParams.type == 'emit') {
-            _ipcBus.emit.apply(_ipcBus, ['test-performance-renderer'].concat(msgContent));
-            _ipcBus.emit.apply(_ipcBus, ['test-performance-node'].concat(msgContent));
-            _ipcBus.emit.apply(_ipcBus, ['test-performance-browser'].concat(msgContent));
+            _ipcBus.emit.apply(_ipcBus, [type].concat(msgContent));
         }
         else {
-            _ipcBus.send('test-performance-renderer', msgContent);
-            _ipcBus.send('test-performance-node', msgContent);
-            _ipcBus.send('test-performance-browser', msgContent);
+            _ipcBus.send(type, msgContent);
         }
+        _ipcBus.send('test-performance-start', msgTestStart);
+    }
+
+    function onIPCBus_TestPerformanceRun(ipcBusEvent, testParams) {
+        testPerformance('test-performance-renderer', testParams);
+        testPerformance('test-performance-node', testParams);
+        testPerformance('test-performance-browser', testParams);
     }
 
     function onIPCBus_TestPerformance(ipcBusEvent, msgContent) {

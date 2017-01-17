@@ -1,23 +1,16 @@
 // Constants
-export const IPC_BUS_RENDERER_HANDSHAKE = 'IPC_BUS_RENDERER_HANDSHAKE';
-export const IPC_BUS_RENDERER_CONNECT = 'IPC_BUS_RENDERER_CONNECT';
-export const IPC_BUS_RENDERER_CLOSE = 'IPC_BUS_RENDERER_CLOSE';
-export const IPC_BUS_RENDERER_SUBSCRIBE = 'IPC_BUS_RENDERER_SUBSCRIBE';
-export const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE';
-export const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND';
-export const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST';
-export const IPC_BUS_RENDERER_EMIT_SEND = 'IPC_BUS_RENDERER_EMIT_SEND';
-export const IPC_BUS_RENDERER_EMIT_REQUEST = 'IPC_BUS_RENDERER_EMIT_REQUEST';
-export const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE';
+export const IPC_BUS_RENDERER_HANDSHAKE = 'IpcBusRenderer:Handshake';
+export const IPC_BUS_RENDERER_CONNECT = 'IpcBusRenderer:Connect';
+export const IPC_BUS_RENDERER_CLOSE = 'IpcBusRenderer:Close';
 
-export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'subscribeChannel';
-export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'unsubscribeChannel';
-export const IPC_BUS_COMMAND_SENDMESSAGE = 'sendMessage';
-export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'requestMessage';
-export const IPC_BUS_COMMAND_QUERYSTATE = 'queryState';
+export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'IpcBusCommand:subscribeChannel';
+export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'IpcBusCommand:unsubscribeChannel';
+export const IPC_BUS_COMMAND_SENDMESSAGE = 'IpcBusCommand:sendMessage';
+export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'IpcBusCommand:requestMessage';
+export const IPC_BUS_COMMAND_QUERYSTATE = 'IpcBusCommand:queryState';
 
-export const IPC_BUS_EVENT_SENDMESSAGE = 'onSendMessage';
-export const IPC_BUS_EVENT_REQUESTMESSAGE = 'onRequestMessage';
+export const IPC_BUS_EVENT_SENDMESSAGE = 'IpcBusEvent:onSendMessage';
+export const IPC_BUS_EVENT_REQUESTMESSAGE = 'IpcBusEvent:onRequestMessage';
 
 function uuid(): string {
     return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);

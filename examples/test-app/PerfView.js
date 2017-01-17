@@ -68,27 +68,27 @@ function onIPCBus_TestPerformanceResult(uuid) {
         cell3.innerHTML = `${delay}`;
 
         var q = (delays.length / 5);
+        var q1 = Math.floor(q);
+        var q2 = Math.floor(q * 2);                
+        var q3 = Math.floor(q * 3);                
+        var q4 = Math.floor(q * 4);                
 
         for (var i = 1; i < table.rows.length; ++i) {
             var curRow = table.rows[i];
             var delay = curRow.cells[3].getAttribute('delay');
-            var q1 = Math.floor(q);
             if (delay <= delays[q1]) {
                 curRow.className = "success";
                 continue;
             } 
-            q1 = Math.floor(q * 2);                
-            if (delay <= delays[q1]) {
+            if (delay <= delays[q2]) {
                 curRow.className = "info";
                 continue;
             } 
-            q1 = Math.floor(q * 4);                
-            if (delay >= delays[q1]) {
+            if (delay >= delays[q4]) {
                 curRow.className = "danger";
                 continue;
             } 
-            q1 = Math.floor(q * 3);                
-            if (delay >= delays[q1]) {
+            if (delay >= delays[q3]) {
                 curRow.className = "warning";
                 continue;
             } 
