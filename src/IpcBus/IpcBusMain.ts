@@ -18,8 +18,6 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
         this._ipcObj = require('electron').ipcMain;
         this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IPCBus:Bridge]');
         this._webContents = require('electron').webContents;
-        this.on(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, (name: string, args: any[]) => this._onEventReceived(name, args));
-        this.on(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, (name: string, args: any[]) => this._onEventReceived(name, args));
 
 //        this._lambdaListenerHandler = (msgChannel: string, msgContent: any, msgPeer: string, msgReplyChannel?: string) => this.rendererSubscribeHandler(msgChannel, msgContent, msgPeer, msgReplyChannel);
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
@@ -35,6 +33,7 @@ class IpcBusRendererBridge extends IpcBusNodeEventEmitter {
             IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send received on '${channel}' to peer #Renderer_${connData.connKey}`);
             connData.conn.send(name, name, args);
         });
+        super._onEventReceived(name, args);
     }
 
     // Set API

@@ -22,7 +22,7 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
 
     protected _onEvent(data: any, conn: any): void {
         if (BaseIpc.Cmd.isCmd(data)) {
-            this.emit(data.name, data.name, data.args[0]);
+            this._onEventReceived(data.name, data.args[0]);
         }
     }
 

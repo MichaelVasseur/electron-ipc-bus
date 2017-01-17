@@ -11,6 +11,10 @@ export abstract class IpcBusCommonEventEmitter extends EventEmitter {
         super();
     }
 
+    protected _onEventReceived(name: string, args: any[]) {
+        this.emit(name, name, args);
+    }
+
     abstract ipcConnect(timeoutDelay?: number): Promise<string>;
     abstract ipcClose(): void;
 

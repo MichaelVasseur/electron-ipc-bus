@@ -3,10 +3,6 @@
 
 'use strict';
 
-// Load node-import without wrapping to variable. 
-require('node-import');
-imports('PerfTests');
-
 console.log('Starting Node instance ...')
 
 // Node
@@ -17,6 +13,8 @@ const child_process = require('child_process');
 const ipcBusModule = require('electron-ipc-bus');
 const ipcBus = ipcBusModule.CreateIpcBus();
 ipcBusModule.ActivateIpcBusTrace(true);
+
+const PerfTests = require('./PerfTests.js');
 
 const peerName = 'Node_' + process.pid;
 
@@ -119,7 +117,7 @@ ipcBus.connect()
             dispatchMessage(msg);
         }
         msgs = [];
-        perfTests = new PerfTests(ipcBus, 'node');
+        perfTests = new PerfTests('node');
 });
 
 process.on('message', dispatchMessage);

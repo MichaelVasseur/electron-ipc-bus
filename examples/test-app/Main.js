@@ -32,7 +32,8 @@ ipcBusModule.ActivateIpcBusTrace(true);
 // Load node-import without wrapping to variable. 
 require('node-import');
 imports('ProcessConnector');
-imports('PerfTests');
+const PerfTests = require('./PerfTests.js');
+
 
 // Helpers
 function spawnNodeInstance(scriptPath) {
@@ -75,7 +76,7 @@ var MainProcess = (function () {
         processMainFromView.on('new-perf', doNewPerfView);
         processMainFromView.on('start-performance-tests', doPerformanceTests)
 
-        var perfTests = new PerfTests(ipcBus, 'browser');
+        var perfTests = new PerfTests('browser');
 
         const mainWindow = new BrowserWindow({
             width: width, height: 800,

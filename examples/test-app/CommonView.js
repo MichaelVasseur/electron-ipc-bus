@@ -315,7 +315,7 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
-                perfTests = new PerfTests(ipcBus, 'renderer');
+                perfTests = new PerfTests('renderer');
             });
     }
     if (args['type'] === 'node') {

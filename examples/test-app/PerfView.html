@@ -13,7 +13,6 @@
     <!--script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script-->
 
     <script src="ProcessConnector.js"></script>
-    <script src="PerfTests.js"></script>
     <script src="PerfView.js"></script>
 </head>
 
@@ -23,6 +22,9 @@
             <input type="button" class="btn btn-primary" onclick="doPerformance('string')" value="Run (string)"></input>
             <input type="button" class="btn btn-primary" onclick="doPerformance('object')" value="Run (object)"></input>
             <input type="button" class="btn btn-primary" onclick="doClear()" value="Clear"></input>
+              <label class="btn btn-primary">
+                    <input type="checkbox" class="traceEnable" onclick="doTraceEnable(event)" checked autocomplete="off">Trace enable
+            </label>
         </div>
     <div class="panel-body">
         <table id="perfResults" class="table" border="1">

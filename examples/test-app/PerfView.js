@@ -27,6 +27,10 @@ function doClear(event) {
      delays = [];   
 }
 
+function doTraceEnable(event) {
+    ipcBus.send('test-performance-trace', event.currentTarget.checked);
+}
+
 function onIPCBus_TestPerformanceStart(ipcBusEvent, msgTestStart) {
     var uuid = msgTestStart.uuid;
     testStart.set(uuid, msgTestStart);

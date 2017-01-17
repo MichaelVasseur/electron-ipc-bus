@@ -9,7 +9,7 @@ import * as IpcBusInterfaces from './IpcBusInterfaces';
 /** @internal */
 export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
     private _ipcObj: any;
-    private _onEventReceived: Function;
+    private _onIpcEventReceived: Function;
 
     constructor() {
         super();
@@ -21,15 +21,15 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
         if (peerNameOrUndefined) {
             peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${peerName}`);
-            this._onEventReceived = (eventEmitter: any, name: string, args: any[]) => this.emit(name, name, args);
+            this._onIpcEventReceived = (eventEmitter: any, name: string, args: any[]) => this._onEventReceived(name, args);
         } else {
             peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${peerName}`);
-            this._onEventReceived = (name: string, args: any[]) =>  this.emit(name, name, args);
+            this._onIpcEventReceived = (name: string, args: any[]) =>  this._onEventReceived( name, args);
         }
         this.emit(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, peerName);
-        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onEventReceived);
-        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onEventReceived);
+        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
+        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
     };
 
     private _ipcConnect(timeoutDelay: number): Promise<string> {
@@ -76,8 +76,8 @@ export class IpcBusRendererEventEmitter extends IpcBusCommonEventEmitter {
 
     ipcClose(): void {
         if (this._ipcObj) {
-            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onEventReceived);
-            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onEventReceived);
+            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
+            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
             this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
             this._ipcObj = null;
         }
