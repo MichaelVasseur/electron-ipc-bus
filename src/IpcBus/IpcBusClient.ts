@@ -9,6 +9,8 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 export class IpcBusData {
     replyChannel?: string;
+    resolve?: boolean;
+    reject?: boolean;
 }
 
 export abstract class IpcBusTransport {
@@ -27,7 +29,10 @@ export abstract class IpcBusTransport {
     abstract ipcUnsubscribeAll(ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void;
 
     abstract ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void;
+
     abstract ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void;
+    abstract ipcRequestResponse(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void;
+    abstract ipcRequestCancel(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void;
 
     abstract ipcQueryBrokerState(ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void;
 }
@@ -58,21 +63,30 @@ export class IpcBusCommonClient extends EventEmitter
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
                 this._onRequestEventReceived(ipcBusData, ipcBusEvent, args);
                 break;
+            case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE:
+                this._onRequestResponseEventReceived(ipcBusData, ipcBusEvent, args);
+                break;
         }
     }
 
     private _onRequestEventReceived(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
         IpcBusUtils.Logger.info(`[IpcBusTransport] Emit request received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName} (replyChannel '${ipcBusData.replyChannel}')`);
-        ipcBusEvent.requestResolve = (payload: Object | string) => {
-            let args: any[] = [{ resolve: payload }];
-            this._ipcBusTransport.ipcSend(new IpcBusData(), {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, args);
+        let localIpcBusEvent: IpcBusInterfaces.IpcBusEvent = JSON.parse(JSON.stringify(ipcBusEvent));
+        localIpcBusEvent.requestResolve = (payload: Object | string) => {
+            ipcBusData.resolve = true;
+            this._ipcBusTransport.ipcRequestResponse(ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [payload]);
         };
-        ipcBusEvent.requestReject =  (err: string) => {
-            let args: any[] = [{ reject: err }];
-            this._ipcBusTransport.ipcSend(new IpcBusData(), {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, args);
+        localIpcBusEvent.requestReject =  (err: string) => {
+            ipcBusData.reject = true;
+            this._ipcBusTransport.ipcRequestResponse(ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [err]);
         };
-        let argsEmit: any[] = [ipcBusEvent.channel, ipcBusEvent].concat(args);
+        let argsEmit: any[] = [localIpcBusEvent.channel, localIpcBusEvent].concat(args);
         super.emit.apply(this, argsEmit);
+    }
+
+    private _onRequestResponseEventReceived(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        IpcBusUtils.Logger.info(`[IpcBusTransport] Emit request response received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName} (replyChannel '${ipcBusData.replyChannel}')`);
+        super.emit(ipcBusEvent.channel, ipcBusData, ipcBusEvent, args);
     }
 
     private _onSendEventReceived(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
@@ -88,21 +102,26 @@ export class IpcBusCommonClient extends EventEmitter
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             const generatedChannel = IpcBusUtils.GenerateReplyChannel();
+            const ipcBusData: IpcBusData = {replyChannel: generatedChannel};
+            const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = {channel: channel, sender: {peerName: this._peerName}};
 
             // Prepare reply's handler, we have to change the replyChannel to channel
-            const localRequestCallback: IpcBusInterfaces.IpcBusChannelHandler = (localIpcBusEvent: IpcBusInterfaces.IpcBusEvent, responsePromise: any) => {
+            const localRequestCallback = (localIpcBusData: IpcBusData, localIpcBusEvent: IpcBusInterfaces.IpcBusEvent, responsePromise: any[]) => {
                 IpcBusUtils.Logger.info(`[IpcBusTransport] Peer #${localIpcBusEvent.sender.peerName} replied to request on ${generatedChannel}`);
-                this.unsubscribe(generatedChannel, localRequestCallback);
+                // Unregister locally
+                super.removeListener(generatedChannel, localRequestCallback);
+                // Unrgister remotely
+                this._ipcBusTransport.ipcRequestCancel(ipcBusData, ipcBusEvent);
                 // The channel is not generated one
                 localIpcBusEvent.channel = channel;
-                if (responsePromise.hasOwnProperty('resolve')) {
+                if (localIpcBusData.resolve) {
                     IpcBusUtils.Logger.info(`[IpcBusTransport] resolve`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, payload: responsePromise.resolve};
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, payload: responsePromise[0]};
                     resolve(response);
                 }
-                else if (responsePromise.hasOwnProperty('reject')) {
+                else if (localIpcBusData.reject) {
                     IpcBusUtils.Logger.info(`[IpcBusTransport] reject`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, err: responsePromise.reject};
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = {event: localIpcBusEvent, err: responsePromise[0]};
                     reject(response);
                 }
                 else {
@@ -112,15 +131,18 @@ export class IpcBusCommonClient extends EventEmitter
                 }
             };
 
-            this.subscribe(generatedChannel, localRequestCallback);
-
+            // Register locally
+            super.addListener(generatedChannel, localRequestCallback);
             // Execute request
-            this._ipcBusTransport.ipcRequest({replyChannel: generatedChannel}, {channel: channel, sender: {peerName: this._peerName}}, args);
+            this._ipcBusTransport.ipcRequest(ipcBusData, ipcBusEvent, args);
 
             // Clean-up
             setTimeout(() => {
-                if (this.listenerCount(generatedChannel) > 0) {
-                    this.unsubscribe(generatedChannel, localRequestCallback);
+                if (super.listenerCount(generatedChannel) > 0) {
+                    // Unregister locally
+                    super.removeListener(generatedChannel, localRequestCallback);
+                    // Unrgister remotely
+                    this._ipcBusTransport.ipcRequestCancel(ipcBusData, ipcBusEvent);
                     IpcBusUtils.Logger.info(`[IpcBusTransport] reject: timeout`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {event: {channel: channel, sender: {peerName: ''}}, err: 'timeout'};
                     reject(response);

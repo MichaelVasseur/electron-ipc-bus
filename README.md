@@ -1,6 +1,6 @@
 # electron-ipc-bus
 A safe Ipc bus for applications built on Electron. 
-Dispatching of messages is managed by a broker.
+Dispatching of messages is managed by a broker. A broker can be instanciated in a node or in a the master process (not in renderer).
 For performance purpose, it is better to instanciate the broker in an independent process node instance.
 This Ipc bus works in sandbox mode and in affinity case (several webpages hosted in the same renderer process)
 
@@ -31,6 +31,8 @@ Ex, busPath set by command line: electron . --bus-path=***value***
 Ex:
    
     ipcBusBroker.start() 
+        .then((msg) => console.log(msg))
+        .catch((err) => console.log(err));
 
 Start the messages dispatcher
 

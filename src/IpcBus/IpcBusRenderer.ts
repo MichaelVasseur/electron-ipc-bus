@@ -33,6 +33,7 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         this._onEventReceived(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, {}, {channel: '', sender: { peerName: peerName}}, []);
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
+        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, this._onIpcEventReceived);
     };
 
     private _ipcConnect(timeoutDelay: number): Promise<string> {
@@ -81,6 +82,7 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         if (this._ipcObj) {
             this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
             this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
+            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, this._onIpcEventReceived);
             this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
             this._ipcObj = null;
         }
@@ -104,6 +106,14 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
 
     ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
         this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args);
+    }
+
+    ipcRequestResponse(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusEvent, args);
+    }
+
+    ipcRequestCancel(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void {
+        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent);
     }
 
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent): void {

@@ -68,6 +68,14 @@ export class IpcBusSocketTransport extends IpcBusTransport {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args, this._busConn);
     }
 
+    ipcRequestResponse(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusEvent, args, this._busConn);
+    }
+
+    ipcRequestCancel(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void {
+        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent, this._busConn);
+    }
+
     ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent) {
         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, event, this._busConn);
     }

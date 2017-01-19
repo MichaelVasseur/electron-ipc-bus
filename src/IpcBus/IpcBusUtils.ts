@@ -7,10 +7,13 @@ export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'IpcBusCommand:subscribeChannel
 export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'IpcBusCommand:unsubscribeChannel';
 export const IPC_BUS_COMMAND_SENDMESSAGE = 'IpcBusCommand:sendMessage';
 export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'IpcBusCommand:requestMessage';
+export const IPC_BUS_COMMAND_REQUESTRESPONSE = 'IpcBusCommand:requestResponse';
+export const IPC_BUS_COMMAND_REQUESTCANCEL = 'IpcBusCommand:requestCancel';
 export const IPC_BUS_COMMAND_QUERYSTATE = 'IpcBusCommand:queryState';
 
 export const IPC_BUS_EVENT_SENDMESSAGE = 'IpcBusEvent:onSendMessage';
 export const IPC_BUS_EVENT_REQUESTMESSAGE = 'IpcBusEvent:onRequestMessage';
+export const IPC_BUS_EVENT_REQUESTRESPONSE = 'IpcBusEvent:onRequestResponse';
 
 function uuid(): string {
     return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
@@ -241,11 +244,22 @@ export class ChannelConnectionMap {
         }
     }
 
+    // public releaseAll(channel: string, callback?: ChannelConnectionMap.MapHandler) {
+    //     this._info(`releaseAll: channel = ${channel}`);
+    //     let connsMap = this._channelsMap.get(channel);
+    //     if (connsMap == null) {
+    //         this._warn(`Release: '${channel}' is unknown`);
+    //     }
+    //     // while
+    //     // releaseConnection
+    // }
+
     public release(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
         this._release(channel, connKey, peerName, false, callback);
     }
 
     public releasePeerName(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+        this._info(`releasePeerName: connKey = ${connKey}, peerName = ${peerName}`);
         this._release(channel, connKey, peerName, true, callback);
     }
 

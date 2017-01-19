@@ -10,6 +10,7 @@ import * as IpcBusInterfaces from './IpcBusInterfaces';
 class IpcBusRendererBridge extends IpcBusSocketTransport {
     _ipcObj: any;
     _channelRendererRefs: IpcBusUtils.ChannelConnectionMap;
+    _requestChannels: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionData>;
     _webContents: any;
 //    _lambdaCleanUpHandler: Function;
 
@@ -17,6 +18,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         super(ipcOptions);
         this._ipcObj = require('electron').ipcMain;
         this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IPCBus:Bridge]');
+        this._requestChannels = new Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionData>();
         this._webContents = require('electron').webContents;
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
         //     this.rendererCleanUp(webContentsId);
@@ -25,12 +27,34 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
 
     // Override the base method, we forward message to renderer/s
     protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+        switch (name) {
+            case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
+            case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
+                this._onMessageEventReceived(name, ipcBusData, ipcBusEvent, args);
+                super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
+                break;
+            case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE:
+                this._onRequestResponseEventReceived(name, ipcBusData, ipcBusEvent, args);
+                break;
+        }
+    }
+
+    protected _onMessageEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
         this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send received on '${channel}' to peer #Renderer_${connData.connKey}`);
+            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
             connData.conn.send(name, name, ipcBusData, ipcBusEvent, args);
         });
-        super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
+    }
+
+    protected _onRequestResponseEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.peerName}`);
+        let connData: IpcBusUtils.ChannelConnectionMap.ConnectionData = this._requestChannels.get(ipcBusData.replyChannel);
+        if (connData) {
+            this._requestChannels.delete(ipcBusData.replyChannel);
+            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${connData.connKey}`);
+            connData.conn.send(name, name, ipcBusData, ipcBusEvent, args);
+        }
     }
 
     // Set API
@@ -52,6 +76,10 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
                         , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any) => this.onSend(event, ipcBusData, ipcBusEvent, data));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE
                         , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any, ) => this.onRequest(event, ipcBusData, ipcBusEvent, data));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE
+                        , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, data: any, ) => this.onRequestResponse(event, ipcBusData, ipcBusEvent, data));
+                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL
+                        , (event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) => this.onRequestCancel(event, ipcBusData, ipcBusEvent));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE
                         , (event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) => this.onQueryState(event, ipcBusEvent));
                     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
@@ -128,9 +156,23 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
     }
 
     onRequest(event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        const webContents = event.sender;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} sent request on '${ipcBusEvent.channel}'`);
+        this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionData(webContents.id, webContents));
         this.ipcRequest(ipcBusData, ipcBusEvent, args);
     }
+
+    onRequestResponse(event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} sent response request on '${ipcBusEvent.channel}'`);
+        this.ipcRequestResponse(ipcBusData, ipcBusEvent, args);
+    }
+
+    onRequestCancel(event: any, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void {
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} sent cancel request on '${ipcBusEvent.channel}'`);
+        this._requestChannels.delete(ipcBusData.replyChannel);
+        this.ipcRequestCancel(ipcBusData, ipcBusEvent);
+    }
+
 
     onQueryState(event: any, ipcBusEvent: IpcBusInterfaces.IpcBusEvent) {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} query Broker state on channel '${ipcBusEvent.channel}'`);
