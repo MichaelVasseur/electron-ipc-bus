@@ -31,12 +31,12 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
                 this._onMessageEventReceived(name, ipcBusData, ipcBusEvent, args);
-                super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
                 break;
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE:
                 this._onRequestResponseEventReceived(name, ipcBusData, ipcBusEvent, args);
                 break;
         }
+        super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
     }
 
     protected _onMessageEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
