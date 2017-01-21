@@ -88,36 +88,8 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         }
     }
 
-    ipcSubscribe(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, event);
-    }
-
-    ipcUnsubscribe(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, false);
-    }
-
-    ipcUnsubscribeAll(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, true);
-    }
-
-    ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent, args);
-    }
-
-    ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args);
-    }
-
-    ipcRequestResponse(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusEvent, args);
-    }
-
-    ipcRequestCancel(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent);
-    }
-
-    ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent): void {
-        this._ipcObj.send(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, event);
+    ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
+       this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, ipcBusEvent, args);
     }
 }
 

@@ -48,36 +48,13 @@ export class IpcBusSocketTransport extends IpcBusTransport {
         this._busConn = null;
     }
 
-    ipcSubscribe(event: IpcBusInterfaces.IpcBusEvent) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, event, this._busConn);
-    }
-
-    ipcUnsubscribe(event: IpcBusInterfaces.IpcBusEvent) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, false, this._busConn);
-    }
-
-    ipcUnsubscribeAll(event: IpcBusInterfaces.IpcBusEvent) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, event, true, this._busConn);
-    }
-
-    ipcSend(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent, args, this._busConn);
-    }
-
-    ipcRequest(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args, this._busConn);
-    }
-
-    ipcRequestResponse(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusEvent, args, this._busConn);
-    }
-
-    ipcRequestCancel(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent): void {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent, this._busConn);
-    }
-
-    ipcQueryBrokerState(event: IpcBusInterfaces.IpcBusEvent) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, event, this._busConn);
+    ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
+        if (args) {
+            BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
+        }
+        else {
+            BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, this._busConn);
+        }
     }
 }
 
