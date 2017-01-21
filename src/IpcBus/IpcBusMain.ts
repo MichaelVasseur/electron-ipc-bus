@@ -43,7 +43,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
         this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
             IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
-            connData.conn.send(name, name, ipcBusData, ipcBusEvent, args);
+            connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
         });
     }
 
@@ -53,7 +53,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         if (connData) {
             this._requestChannels.delete(ipcBusData.replyChannel);
             IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${connData.connKey}`);
-            connData.conn.send(name, name, ipcBusData, ipcBusEvent, args);
+            connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
         }
     }
 
@@ -113,46 +113,37 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
 
     onRendererMessage(event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         const webContents = event.sender;
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} post ${command} to '${ipcBusEvent.channel}'`);
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
             case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL :
             {
-                this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.peerName
-                    , (channel, peerName, connData) => super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args)
-                );
+                this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.peerName);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL :
             {
                 if (ipcBusData.unsubscribeAll) {
-                    this._channelRendererRefs.releasePeerName(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName
-                        , (channel, peerName, connData) => super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args)
-                    );
+                    this._channelRendererRefs.releasePeerName(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName);
                 }
                 else {
-                    this._channelRendererRefs.release(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName
-                        , (channel, peerName, connData) => super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args)
-                    );
+                    this._channelRendererRefs.release(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName);
                 }
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE :
             {
                 this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionData(webContents.id, webContents));
-                super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
                 break;
             }
-            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE :
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL :
             {
                 this._requestChannels.delete(ipcBusData.replyChannel);
-                super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
                 break;
             }
             default :
-                super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
                 break;
         }
+        super.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
     }
 }
 

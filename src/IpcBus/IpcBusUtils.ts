@@ -3,6 +3,7 @@ export const IPC_BUS_RENDERER_HANDSHAKE = 'IpcBusRenderer:Handshake';
 export const IPC_BUS_RENDERER_CONNECT = 'IpcBusRenderer:Connect';
 export const IPC_BUS_RENDERER_CLOSE = 'IpcBusRenderer:Close';
 export const IPC_BUS_RENDERER_COMMAND = 'IpcBusRenderer:Command';
+export const IPC_BUS_RENDERER_EVENT = 'IpcBusRenderer:Event';
 
 export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'IpcBusCommand:subscribeChannel';
 export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'IpcBusCommand:unsubscribeChannel';

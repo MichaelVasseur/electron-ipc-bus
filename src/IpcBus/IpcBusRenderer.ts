@@ -31,9 +31,7 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
             this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
         this._onEventReceived(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, {}, {channel: '', sender: { peerName: peerName}}, []);
-        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
-        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
-        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, this._onIpcEventReceived);
+        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
     };
 
     private _ipcConnect(timeoutDelay: number): Promise<string> {
