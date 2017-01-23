@@ -177,6 +177,7 @@ export class IpcBusCommonClient extends EventEmitter
 
     once(channel: string, listener: Function): this {
         super.once(channel, listener);
+        // removeListener will be automatically called by NodeJS when callback has been triggered
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});
         return this;
     }

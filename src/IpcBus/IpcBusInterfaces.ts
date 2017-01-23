@@ -9,6 +9,12 @@ export interface IpcBusRequestReject {
     (err: string) : void;
 }
 
+export interface IpcBusRequestResponse {
+    event: IpcBusEvent;
+    payload?: Object | string;
+    err?: string;
+}
+
 export interface IpcBusSender {
     peerName: string;
 }
@@ -18,12 +24,6 @@ export interface IpcBusEvent {
     requestResolve?: IpcBusRequestResolve;
     requestReject?: IpcBusRequestReject;
     sender: IpcBusSender;
-}
-
-export interface IpcBusRequestResponse {
-    event: IpcBusEvent;
-    payload?: Object | string;
-    err?: string;
 }
 
 export interface IpcBusClient extends events.EventEmitter {
