@@ -32,7 +32,7 @@ Ex:
    
     ipcBusBroker.start() 
         .then((msg) => console.log(msg))
-        .catch((err) => console.log(err));
+        .catch((err) => console.log(err))
 
 Start the messages dispatcher
 
@@ -41,6 +41,15 @@ Start the messages dispatcher
 Ex:
    
     ipcBusBroker.stop() 
+
+
+#### queryState() - for debugging purpose only
+
+Ex:
+   
+    var queryState = ipcBusBroker.queryState() 
+
+Returns the list of pair <topic, peerName> subscriptions. Format may change from one version to another.
 
 
 ## Ipc Bus client
@@ -84,21 +93,33 @@ The code below to make the client accessible to the the Web page scripts.
     window.ipcBus = ipcBus;
 
 ### Common API
+Most the API follow the EventListener methods. 
+
+When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
+The first parameter of the callback is always an event which contains the channel and the origin of the message (sender).
+
+Ex:
+    // listener
+    function HelloHandler(ipcBusEvent, content) {
+       console.log("Received '" + content + "' on channel '" + ipcBusEvent.channel +"' from #" + ipcBusEvent.sender.peerName)
+    }
+    ipcBus.on("Hello!", HelloHandler)
+
+    // sender
+    ipcBus.send("Hello!", 'it's me')
+
 #### connect([handler])
 
 Ex:
    
-    ipcBus.connect((eventName, conn) => console.log("Connected to Ipc bus !")) 
+    ipcBus.connect().then((eventName) => console.log("Connected to Ipc bus !"))
 
-#### subscribe(topic, handler)
-Subscribe to the specified topic. Each time a message is received on this topic,
-handler is called with the data related to the message.
+#### close()
+
 Ex:
 
-    function HelloHandler(topic, content, peerName) {
-       console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)
-    }
-    ipcBus.subscribe("Hello!", HelloHandler)
+    ipcBus.close()
+
 
 #### send(topic [, content])
 Send a message to every client subscribed to this topic.
@@ -112,7 +133,7 @@ Ex:
 
     ipcBus.request("compute", "2*PI*9")
         .then(ipcBusRequestResponse) {
-            console.log("topic = " + ipcBusRequestResponse.topic + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.peerName);
+            console.log("channel = " + ipcBusRequestResponse.event.channel + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.event.sender.peerName);
         }
         .catch(ipcBusRequestResponse) {
             console.log("err = " + ipcBusRequestResponse.payload);
@@ -120,28 +141,15 @@ Ex:
 
 To identify and manage such request, the clients must check the ***resolveCallback*** parameter
 
-    function ComputeHandler(topic, content, peerName, resolveCallback, rejectCallback) {
-       console.log("Received '" + content + "' on topic '" + topic +"' from #" + peerName)
-       if (resolveCallback) {
-           resolveCallback(eval(content))
+    function ComputeHandler(ipcBusEvent, content) {
+       console.log("Received '" + content + "' on channel '" + ipcBusEvent.channel +"' from #" + ipcBusEvent.sender.peerName)
+       if (ipcBusEvent.resolveCallback) {
+           ipcBusEvent.resolveCallback(eval(content))
        }
     }
 
     ipcBus.subscribe("compute", ComputeHandler)
 
-
-#### unsubscribe(topic, handler)
-Unsubscribe from the specified topic. handler won't be called anymore when
-a message will be received on topic.
-Ex:
-
-    ipcBus.unsubscribe("Hello!", HelloHandler)
-
-#### close()
-
-Ex:
-
-    ipcBus.close()
 
 ## Test application
 
