@@ -1,29 +1,29 @@
 // Constants
-export const IPC_BUS_RENDERER_HANDSHAKE = 'IPC_BUS_RENDERER_HANDSHAKE';
-export const IPC_BUS_RENDERER_CONNECT = 'IPC_BUS_RENDERER_CONNECT';
-export const IPC_BUS_RENDERER_CLOSE = 'IPC_BUS_RENDERER_CLOSE';
-export const IPC_BUS_RENDERER_SUBSCRIBE = 'IPC_BUS_RENDERER_SUBSCRIBE';
-export const IPC_BUS_RENDERER_UNSUBSCRIBE = 'IPC_BUS_RENDERER_UNSUBSCRIBE';
-export const IPC_BUS_RENDERER_SEND = 'IPC_BUS_RENDERER_SEND';
-export const IPC_BUS_RENDERER_REQUEST = 'IPC_BUS_RENDERER_REQUEST';
-export const IPC_BUS_RENDERER_RECEIVE = 'IPC_BUS_RENDERER_RECEIVE';
-export const IPC_BUS_RENDERER_QUERYSTATE = 'IPC_BUS_RENDERER_QUERYSTATE';
+export const IPC_BUS_RENDERER_HANDSHAKE = 'IpcBusRenderer:Handshake';
+export const IPC_BUS_RENDERER_CONNECT = 'IpcBusRenderer:Connect';
+export const IPC_BUS_RENDERER_CLOSE = 'IpcBusRenderer:Close';
+export const IPC_BUS_RENDERER_COMMAND = 'IpcBusRenderer:Command';
+export const IPC_BUS_RENDERER_EVENT = 'IpcBusRenderer:Event';
 
-export const IPC_BUS_COMMAND_SUBSCRIBETOPIC = 'subscribeTopic';
-export const IPC_BUS_COMMAND_UNSUBSCRIBETOPIC = 'unsubscribeTopic';
-export const IPC_BUS_COMMAND_SENDMESSAGE = 'sendMessage';
-export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'requestMessage';
-export const IPC_BUS_COMMAND_QUERYSTATE = 'queryState';
-export const IPC_BUS_EVENT_SENDMESSAGE = 'onSendMessage';
-export const IPC_BUS_EVENT_REQUESTMESSAGE = 'onRequestMessage';
+export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'IpcBusCommand:subscribeChannel';
+export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'IpcBusCommand:unsubscribeChannel';
+export const IPC_BUS_COMMAND_SENDMESSAGE = 'IpcBusCommand:sendMessage';
+export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'IpcBusCommand:requestMessage';
+export const IPC_BUS_COMMAND_REQUESTRESPONSE = 'IpcBusCommand:requestResponse';
+export const IPC_BUS_COMMAND_REQUESTCANCEL = 'IpcBusCommand:requestCancel';
+export const IPC_BUS_COMMAND_QUERYSTATE = 'IpcBusCommand:queryState';
+
+export const IPC_BUS_EVENT_SENDMESSAGE = 'IpcBusEvent:onSendMessage';
+export const IPC_BUS_EVENT_REQUESTMESSAGE = 'IpcBusEvent:onRequestMessage';
+export const IPC_BUS_EVENT_REQUESTRESPONSE = 'IpcBusEvent:onRequestResponse';
 
 function uuid(): string {
     return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
 }
 
 /** @internal */
-export function GenerateReplyTopic(): string {
-    return 'replyTopic/' + uuid();
+export function GenerateReplyChannel(): string {
+    return 'replyChannel/' + uuid();
 }
 
 /** @internal */
@@ -115,13 +115,13 @@ export class Logger {
 };
 
 /** @internal */
-export class TopicConnectionMap {
+export class ChannelConnectionMap {
     private _name: string;
-    private _topicsMap: Map<string, Map<string, TopicConnectionMap.ConnectionData>>;
+    private _channelsMap: Map<string, Map<string, ChannelConnectionMap.ConnectionData>>;
 
     constructor(name: string) {
         this._name = name;
-        this._topicsMap = new Map<string, Map<string, TopicConnectionMap.ConnectionData>>();
+        this._channelsMap = new Map<string, Map<string, ChannelConnectionMap.ConnectionData>>();
     }
 
     private _info(str: string) {
@@ -136,26 +136,26 @@ export class TopicConnectionMap {
        Logger.error(`[${this._name}] ${str}`);
     }
 
-    public addRef(topic: string, connKey: string, conn: any, peerName: string, callback?: TopicConnectionMap.MapHandler) {
-        this._info(`AddRef: '${topic}', connKey = ${connKey}`);
+    public addRef(channel: string, connKey: string, conn: any, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+        this._info(`AddRef: '${channel}', connKey = ${connKey}`);
 
-        let connsMap = this._topicsMap.get(topic);
+        let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
-            connsMap = new Map<string, TopicConnectionMap.ConnectionData>();
-            // This topic has NOT been subscribed yet, add it to the map
-            this._topicsMap.set(topic, connsMap);
-            // this._info(`AddRef: topic '${topic}' is added`);
+            connsMap = new Map<string, ChannelConnectionMap.ConnectionData>();
+            // This channel has NOT been subscribed yet, add it to the map
+            this._channelsMap.set(channel, connsMap);
+            // this._info(`AddRef: channel '${channel}' is added`);
         }
         let connData = connsMap.get(connKey);
         if (connData == null) {
-            // This topic has NOT been already subscribed by this connection
-            connData = new TopicConnectionMap.ConnectionData(connKey, conn);
+            // This channel has NOT been already subscribed by this connection
+            connData = new ChannelConnectionMap.ConnectionData(connKey, conn);
             connsMap.set(connKey, connData);
             // this._info(`AddRef: connKey = ${connKey} is added`);
         }
         let count = connData.peerNames.get(peerName);
         if (count == null) {
-            // This topic has NOT been already subcribed by this peername, by default 1
+            // This channel has NOT been already subcribed by this peername, by default 1
             count = 1;
             // this._info(`AddRef: peerName #${peerName} is added`);
         }
@@ -163,18 +163,18 @@ export class TopicConnectionMap {
             ++count;
         }
         connData.peerNames.set(peerName, count);
-        this._info(`AddRef: '${topic}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
+        this._info(`AddRef: '${channel}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
         if ((callback instanceof Function) === true) {
-            callback(topic, peerName, connData);
+            callback(channel, peerName, connData);
         }
     }
 
-    private _release(topic: string, connKey: string, peerName?: string, callback?: TopicConnectionMap.MapHandler) {
-        this._info(`Release: '${topic}', connKey = ${connKey}`);
+    private _release(channel: string, connKey: string, peerName: string, removeAll: boolean, callback?: ChannelConnectionMap.MapHandler) {
+        this._info(`Release: '${channel}', connKey = ${connKey}`);
 
-        let connsMap = this._topicsMap.get(topic);
+        let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
-            this._warn(`Release: '${topic}' is unknown`);
+            this._warn(`Release: '${channel}' is unknown`);
         }
         else {
             let connData = connsMap.get(connKey);
@@ -192,7 +192,7 @@ export class TopicConnectionMap {
                     if ((callback instanceof Function) === true) {
                         for (let i = 0; i < len; ++i) {
                             connData.peerNames.delete(peerNamesTemp[i]);
-                            callback(topic, peerNamesTemp[i], connData);
+                            callback(channel, peerNamesTemp[i], connData);
                         }
                     }
                     else {
@@ -207,73 +207,100 @@ export class TopicConnectionMap {
                         this._warn(`Release: peerName #${peerName} is unknown`);
                     }
                     else {
-                        // This connection has subscribed to this topic
-                        --count;
-                        if (count > 0) {
-                            connData.peerNames.set(peerName, count);
-                        } else {
-                            // The connection is no more referenced
+                        if (removeAll) {
+                            if ((callback instanceof Function) === true) {
+                                while (count > 0) {
+                                    --count;
+                                     connData.peerNames.set(peerName, count);
+                                     callback(channel, peerName, connData);
+                                }
+                            }
                             connData.peerNames.delete(peerName);
-                            // this._info(`Release: peerName #${peerName} is released`);
                         }
-                    }
-                    if ((callback instanceof Function) === true) {
-                        callback(topic, peerName, connData);
+                        else {
+                            // This connection has subscribed to this channel
+                            --count;
+                            if (count > 0) {
+                                connData.peerNames.set(peerName, count);
+                            } else {
+                                // The connection is no more referenced
+                                connData.peerNames.delete(peerName);
+                                // this._info(`Release: peerName #${peerName} is released`);
+                            }
+                            if ((callback instanceof Function) === true) {
+                                callback(channel, peerName, connData);
+                            }
+                        }
                     }
                 }
                 if (connData.peerNames.size === 0) {
                     connsMap.delete(connKey);
                     // this._info(`Release: conn = ${connKey} is released`);
                     if (connsMap.size === 0) {
-                        this._topicsMap.delete(topic);
-                        // this._info(`Release: topic '${topic}' is released`);
+                        this._channelsMap.delete(channel);
+                        // this._info(`Release: channel '${channel}' is released`);
                     }
                 }
-                this._info(`Release: '${topic}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
+                this._info(`Release: '${channel}', connKey = ${connKey}, count = ${connData.peerNames.size}`);
             }
         }
     }
 
-    public release(topic: string, connKey: string, peerName: string, callback?: TopicConnectionMap.MapHandler) {
-        this._release(topic, connKey, peerName, callback);
+    // public releaseAll(channel: string, callback?: ChannelConnectionMap.MapHandler) {
+    //     this._info(`releaseAll: channel = ${channel}`);
+    //     let connsMap = this._channelsMap.get(channel);
+    //     if (connsMap == null) {
+    //         this._warn(`Release: '${channel}' is unknown`);
+    //     }
+    //     // while
+    //     // releaseConnection
+    // }
+
+    public release(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+        this._release(channel, connKey, peerName, false, callback);
     }
 
-    public releaseConnection(connKey: string, callback?: TopicConnectionMap.MapHandler) {
+    public releasePeerName(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+        this._info(`releasePeerName: connKey = ${connKey}, peerName = ${peerName}`);
+        this._release(channel, connKey, peerName, true, callback);
+    }
+
+    public releaseConnection(connKey: string, callback?: ChannelConnectionMap.MapHandler) {
         this._info(`ReleaseConn: connKey = ${connKey}`);
 
         // Store keys in an intermediate array
         // Not sure iterating and removing at the same time is well supported 
-        let topicsTmp = new Array<string>();
-        for (let topic of this._topicsMap.keys()) {
-            topicsTmp.push(topic);
+        let channelsTmp = new Array<string>();
+        for (let channel of this._channelsMap.keys()) {
+            channelsTmp.push(channel);
         }
-        let len = topicsTmp.length;
+        let len = channelsTmp.length;
         for (let i = 0; i < len; ++i) {
-            this._release(topicsTmp[i], connKey, null, callback);
+            this._release(channelsTmp[i], connKey, null, false, callback);
         }
     }
 
-    public forEachTopic(topic: string, callback: TopicConnectionMap.ForEachHandler) {
-        this._info(`forEachTopic: '${topic}'`);
+    public forEachChannel(channel: string, callback: ChannelConnectionMap.ForEachHandler) {
+        this._info(`forEachChannel: '${channel}'`);
 
         if ((callback instanceof Function) === false) {
-            this._error('forEachTopic: No callback provided !');
+            this._error('forEachChannel: No callback provided !');
             return;
         }
 
-        let connsMap = this._topicsMap.get(topic);
+        let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
-            this._warn(`forEachTopic: Unknown topic '${topic}' !`);
+            this._warn(`forEachChannel: Unknown channel '${channel}' !`);
         }
         else {
             connsMap.forEach((connData, connKey) => {
-                this._info(`forEachTopic: '${topic}', connKey = ${connKey} (${connData.peerNames.size})`);
-                callback(connData, topic);
+                this._info(`forEachChannel: '${channel}', connKey = ${connKey} (${connData.peerNames.size})`);
+                callback(connData, channel);
             });
         }
     }
 
-    public forEach(callback: TopicConnectionMap.ForEachHandler) {
+    public forEach(callback: ChannelConnectionMap.ForEachHandler) {
         this._info('forEach');
 
         if ((callback instanceof Function) === false) {
@@ -281,17 +308,17 @@ export class TopicConnectionMap {
             return;
         }
 
-        this._topicsMap.forEach((connsMap, topic: string) => {
+        this._channelsMap.forEach((connsMap, channel: string) => {
             connsMap.forEach((connData, connKey) => {
-                this._info(`forEach: '${topic}', connKey = ${connKey} (${connData.peerNames.size})`);
-                callback(connData, topic);
+                this._info(`forEach: '${channel}', connKey = ${connKey} (${connData.peerNames.size})`);
+                callback(connData, channel);
             });
         });
     }
 }
 
 /** @internal */
-export namespace TopicConnectionMap {
+export namespace ChannelConnectionMap {
     /** @internal */
     export class ConnectionData {
         readonly connKey: string;
@@ -306,12 +333,12 @@ export namespace TopicConnectionMap {
 
     /** @internal */
     export interface MapHandler {
-        (topic: string, peerName: string, connData: ConnectionData): void;
+        (channel: string, peerName: string, connData: ConnectionData): void;
     };
 
     /** @internal */
     export interface ForEachHandler {
-        (ConnectionData: ConnectionData, topic: string): void;
+        (ConnectionData: ConnectionData, channel: string): void;
     };
 };
 

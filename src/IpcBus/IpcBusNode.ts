@@ -2,34 +2,27 @@
 
 import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
-import { IpcBusCommonEventEmitter } from './IpcBusClient';
-import { IpcBusCommonClient } from './IpcBusClient';
+import {IpcBusTransport} from './IpcBusClient';
+import {IpcBusCommonClient} from './IpcBusClient';
+import {IpcBusData} from './IpcBusClient';
+import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 // Implementation for Node process
 /** @internal */
-export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
+export class IpcBusSocketTransport extends IpcBusTransport {
     private _ipcOptions: IpcBusUtils.IpcOptions;
     private _baseIpc: BaseIpc;
     private _busConn: any;
 
-    constructor(peerName: string, ipcOptions: IpcBusUtils.IpcOptions) {
-        super(peerName);
+    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
+        super();
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
-        this._baseIpc.on('data', (data: any, conn: any) => this._onData(data, conn));
-    }
-
-    protected _onData(data: any, conn: any): void {
-        if (BaseIpc.Cmd.isCmd(data)) {
-            switch (data.name) {
-                case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
-                case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
-                    {
-                        this._onDataReceived.apply(this, data.args);
-                        break;
-                    }
+        this._baseIpc.on('data', (data: any) => {
+            if (BaseIpc.Cmd.isCmd(data)) {
+                this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
             }
-        }
+        });
     }
 
     // Set API
@@ -43,9 +36,7 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
                 resolve('connected');
             });
             setTimeout(() => {
-                if (this._busConn == null) {
-                    reject('timeout');
-                }
+                reject('timeout');
             }, timeoutDelay);
             this._baseIpc.connect(this._ipcOptions.port, this._ipcOptions.host);
         });
@@ -57,24 +48,13 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
         this._busConn = null;
     }
 
-    ipcSubscribe(topic: string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBETOPIC, topic, peerName, this._busConn);
-    }
-
-    ipcUnsubscribe(topic: string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBETOPIC, topic, peerName, this._busConn);
-    }
-
-    ipcSend(topic: string, data: Object | string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, topic, data, peerName, this._busConn);
-    }
-
-    ipcRequest(topic: string, data: Object | string, peerName: string, replyTopic: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, topic, data, peerName, replyTopic, this._busConn);
-    }
-
-    ipcQueryBrokerState(topic: string, peerName: string) {
-        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, topic, peerName, this._busConn);
+    ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
+        if (args) {
+            BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
+        }
+        else {
+            BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, this._busConn);
+        }
     }
 }
 
@@ -82,6 +62,6 @@ export class IpcBusNodeEventEmitter extends IpcBusCommonEventEmitter {
 /** @internal */
 export class IpcBusNodeClient extends IpcBusCommonClient {
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
-        super(new IpcBusNodeEventEmitter('Node_' + process.pid, ipcOptions));
+        super('Node_' + process.pid, new IpcBusSocketTransport(ipcOptions));
     }
 }

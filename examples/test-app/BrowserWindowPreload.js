@@ -7,6 +7,7 @@ window.ipcBus = require('electron-ipc-bus').CreateIpcBus();
 require('electron-ipc-bus').ActivateIpcBusTrace(true);
 
 window.ipcRenderer = require('electron').ipcRenderer;
+window.PerfTests = require('./PerfTests.js');
 
 // require('electron').remote.getCurrentWindow().id
 

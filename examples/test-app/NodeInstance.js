@@ -3,10 +3,6 @@
 
 'use strict';
 
-// Load node-import without wrapping to variable. 
-require('node-import');
-imports('PerfTests');
-
 console.log('Starting Node instance ...')
 
 // Node
@@ -18,19 +14,21 @@ const ipcBusModule = require('electron-ipc-bus');
 const ipcBus = ipcBusModule.CreateIpcBus();
 ipcBusModule.ActivateIpcBusTrace(true);
 
+const PerfTests = require('./PerfTests.js');
+
 const peerName = 'Node_' + process.pid;
 
-function onTopicMessage(topicName, topicMsg, topicPeerName, requestResolveCB, rejectResolveCB) {
-    console.log('node - onTopicMessage topic:' + topicName + ' data:' + topicMsg);
-    var msgJSON = {
-        action: 'receivedSend',
-        args: { topic : topicName, msg : topicMsg, peerName: topicPeerName}
-    };
-    if (requestResolveCB) {
-        var autoReply = topicName + ' - AutoReply from #' + peerName;
-        requestResolveCB(autoReply);
+function onTopicMessage(ipcEvent, ipcContent) {
+   console.log('Node - ReceivedMessage - topic:' + ipcEvent.channel + 'from #' + ipcEvent.sender.peerName);
+    if (ipcEvent.requestResolve) {
+        var autoReply = ipcEvent.channel + ' - AutoReply from #' + ipcBus.peerName;
+        ipcEvent.requestResolve(autoReply);
         console.log(autoReply);
     }
+    var msgJSON = {
+        action: 'receivedSend',
+        args: { event : ipcEvent, content : ipcContent}
+    };
     process.send(JSON.stringify(msgJSON));
 }
 
@@ -119,7 +117,7 @@ ipcBus.connect()
             dispatchMessage(msg);
         }
         msgs = [];
-        perfTests = new PerfTests(ipcBus, 'node');
+        perfTests = new PerfTests('node');
 });
 
 process.on('message', dispatchMessage);

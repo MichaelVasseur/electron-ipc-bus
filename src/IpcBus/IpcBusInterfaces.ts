@@ -1,3 +1,6 @@
+/// <reference types='node' />
+import events = require('events');
+
 export interface IpcBusRequestResolve {
     (payload: Object | string) : void;
 }
@@ -6,29 +9,40 @@ export interface IpcBusRequestReject {
     (err: string) : void;
 }
 
-export interface IpcBusRequestResponse {
-    topic: string;
-    payload: Object | string;
+export interface IpcBusSender {
     peerName: string;
 }
 
-export interface IpcBusTopicHandler {
-    (topic: string, payload: Object | string, peerName: string, requestResolve?: IpcBusRequestResolve, requestReject?: IpcBusRequestReject): void;
+export interface IpcBusEvent {
+    channel: string;
+    requestResolve?: IpcBusRequestResolve;
+    requestReject?: IpcBusRequestReject;
+    sender: IpcBusSender;
 }
 
-export interface IpcBusClient {
+export interface IpcBusRequestResponse {
+    event: IpcBusEvent;
+    payload?: Object | string;
+    err?: string;
+}
+
+export interface IpcBusChannelHandler {
+    (event: IpcBusEvent, payload: Object | string): void;
+}
+
+export interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;
-    subscribe(topic: string, topicHandler: IpcBusTopicHandler): void;
-    unsubscribe(topic: string, topicHandler: IpcBusTopicHandler): void;
-    send(topic: string, payload: Object | string): void;
-    request(topic: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusRequestResponse>;
-    queryBrokerState(topic: string): void;
+    subscribe(channel: string, channelHandler: IpcBusChannelHandler): void;
+    unsubscribe(channel: string, channelHandler: IpcBusChannelHandler): void;
+    send(channel: string, payload: Object | string): void;
+    request(channel: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusRequestResponse>;
+    queryBrokerState(channel: string): void;
 }
 
 export interface IpcBusBroker {
-    start(): void;
+    start(timeoutDelay?: number): Promise<string>;
     stop(): void;
 }
 

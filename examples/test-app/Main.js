@@ -32,7 +32,8 @@ ipcBusModule.ActivateIpcBusTrace(true);
 // Load node-import without wrapping to variable. 
 require('node-import');
 imports('ProcessConnector');
-imports('PerfTests');
+const PerfTests = require('./PerfTests.js');
+
 
 // Helpers
 function spawnNodeInstance(scriptPath) {
@@ -75,7 +76,7 @@ var MainProcess = (function () {
         processMainFromView.on('new-perf', doNewPerfView);
         processMainFromView.on('start-performance-tests', doPerformanceTests)
 
-        var perfTests = new PerfTests(ipcBus, 'browser');
+        var perfTests = new PerfTests('browser');
 
         const mainWindow = new BrowserWindow({
             width: width, height: 800,
@@ -150,12 +151,12 @@ var MainProcess = (function () {
             }
         }
 
-        function onIPCElectron_ReceivedMessage(topicName, topicMsg, topicPeerName, requestResolveCB, rejectResolveCB) {
-            console.log('Master - onIPCElectron_ReceivedMessage - topic:' + topicName + ' data:' + topicMsg);
-            if (requestResolveCB) {
-                requestResolveCB(topicName + ' - AutoReply from #' + peerName);
+        function onIPCElectron_ReceivedMessage(ipcEvent, ipcContent) {
+            console.log('Master - ReceivedMessage - topic:' + ipcEvent.channel + 'from #' + ipcEvent.sender.peerName);
+            if (ipcEvent.requestResolve) {
+                ipcEvent.requestResolve(ipcEvent.channel + ' - AutoReply from #' + ipcBus.peerName);
             }
-            processMainToView.postReceivedMessage(topicName, topicMsg, peerName);
+            processMainToView.postReceivedMessage(ipcEvent, ipcContent);
         }
 
         function onIPCElectron_Subscribe(topicName) {
@@ -323,7 +324,7 @@ var NodeProcess = (function () {
                         processMainToView.postRequestCatch(msgJSON['requestPromiseResponse']);
                         break;
                     case 'receivedSend':
-                        processMainToView.postReceivedMessage(msgJSON['args']['topic'], msgJSON['args']['msg'], msgJSON['args']['peerName']);
+                        processMainToView.postReceivedMessage(msgJSON['args']['event'], msgJSON['args']['content']);
                         break;
                     case 'subscribe':
                         processMainToView.postSubscribeDone(msgJSON['topic']);
@@ -382,18 +383,34 @@ let ipcBrokerInstance = null;
 electronApp.on('ready', function () {
 
     // Setup IPC Broker
-    console.log('<MAIN> Starting IPC broker ...');
-    ipcBrokerInstance = spawnNodeInstance('BrokerNodeInstance.js');
-    ipcBrokerInstance.on('message', function (msg) {
+    // console.log('<MAIN> Starting IPC broker ...');
+    // ipcBrokerInstance = spawnNodeInstance('BrokerNodeInstance.js');
+    // ipcBrokerInstance.on('message', function (msg) {
 
-        console.log('<MAIN> IPC broker is ready !');
-        // Setup IPC Client (and renderer bridge)
-        ipcBus.connect()
-            .then(() => {
-                new MainProcess();
-            });
-    });
-    ipcBrokerInstance.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
-    ipcBrokerInstance.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    //     console.log('<MAIN> IPC broker is ready !');
+    //     // Setup IPC Client (and renderer bridge)
+    //     ipcBus.connect()
+    //         .then(() => {
+    //             new MainProcess();
+    //         });
+    // });
+    // ipcBrokerInstance.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    // ipcBrokerInstance.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+
+    // Broker in Master process
+    const ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
+    ipcBroker.start()
+        .then((msg) => {
+            console.log("IPC Broker instance : Started");
+        })
+        .catch((err) => {
+            console.log("IPC Broker instance : " + err);
+        });
+    console.log('<MAIN> IPC broker is ready !');
+    // Setup IPC Client (and renderer bridge)
+    ipcBus.connect()
+        .then(() => {
+            new MainProcess();
+        });
 });
 
