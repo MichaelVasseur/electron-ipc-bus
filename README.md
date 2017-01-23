@@ -1,8 +1,8 @@
 # electron-ipc-bus
 A safe Ipc bus for applications built on Electron. 
 Dispatching of messages is managed by a broker. A broker can be instanciated in a node or in a the master process (not in renderer).
-For performance purpose, it is better to instanciate the broker in an independent process node instance.
-This Ipc bus works in sandbox mode and in affinity case (several webpages hosted in the same renderer process)
+For performance purpose, it is better to instanciate the broker in an independent node process.
+This Ipc bus works in Chromium/Electron sandbox mode and in Chromium affinity case (several webpages hosted in the same renderer process)
 
 # How to use
 ## Ipc Bus Broker
@@ -93,10 +93,16 @@ The code below to make the client accessible to the the Web page scripts.
     window.ipcBus = ipcBus;
 
 ### Common API
-Most the API follow the EventListener methods. 
+Most the API inherits from the EventListener methods. 
 
 When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
 The first parameter of the callback is always an event which contains the channel and the origin of the message (sender).
+
+For debugging purpose each sender is identified by a peerName. 
+The peerName is computed automatically from the type of the process : 
+- Master
+- Renderer + WebContents Id
+- Node + Process ID
 
 Ex:
     // listener
