@@ -29,6 +29,11 @@ const ipcBusModule = require('electron-ipc-bus');
 const ipcBus = ipcBusModule.CreateIpcBus(busPath);
 ipcBusModule.ActivateIpcBusTrace(true);
 
+// Startup
+let ipcBrokerProcess = null;
+let ipcBroker = null;
+
+
 // Load node-import without wrapping to variable. 
 require('node-import');
 imports('ProcessConnector');
@@ -75,6 +80,7 @@ var MainProcess = (function () {
         processMainFromView.on('new-renderer', doNewRenderer);
         processMainFromView.on('new-perf', doNewPerfView);
         processMainFromView.on('start-performance-tests', doPerformanceTests)
+        processMainFromView.on('queryState', doQueryState);
 
         var perfTests = new PerfTests('browser');
 
@@ -151,12 +157,26 @@ var MainProcess = (function () {
             }
         }
 
-        function onIPCElectron_ReceivedMessage(ipcEvent, ipcContent) {
-            console.log('Master - ReceivedMessage - topic:' + ipcEvent.channel + 'from #' + ipcEvent.sender.peerName);
-            if (ipcEvent.requestResolve) {
-                ipcEvent.requestResolve(ipcEvent.channel + ' - AutoReply from #' + ipcBus.peerName);
+        function doQueryState() {
+            if (ipcBroker) {
+                var queryState = ipcBroker.queryState();
+                mainWindow.webContents.send('get-queryState', queryState);
             }
-            processMainToView.postReceivedMessage(ipcEvent, ipcContent);
+            if (ipcBrokerProcess) {
+                ipcBrokerProcess.once('message', (msg) => {
+                    var msgJSON = JSON.parse(msg);
+                    var queryState = msg.queryState;
+                    mainWindow.webContents.send('get-queryState', queryState);
+                });
+            }
+        }
+
+        function onIPCElectron_ReceivedMessage(ipcBusEvent, ipcContent) {
+            console.log('Master - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.peerName);
+            if (ipcBusEvent.sender.request) {
+                ipcBusEvent.sender.request.resolve(ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName);
+            }
+            processMainToView.postReceivedMessage(ipcBusEvent, ipcContent);
         }
 
         function onIPCElectron_Subscribe(topicName) {
@@ -167,7 +187,7 @@ var MainProcess = (function () {
 
         function onIPCElectron_Unsubscribe(topicName) {
             console.log('Master - onIPCElectron_Subscribe:' + topicName);
-            ipcBus.unsubscribe(topicName, onIPCElectron_ReceivedMessage);
+            ipcBus.off(topicName, onIPCElectron_ReceivedMessage);
             processMainToView.postUnsubscribeDone(topicName);
         }
 
@@ -377,15 +397,14 @@ var NodeProcess = (function () {
     return NodeProcess;
 
 })();
-// Startup
-let ipcBrokerInstance = null;
 
+// Startup
 electronApp.on('ready', function () {
 
     // Setup IPC Broker
     // console.log('<MAIN> Starting IPC broker ...');
-    // ipcBrokerInstance = spawnNodeInstance('BrokerNodeInstance.js');
-    // ipcBrokerInstance.on('message', function (msg) {
+    // ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
+    // ipcBrokerProcess.on('message', function (msg) {
 
     //     console.log('<MAIN> IPC broker is ready !');
     //     // Setup IPC Client (and renderer bridge)
@@ -394,11 +413,11 @@ electronApp.on('ready', function () {
     //             new MainProcess();
     //         });
     // });
-    // ipcBrokerInstance.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
-    // ipcBrokerInstance.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    // ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    // ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
 
     // Broker in Master process
-    const ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
+    ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
     ipcBroker.start()
         .then((msg) => {
             console.log("IPC Broker instance : Started");

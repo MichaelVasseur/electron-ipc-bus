@@ -11,7 +11,6 @@ export const IPC_BUS_COMMAND_SENDMESSAGE = 'IpcBusCommand:sendMessage';
 export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'IpcBusCommand:requestMessage';
 export const IPC_BUS_COMMAND_REQUESTRESPONSE = 'IpcBusCommand:requestResponse';
 export const IPC_BUS_COMMAND_REQUESTCANCEL = 'IpcBusCommand:requestCancel';
-export const IPC_BUS_COMMAND_QUERYSTATE = 'IpcBusCommand:queryState';
 
 export const IPC_BUS_EVENT_SENDMESSAGE = 'IpcBusEvent:onSendMessage';
 export const IPC_BUS_EVENT_REQUESTMESSAGE = 'IpcBusEvent:onRequestMessage';

@@ -102,7 +102,7 @@ var processToMaster = new ProcessConnector('browser', ipcRenderer);
 ipcBus.connect()
     .then(() => {
         console.log('renderer : connected to ipcBus');
-        ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
-        ipcBus.subscribe('test-performance-stop', onIPCBus_TestPerformanceStop);
+        ipcBus.on('test-performance-start', onIPCBus_TestPerformanceStart);
+        ipcBus.on('test-performance-stop', onIPCBus_TestPerformanceStop);
     });
 

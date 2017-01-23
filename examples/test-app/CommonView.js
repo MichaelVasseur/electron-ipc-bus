@@ -20,6 +20,11 @@ function doOpenPerfView(event) {
     processToMaster.send('new-perf');
 }
 
+function doQueryBrokerState() {
+    processToMaster.send('queryState');
+}
+
+
 // var rendererWindow;
 // function doNewAffinityRendererInstance(event) {
 //     var strWindowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no';
@@ -57,7 +62,7 @@ function doSubscribeToTopic(event) {
     if (processToMonitor.Type() === 'renderer') {
         ipcBus.connect()
             .then(() => {
-                ipcBus.subscribe(topicName, onIPC_Received);
+                ipcBus.on(topicName, onIPC_Received);
                 onIPCElectron_SubscribeNotify(topicName);
         });
     }
@@ -100,7 +105,7 @@ function doUnsubscribeFromTopic(event) {
     if (processToMonitor.Type() === 'renderer') {
         ipcBus.connect()
         .then(() => {
-            ipcBus.unsubscribe(topicName, onIPC_Received);
+            ipcBus.off(topicName, onIPC_Received);
             onIPCElectron_UnsubscribeNotify(topicName);
         });
     }
@@ -200,8 +205,8 @@ function onIPC_Received(ipcBusEvent, ipcContent) {
     var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + ipcBusEvent.channel);
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector('.topicAutoReply');
-        if (ipcBusEvent.requestResolve) {
-            ipcBusEvent.requestResolve(topicAutoReplyElt.value);
+        if (ipcBusEvent.sender.request) {
+            ipcBusEvent.sender.request.resolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
         ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
@@ -230,12 +235,8 @@ function onIPCBus_ReceivedSendNotify(ipcBusEvent, ipcContent) {
     onIPC_Received(ipcBusEvent, ipcContent);
 }
 
-function doQueryBrokerState() {
-    ipcBus.queryBrokerState('brokerStateResults');
-}
-
-function onIPC_BrokerStatusTopic(ipcBusEvent, ipcContent) {
-    console.log('queryBrokerState - msgTopic:' + ipcBusEvent.channel + ' msgContent:' + ipcContent)
+function onIPC_BrokerStatusTopic(ipcContent) {
+    console.log('queryBrokerState - msgContent:' + ipcContent)
 
     var statesListElt = document.getElementById('brokerStatesList');
     statesListElt.style.display = 'block';
@@ -300,11 +301,11 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         processToolbar = document.getElementById('ProcessBrokerState');
         processToolbar.style.display = 'block';
 
+        ipcRenderer.on('get-queryState', onIPC_BrokerStatusTopic);
+
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
-                ipcBus.subscribe('brokerStateResults', onIPC_BrokerStatusTopic);
- //               doQueryBrokerState();
             });
     }
     if (args['type'] === 'renderer') {
@@ -330,4 +331,3 @@ ipcRenderer.on('initializeWindow', function (event, data) {
             });
     }
 });
-

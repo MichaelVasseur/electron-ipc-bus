@@ -151,24 +151,12 @@ export class IpcBusCommonClient extends EventEmitter
         this._ipcBusTransport.ipcClose();
     }
 
-    subscribe(channel: string, listenCallback: IpcBusInterfaces.IpcBusChannelHandler) {
-        this.addListener(channel, listenCallback);
+    send(channel: string, ...args: any[]) {
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, {}, {channel: channel, sender: {peerName: this._peerName}}, args);
     }
 
-    unsubscribe(channel: string, listenCallback: IpcBusInterfaces.IpcBusChannelHandler) {
-        this.removeListener(channel, listenCallback);
-    }
-
-    send(channel: string, data: Object | string) {
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, {}, {channel: channel, sender: {peerName: this._peerName}}, [data]);
-    }
-
-    request(channel: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        return this._request(channel, timeoutDelay, [data]);
-    }
-
-    queryBrokerState(channel: string) {
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE, {}, {channel: channel, sender: {peerName: this._peerName}});
+    request(channel: string, timeoutDelay: number, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
+        return this._request(channel, timeoutDelay, args);
     }
 
     addListener(channel: string, listener: Function): this {
@@ -203,15 +191,6 @@ export class IpcBusCommonClient extends EventEmitter
             super.removeAllListeners(channel);
         }
         return this;
-    }
-
-    emit(channel: string, ...args: any[]): boolean {
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, {}, {channel: channel, sender: {peerName: this._peerName}}, args);
-        return true;
-    }
-
-    emitRequest(channel: string, timeoutDelay: number, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        return this._request(channel, timeoutDelay, args);
     }
 
     // Added in Node 6...

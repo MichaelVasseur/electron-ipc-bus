@@ -3,9 +3,9 @@ var PerfTests = function _PerfTests(type) {
     var _ipcBus = _ipcBusModule.CreateIpcBus();
     var _type = type;
 
-    _ipcBus.subscribe('test-performance-trace', onIPCBus_TestPerformanceTrace);
-    _ipcBus.subscribe('test-performance-run', onIPCBus_TestPerformanceRun);
-    _ipcBus.subscribe('test-performance-'+ _type, onIPCBus_TestPerformance);
+    _ipcBus.on('test-performance-trace', onIPCBus_TestPerformanceTrace);
+    _ipcBus.on('test-performance-run', onIPCBus_TestPerformanceRun);
+    _ipcBus.on('test-performance-'+ _type, onIPCBus_TestPerformance);
 
     this.doPerformanceTests = function _doPerformanceTests(testParams) {
         _ipcBus.send('test-performance-run', testParams);
@@ -74,7 +74,7 @@ var PerfTests = function _PerfTests(type) {
 
         msgTestStart.start.timeStamp = Date.now();
         if (testParams.type == 'emit') {
-            _ipcBus.emit.apply(_ipcBus, [type].concat(msgContent));
+            _ipcBus.send.apply(_ipcBus, [type].concat(msgContent));
         }
         else {
             _ipcBus.send(type, msgContent);

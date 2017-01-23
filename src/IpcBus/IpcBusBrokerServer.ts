@@ -50,6 +50,16 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
         }
     }
 
+    queryState(): Object {
+        let queryStateResult: Object[] = [];
+        this._subscriptions.forEach(function (connData, channel) {
+            connData.peerNames.forEach(function (count: number, peerName: string) {
+                queryStateResult.push({ channel: channel, peerName: peerName, count: count });
+            });
+        });
+        return queryStateResult;
+    }
+
     private _onConnection(socket: any, server: any): void {
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
         IpcBusUtils.Logger.info('[IPCBus:Broker] socket.address=' + JSON.stringify(socket.address()));
@@ -139,27 +149,6 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                         IpcBusUtils.Logger.info(`[IPCBus:Broker] Received cancel request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.peerName}`);
                         this._requestSubscriptions.delete(ipcBusData.replyChannel);
-                        break;
-                    }
-                case IpcBusUtils.IPC_BUS_COMMAND_QUERYSTATE:
-                    {
-                        // const ipcBusData: IpcBusData = data.args[0];
-                        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
-                        IpcBusUtils.Logger.info(`[IPCBus:Broker] QueryState message reply on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
-
-                        let queryStateResult: Object[] = [];
-                        this._subscriptions.forEach(function (connData, channel) {
-                            connData.peerNames.forEach(function (count: number, peerName: string) {
-                                queryStateResult.push({ channel: channel, peerName: peerName, count: count });
-                            });
-                        });
-
-                        const ipcBusDataBroker: IpcBusData = {};
-                        const ipcBusEventBroker: IpcBusInterfaces.IpcBusEvent = {channel: ipcBusEvent.channel, sender: {peerName: 'Broker'}};
-                        this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                            // Send states to subscribed connections
-                            BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, ipcBusDataBroker, ipcBusEventBroker, [queryStateResult], connData.conn);
-                        });
                         break;
                     }
             }

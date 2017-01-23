@@ -26,23 +26,17 @@ export interface IpcBusRequestResponse {
     err?: string;
 }
 
-export interface IpcBusChannelHandler {
-    (event: IpcBusEvent, payload: Object | string): void;
-}
-
 export interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;
-    subscribe(channel: string, channelHandler: IpcBusChannelHandler): void;
-    unsubscribe(channel: string, channelHandler: IpcBusChannelHandler): void;
     send(channel: string, payload: Object | string): void;
     request(channel: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusRequestResponse>;
-    queryBrokerState(channel: string): void;
 }
 
 export interface IpcBusBroker {
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
+    queryState(): Object;
 }
 

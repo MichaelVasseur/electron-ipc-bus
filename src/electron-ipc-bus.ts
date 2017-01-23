@@ -1,7 +1,4 @@
-export {IpcBusRequestResolve} from './IpcBus/IpcBusInterfaces';
-export {IpcBusRequestReject} from './IpcBus/IpcBusInterfaces';
 export {IpcBusEvent} from './IpcBus/IpcBusInterfaces';
-export {IpcBusChannelHandler} from './IpcBus/IpcBusInterfaces';
 export {IpcBusRequestResponse} from './IpcBus/IpcBusInterfaces';
 export {IpcBusClient} from './IpcBus/IpcBusInterfaces';
 export {IpcBusBroker} from './IpcBus/IpcBusInterfaces';
