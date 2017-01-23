@@ -1,7 +1,9 @@
 # electron-ipc-bus
 A safe Ipc bus for applications built on Electron. 
-Dispatching of messages is managed by a broker. A broker can be instanciated in a node or in a the master process (not in renderer).
+
+Dispatching of messages is managed by a broker. The broker can be instanciated in a node or in a the master process (not in renderer).
 For performance purpose, it is better to instanciate the broker in an independent node process.
+
 This Ipc bus works in Chromium/Electron sandbox mode and in Chromium affinity case (several webpages hosted in the same renderer process)
 
 # How to use
@@ -49,7 +51,7 @@ Ex:
    
     var queryState = ipcBusBroker.queryState() 
 
-Returns the list of pair <topic, peerName> subscriptions. Format may change from one version to another.
+Returns the list of pair <channel, peerName> subscriptions. Format may change from one version to another.
 
 
 ## Ipc Bus client
@@ -98,7 +100,7 @@ Most the API inherits from the EventListener methods.
 When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
 The first parameter of the callback is always an event which contains the channel and the origin of the message (sender).
 
-For debugging purpose each sender is identified by a peerName. 
+For debugging purpose, each sender is identified by a peerName. 
 The peerName is computed automatically from the type of the process : 
 - Master
 - Renderer + WebContents Id
@@ -131,7 +133,7 @@ Ex:
 Send a message to every client subscribed to this topic.
 Ex:
 
-    ipcBus.send("Hello!", { name: "My Name !"})
+    ipcBus.send("Hello!", { name: "My age !"}, "is", 10)
 
 #### request(topic, content, [, timeoutDelay]) : Promise<IpcBusRequestResponse>
 Send a request message on specified topic. promise is settled when a result is available.
@@ -154,7 +156,7 @@ To identify and manage such request, the clients must check the ***resolveCallba
        }
     }
 
-    ipcBus.subscribe("compute", ComputeHandler)
+    ipcBus.on("compute", ComputeHandler)
 
 
 ## Test application
