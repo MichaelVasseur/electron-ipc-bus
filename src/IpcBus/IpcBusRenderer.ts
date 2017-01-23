@@ -78,9 +78,7 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
 
     ipcClose(): void {
         if (this._ipcObj) {
-            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, this._onIpcEventReceived);
-            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, this._onIpcEventReceived);
-            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, this._onIpcEventReceived);
+            this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
             this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
             this._ipcObj = null;
         }

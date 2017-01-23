@@ -151,5 +151,13 @@ export class IpcBusMainClient extends IpcBusCommonClient {
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         super('Master', new IpcBusRendererBridge(ipcOptions));
     }
+
+    // Master is in charge to dispatch renderer events, so it can be called very often even if it has no listeners on its own.
+    // For optimization-purpose we test if there are real master listeners for the channel before proceeding
+    protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+        if (super.listenerCount(ipcBusEvent.channel) > 0) {
+            super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
+        }
+    }
 }
 
