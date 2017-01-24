@@ -1,23 +1,10 @@
 /// <reference types='node' />
 import events = require('events');
 
-export interface IpcBusRequestResolve {
-    (payload: Object | string) : void;
-}
 
-export interface IpcBusRequestReject {
-    (err: string) : void;
-}
-
-export interface IpcBusSender {
-    peerName: string;
-}
-
-export interface IpcBusEvent {
-    channel: string;
-    requestResolve?: IpcBusRequestResolve;
-    requestReject?: IpcBusRequestReject;
-    sender: IpcBusSender;
+export interface IpcBusRequest {
+    resolve(payload: Object | string): void;
+    reject(err: string): void;
 }
 
 export interface IpcBusRequestResponse {
@@ -26,23 +13,27 @@ export interface IpcBusRequestResponse {
     err?: string;
 }
 
-export interface IpcBusChannelHandler {
-    (event: IpcBusEvent, payload: Object | string): void;
+export interface IpcBusSender {
+    peerName: string;
+}
+
+export interface IpcBusEvent {
+    channel: string;
+    request?: IpcBusRequest;
+    sender: IpcBusSender;
 }
 
 export interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;
-    subscribe(channel: string, channelHandler: IpcBusChannelHandler): void;
-    unsubscribe(channel: string, channelHandler: IpcBusChannelHandler): void;
-    send(channel: string, payload: Object | string): void;
-    request(channel: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusRequestResponse>;
-    queryBrokerState(channel: string): void;
+    send(channel: string, ...args: any[]): void;
+    request(timeoutDelay: number, channel: string, ...args: any[]): Promise<IpcBusRequestResponse>;
 }
 
 export interface IpcBusBroker {
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
+    queryState(): Object;
 }
 

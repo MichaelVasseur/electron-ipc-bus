@@ -3,10 +3,12 @@
 var processToMaster;
 var transaction = 1;
 function doPerformance(type) {
+    var typeCommandElt = document.querySelector('.typeCommand');
     var testParams =
     {
         transaction: transaction,
-        type: type,
+        typeCommand: typeCommandElt.options[typeCommandElt.selectedIndex].text,
+        typeArgs: type,
         bufferSize: 1024 * 1024
     };
     ++transaction;
@@ -18,7 +20,7 @@ var testStop = new Map;
 var delays = [];
 
 function doClear(event) {
-     var table = document.getElementById("perfResults");
+     var table = document.getElementById('perfResults');
      while(table.rows.length > 1) {
           table.deleteRow(1);
      }
@@ -55,7 +57,7 @@ function onIPCBus_TestPerformanceResult(uuid) {
         delays.push(delay);
         delays.sort();
 
-        var table = document.getElementById("perfResults");
+        var table = document.getElementById('perfResults');
         var row = table.insertRow(-1);
         var cell0 = row.insertCell(-1);
         var cell1 = row.insertCell(-1);
@@ -77,22 +79,22 @@ function onIPCBus_TestPerformanceResult(uuid) {
             var curRow = table.rows[i];
             var delay = curRow.cells[3].getAttribute('delay');
             if (delay <= delays[q1]) {
-                curRow.className = "success";
+                curRow.className = 'success';
                 continue;
             } 
             if (delay <= delays[q2]) {
-                curRow.className = "info";
+                curRow.className = 'info';
                 continue;
             } 
             if (delay >= delays[q4]) {
-                curRow.className = "danger";
+                curRow.className = 'danger';
                 continue;
             } 
             if (delay >= delays[q3]) {
-                curRow.className = "warning";
+                curRow.className = 'warning';
                 continue;
             } 
-            curRow.className = "";
+            curRow.className = '';
         }
     }
 }
@@ -102,7 +104,7 @@ var processToMaster = new ProcessConnector('browser', ipcRenderer);
 ipcBus.connect()
     .then(() => {
         console.log('renderer : connected to ipcBus');
-        ipcBus.subscribe('test-performance-start', onIPCBus_TestPerformanceStart);
-        ipcBus.subscribe('test-performance-stop', onIPCBus_TestPerformanceStop);
+        ipcBus.on('test-performance-start', onIPCBus_TestPerformanceStart);
+        ipcBus.on('test-performance-stop', onIPCBus_TestPerformanceStop);
     });
 

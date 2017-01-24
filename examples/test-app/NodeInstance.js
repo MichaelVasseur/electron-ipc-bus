@@ -18,16 +18,16 @@ const PerfTests = require('./PerfTests.js');
 
 const peerName = 'Node_' + process.pid;
 
-function onTopicMessage(ipcEvent, ipcContent) {
-   console.log('Node - ReceivedMessage - topic:' + ipcEvent.channel + 'from #' + ipcEvent.sender.peerName);
-    if (ipcEvent.requestResolve) {
-        var autoReply = ipcEvent.channel + ' - AutoReply from #' + ipcBus.peerName;
-        ipcEvent.requestResolve(autoReply);
+function onTopicMessage(ipcBusEvent, ipcContent) {
+   console.log('Node - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.peerName);
+    if (ipcBusEvent.request) {
+        var autoReply = ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName;
+        ipcBusEvent.request.resolve(autoReply);
         console.log(autoReply);
     }
     var msgJSON = {
         action: 'receivedSend',
-        args: { event : ipcEvent, content : ipcContent}
+        args: { event : ipcBusEvent, content : ipcContent}
     };
     process.send(JSON.stringify(msgJSON));
 }
@@ -35,14 +35,14 @@ function onTopicMessage(ipcEvent, ipcContent) {
 function doSubscribeTopic(msgJSON) {
     var topicName = msgJSON['topic'];
     console.log('node - doSubscribeTopic:' + topicName);
-    ipcBus.subscribe(topicName, onTopicMessage);
+    ipcBus.on(topicName, onTopicMessage);
     process.send(JSON.stringify(msgJSON));
 }
 
 function doUnsubscribeTopic(msgJSON) {
     var topicName = msgJSON['topic'];
     console.log('node - doUnsubscribeTopic:' + topicName);
-    ipcBus.unsubscribe(topicName, onTopicMessage);
+    ipcBus.off(topicName, onTopicMessage);
     process.send(JSON.stringify(msgJSON));
 }
 
@@ -56,7 +56,7 @@ function doSendOnTopic(msgJSON) {
 function doRequestOnTopic(msgJSON) {
     var args = msgJSON['args'];
     console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
-    ipcBus.request(args['topic'], args['msg'])
+    ipcBus.request(2000, args['topic'], args['msg'])
         .then((requestPromiseResponse) => {
             msgJSON['action'] = 'receivedRequestThen';
             msgJSON['requestPromiseResponse'] = requestPromiseResponse;
