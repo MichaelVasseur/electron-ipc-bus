@@ -20,9 +20,9 @@ const peerName = 'Node_' + process.pid;
 
 function onTopicMessage(ipcBusEvent, ipcContent) {
    console.log('Node - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.peerName);
-    if (ipcBusEvent.sender.request) {
+    if (ipcBusEvent.request) {
         var autoReply = ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName;
-        ipcBusEvent.sender.request.resolve(autoReply);
+        ipcBusEvent.request.resolve(autoReply);
         console.log(autoReply);
     }
     var msgJSON = {
@@ -56,7 +56,7 @@ function doSendOnTopic(msgJSON) {
 function doRequestOnTopic(msgJSON) {
     var args = msgJSON['args'];
     console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
-    ipcBus.request(args['topic'], args['msg'])
+    ipcBus.request(args['topic'], 2000, args['msg'])
         .then((requestPromiseResponse) => {
             msgJSON['action'] = 'receivedRequestThen';
             msgJSON['requestPromiseResponse'] = requestPromiseResponse;

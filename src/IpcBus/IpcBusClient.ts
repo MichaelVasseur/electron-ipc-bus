@@ -61,16 +61,17 @@ export class IpcBusCommonClient extends EventEmitter
 
     private _onRequestEventReceived(ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]): void {
         IpcBusUtils.Logger.info(`[IpcBusTransport] Emit request received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName} (replyChannel '${ipcBusData.replyChannel}')`);
-        let localIpcBusEvent: IpcBusInterfaces.IpcBusEvent = {channel: ipcBusEvent.channel, sender: ipcBusEvent.sender};
-        localIpcBusEvent.requestResolve = (payload: Object | string) => {
-            ipcBusData.resolve = true;
-            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [payload]);
+        ipcBusEvent.request = {
+            resolve: (payload: Object | string) => {
+                ipcBusData.resolve = true;
+                this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [payload]);
+            },
+            reject: (err: string) => {
+                ipcBusData.reject = true;
+                this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [err]);
+            }
         };
-        localIpcBusEvent.requestReject =  (err: string) => {
-            ipcBusData.reject = true;
-            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [err]);
-        };
-        let argsEmit: any[] = [localIpcBusEvent.channel, localIpcBusEvent].concat(args);
+        let argsEmit: any[] = [ipcBusEvent.channel, ipcBusEvent].concat(args);
         super.emit.apply(this, argsEmit);
     }
 
@@ -86,7 +87,7 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     _request(channel: string, timeoutDelay: number, args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        if (timeoutDelay == null) {
+        if ((timeoutDelay == null) || (timeoutDelay <= 0)) {
             timeoutDelay = 2000;
         }
 

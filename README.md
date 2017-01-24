@@ -88,11 +88,11 @@ Ex, busPath set by command line: electron . --bus-path=***value***
     const ipcBus = ipcBusModule.CreateIpcBus();
 
 NOTE : If the renderer is running in sandboxed mode, the code above
-must be run from the ***BrowserWindow***'s preload script. Otherwise, the
-Electron's ipcRenderer is not accessible and the client cannot work.
+must be run from the ***BrowserWindow***'s preload script (browserify -o BundledBrowserWindowPreload.js ***-x electron*** BrowserWindowPreload.js). 
+Otherwise, the Electron's ipcRenderer is not accessible and the client cannot work.
 The code below to make the client accessible to the the Web page scripts.
 
-    window.ipcBus = ipcBus;
+    window.ipcBus = require('electron-ipc-bus').CreateIpcBus();
 
 ### Common API
 Most the API inherits from the EventListener methods. 
@@ -139,7 +139,7 @@ Ex:
 Send a request message on specified topic. promise is settled when a result is available.
 Ex:
 
-    ipcBus.request("compute", "2*PI*9")
+    ipcBus.request("compute", 2000, "2*PI*9")
         .then(ipcBusRequestResponse) {
             console.log("channel = " + ipcBusRequestResponse.event.channel + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.event.sender.peerName);
         }
@@ -147,12 +147,12 @@ Ex:
             console.log("err = " + ipcBusRequestResponse.payload);
         }
 
-To identify and manage such request, the clients must check the ***resolveCallback*** parameter
+To identify and manage such request, the clients must check the ***request*** parameter
 
     function ComputeHandler(ipcBusEvent, content) {
        console.log("Received '" + content + "' on channel '" + ipcBusEvent.channel +"' from #" + ipcBusEvent.sender.peerName)
-       if (ipcBusEvent.resolveCallback) {
-           ipcBusEvent.resolveCallback(eval(content))
+       if (ipcBusEvent.request) {
+           ipcBusEvent.request.resolve(eval(content))
        }
     }
 

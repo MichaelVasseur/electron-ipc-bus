@@ -173,15 +173,15 @@ var MainProcess = (function () {
 
         function onIPCElectron_ReceivedMessage(ipcBusEvent, ipcContent) {
             console.log('Master - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.peerName);
-            if (ipcBusEvent.sender.request) {
-                ipcBusEvent.sender.request.resolve(ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName);
+            if (ipcBusEvent.request) {
+                ipcBusEvent.request.resolve(ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName);
             }
             processMainToView.postReceivedMessage(ipcBusEvent, ipcContent);
         }
 
         function onIPCElectron_Subscribe(topicName) {
             console.log('Master - onIPCElectron_Subscribe:' + topicName);
-            ipcBus.subscribe(topicName, onIPCElectron_ReceivedMessage);
+            ipcBus.on(topicName, onIPCElectron_ReceivedMessage);
             processMainToView.postSubscribeDone(topicName);
         }
 
@@ -198,7 +198,7 @@ var MainProcess = (function () {
 
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log('Master - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
-            ipcBus.request(topicName, topicMsg)
+            ipcBus.request(topicName, 2000, topicMsg)
                 .then((requestPromiseResponse) => {
                     processMainToView.postRequestThen(requestPromiseResponse);
                 })

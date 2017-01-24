@@ -140,7 +140,7 @@ function doRequestMessageToTopic(event) {
 
     var args = { topic: topicName, msg: topicMsg };
     if (processToMonitor.Type() === 'renderer') {
-        let p = ipcBus.request(topicName, topicMsg)
+        let p = ipcBus.request(topicName, 2000, topicMsg)
             .then((requestPromiseResponse) => {
                 onIPCBus_OnRequestThen(requestPromiseResponse);
             })
@@ -205,8 +205,8 @@ function onIPC_Received(ipcBusEvent, ipcContent) {
     var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + ipcBusEvent.channel);
     if (topicItemElt != null) {
         var topicAutoReplyElt = topicItemElt.querySelector('.topicAutoReply');
-        if (ipcBusEvent.sender.request) {
-            ipcBusEvent.sender.request.resolve(topicAutoReplyElt.value);
+        if (ipcBusEvent.request) {
+            ipcBusEvent.request.resolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
         ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';

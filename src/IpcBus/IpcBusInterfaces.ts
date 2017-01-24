@@ -1,12 +1,10 @@
 /// <reference types='node' />
 import events = require('events');
 
-export interface IpcBusRequestResolve {
-    (payload: Object | string) : void;
-}
 
-export interface IpcBusRequestReject {
-    (err: string) : void;
+export interface IpcBusRequest {
+    resolve(payload: Object | string): void;
+    reject(err: string): void;
 }
 
 export interface IpcBusRequestResponse {
@@ -21,8 +19,7 @@ export interface IpcBusSender {
 
 export interface IpcBusEvent {
     channel: string;
-    requestResolve?: IpcBusRequestResolve;
-    requestReject?: IpcBusRequestReject;
+    request?: IpcBusRequest;
     sender: IpcBusSender;
 }
 
