@@ -198,7 +198,7 @@ var MainProcess = (function () {
 
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log('Master - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
-            ipcBus.request(topicName, 2000, topicMsg)
+            ipcBus.request(2000, topicName, topicMsg)
                 .then((requestPromiseResponse) => {
                     processMainToView.postRequestThen(requestPromiseResponse);
                 })

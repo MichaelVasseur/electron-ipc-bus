@@ -27,8 +27,8 @@ export interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;
-    send(channel: string, payload: Object | string): void;
-    request(channel: string, data: Object | string, timeoutDelay?: number): Promise<IpcBusRequestResponse>;
+    send(channel: string, ...args: any[]): void;
+    request(timeoutDelay: number, channel: string, ...args: any[]): Promise<IpcBusRequestResponse>;
 }
 
 export interface IpcBusBroker {

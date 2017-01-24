@@ -19,12 +19,16 @@
 <body>
     <div id="ProcessPerformance" class="panel panel-default" style="display:block">
         <div class="panel-heading">Performances
+              <select class="form-control typeCommand">
+                <option>Send</option>
+                <option>Request</option>
+            </select>
             <input type="button" class="btn btn-primary" onclick="doPerformance('string')" value="Run (string)"></input>
             <input type="button" class="btn btn-primary" onclick="doPerformance('object')" value="Run (object)"></input>
-            <input type="button" class="btn btn-primary" onclick="doPerformance('emit')" value="Run (emit)"></input>
+            <input type="button" class="btn btn-primary" onclick="doPerformance('args')" value="Run (args)"></input>
             <input type="button" class="btn btn-primary" onclick="doClear()" value="Clear"></input>
-              <label class="btn btn-primary">
-                    <input type="checkbox" class="traceEnable" onclick="doTraceEnable(event)" checked autocomplete="off">Trace enable
+            <label class="btn btn-primary">
+                <input type="checkbox" class="traceEnable" onclick="doTraceEnable(event)" checked autocomplete="off">Trace enable
             </label>
         </div>
     <div class="panel-body">

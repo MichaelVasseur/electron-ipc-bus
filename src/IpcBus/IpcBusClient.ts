@@ -86,7 +86,7 @@ export class IpcBusCommonClient extends EventEmitter
         super.emit.apply(this, argsEmit);
     }
 
-    _request(channel: string, timeoutDelay: number, args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
+    private _request(timeoutDelay: number, channel: string, args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
         if ((timeoutDelay == null) || (timeoutDelay <= 0)) {
             timeoutDelay = 2000;
         }
@@ -143,7 +143,7 @@ export class IpcBusCommonClient extends EventEmitter
         return p;
     }
 
-    // Set API
+    // IpcBusClient API
     connect(timeoutDelay?: number): Promise<string> {
         return this._ipcBusTransport.ipcConnect(timeoutDelay);
     }
@@ -156,10 +156,11 @@ export class IpcBusCommonClient extends EventEmitter
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, {}, {channel: channel, sender: {peerName: this._peerName}}, args);
     }
 
-    request(channel: string, timeoutDelay: number, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        return this._request(channel, timeoutDelay, args);
+    request(timeoutDelay: number, channel: string, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
+        return this._request(timeoutDelay, channel, args);
     }
 
+    // EventEmitter API
     addListener(channel: string, listener: Function): this {
         super.addListener(channel, listener);
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});

@@ -139,7 +139,7 @@ Ex:
 Send a request message on specified topic. promise is settled when a result is available.
 Ex:
 
-    ipcBus.request("compute", 2000, "2*PI*9")
+    ipcBus.request(2000, "compute", "2*PI*9")
         .then(ipcBusRequestResponse) {
             console.log("channel = " + ipcBusRequestResponse.event.channel + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.event.sender.peerName);
         }

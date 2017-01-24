@@ -56,7 +56,7 @@ function doSendOnTopic(msgJSON) {
 function doRequestOnTopic(msgJSON) {
     var args = msgJSON['args'];
     console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
-    ipcBus.request(args['topic'], 2000, args['msg'])
+    ipcBus.request(2000, args['topic'], args['msg'])
         .then((requestPromiseResponse) => {
             msgJSON['action'] = 'receivedRequestThen';
             msgJSON['requestPromiseResponse'] = requestPromiseResponse;

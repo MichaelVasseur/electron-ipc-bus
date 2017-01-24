@@ -140,7 +140,7 @@ function doRequestMessageToTopic(event) {
 
     var args = { topic: topicName, msg: topicMsg };
     if (processToMonitor.Type() === 'renderer') {
-        let p = ipcBus.request(topicName, 2000, topicMsg)
+        let p = ipcBus.request(2000, topicName, topicMsg)
             .then((requestPromiseResponse) => {
                 onIPCBus_OnRequestThen(requestPromiseResponse);
             })
