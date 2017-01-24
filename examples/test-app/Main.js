@@ -86,6 +86,7 @@ var MainProcess = (function () {
 
         const mainWindow = new BrowserWindow({
             width: width, height: 800,
+            autoHideMenuBar: true,
             webPreferences:
             {
                 preload: preloadFile
@@ -145,6 +146,7 @@ var MainProcess = (function () {
             else {
                 perfView = new BrowserWindow({
                     width: width, height: 800,
+                    autoHideMenuBar: true,
                     webPreferences:
                     {
                         preload: preloadFile
@@ -219,6 +221,7 @@ var RendererProcess = (function () {
         this.createWindow = function _createWindow() {
             const rendererWindow = new BrowserWindow({
                 width: width, height: 600,
+                autoHideMenuBar: true,
                 webPreferences:
                 {
                     session: getSession(),
@@ -304,6 +307,7 @@ var NodeProcess = (function () {
         // Create node window
         nodeWindow = new BrowserWindow({
             width: width, height: 600,
+            autoHideMenuBar: true,
             webPreferences:
             {
                 preload: preloadFile
