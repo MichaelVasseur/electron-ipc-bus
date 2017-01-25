@@ -20,11 +20,11 @@ ipcBroker.start()
 
 function dispatchMessage(msg)
 {
-    console.log('IPC Broker instance : receive message:' + msg);
+    console.log('IPC Broker instance : receive message:' + JSON.stringify(msg));
      var msgJSON = JSON.parse(msg);
-     if (msg.queryState) {
+     if (msgJSON.action === 'queryState') {
          let queryState = ipcBroker.queryState();
-         process.send({event: 'queryState', results: queryState});
+         process.send({event: 'queryState', result: queryState});
      }
 }
 

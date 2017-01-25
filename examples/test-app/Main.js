@@ -165,11 +165,12 @@ var MainProcess = (function () {
                 mainWindow.webContents.send('get-queryState', queryState);
             }
             if (ipcBrokerProcess) {
-                ipcBrokerProcess.once('message', (msg) => {
-                    var msgJSON = JSON.parse(msg);
-                    var queryState = msg.queryState;
+                ipcBrokerProcess.once('message', (msgJSON) => {
+                    var queryState = msgJSON.result;
                     mainWindow.webContents.send('get-queryState', queryState);
                 });
+                ipcBrokerProcess.send(JSON.stringify({action: 'queryState'}));
+                
             }
         }
 
@@ -406,34 +407,34 @@ var NodeProcess = (function () {
 electronApp.on('ready', function () {
 
     // Setup IPC Broker
-    // console.log('<MAIN> Starting IPC broker ...');
-    // ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
-    // ipcBrokerProcess.on('message', function (msg) {
+    console.log('<MAIN> Starting IPC broker ...');
+    ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
+    ipcBrokerProcess.on('message', function (msg) {
 
-    //     console.log('<MAIN> IPC broker is ready !');
-    //     // Setup IPC Client (and renderer bridge)
-    //     ipcBus.connect()
-    //         .then(() => {
-    //             new MainProcess();
-    //         });
-    // });
-    // ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
-    // ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+        console.log('<MAIN> IPC broker is ready !');
+        // Setup IPC Client (and renderer bridge)
+        ipcBus.connect()
+            .then(() => {
+                new MainProcess();
+            });
+    });
+    ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
 
     // Broker in Master process
-    ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
-    ipcBroker.start()
-        .then((msg) => {
-            console.log("IPC Broker instance : Started");
-        })
-        .catch((err) => {
-            console.log("IPC Broker instance : " + err);
-        });
-    console.log('<MAIN> IPC broker is ready !');
-    // Setup IPC Client (and renderer bridge)
-    ipcBus.connect()
-        .then(() => {
-            new MainProcess();
-        });
+    // ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
+    // ipcBroker.start()
+    //     .then((msg) => {
+    //         console.log("IPC Broker instance : Started");
+    //     })
+    //     .catch((err) => {
+    //         console.log("IPC Broker instance : " + err);
+    //     });
+    // console.log('<MAIN> IPC broker is ready !');
+    // // Setup IPC Client (and renderer bridge)
+    // ipcBus.connect()
+    //     .then(() => {
+    //         new MainProcess();
+    //     });
 });
 
