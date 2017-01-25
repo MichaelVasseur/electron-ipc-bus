@@ -28,7 +28,7 @@ Ex, busPath set by command line: electron . --bus-path=***value***
     const ipcBusBroker = ipcBusModule.CreateIpcBusBroker();
 
 ### API
-#### start()
+#### start([timeoutDelay]) : Promise<string>
 
 Ex:
    
@@ -104,7 +104,7 @@ For debugging purpose, each sender is identified by a peerName.
 The peerName is computed automatically from the type of the process : 
 - Master
 - Renderer + WebContents Id
-- Node + Process ID
+- Node + Process Id
 
 Ex:
     // listener
@@ -116,7 +116,7 @@ Ex:
     // sender
     ipcBus.send("Hello!", 'it's me')
 
-#### connect([handler])
+#### connect([timeoutDelay]) : Promise<string>
 
 Ex:
    
@@ -129,14 +129,14 @@ Ex:
     ipcBus.close()
 
 
-#### send(topic [, content])
-Send a message to every client subscribed to this topic.
+#### send(channel [, ...args])
+Send a message to every client subscribed to this channel.
 Ex:
 
     ipcBus.send("Hello!", { name: "My age !"}, "is", 10)
 
-#### request(topic, content, [, timeoutDelay]) : Promise<IpcBusRequestResponse>
-Send a request message on specified topic. promise is settled when a result is available.
+#### request(timeoutDelay, channel [, ...args]) : Promise<IpcBusRequestResponse>
+Send a request message on specified channel. promise is settled when a result is available.
 Ex:
 
     ipcBus.request(2000, "compute", "2*PI*9")
