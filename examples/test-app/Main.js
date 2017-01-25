@@ -406,35 +406,40 @@ var NodeProcess = (function () {
 // Startup
 electronApp.on('ready', function () {
 
-    // Setup IPC Broker
-    console.log('<MAIN> Starting IPC broker ...');
-    ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
-    ipcBrokerProcess.on('message', function (msg) {
+    var bLocalBrokerState = true;
 
+    if (bLocalBrokerState) {
+        // Broker in Master process
+        ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
+        ipcBroker.start()
+            .then((msg) => {
+                console.log("IPC Broker instance : Started");
+            })
+            .catch((err) => {
+                console.log("IPC Broker instance : " + err);
+            });
         console.log('<MAIN> IPC broker is ready !');
         // Setup IPC Client (and renderer bridge)
         ipcBus.connect()
             .then(() => {
                 new MainProcess();
             });
-    });
-    ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
-    ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    }
+    else {
+        // Setup Remote Broker
+        console.log('<MAIN> Starting IPC broker ...');
+        ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
+        ipcBrokerProcess.on('message', function (msg) {
 
-    // Broker in Master process
-    // ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
-    // ipcBroker.start()
-    //     .then((msg) => {
-    //         console.log("IPC Broker instance : Started");
-    //     })
-    //     .catch((err) => {
-    //         console.log("IPC Broker instance : " + err);
-    //     });
-    // console.log('<MAIN> IPC broker is ready !');
-    // // Setup IPC Client (and renderer bridge)
-    // ipcBus.connect()
-    //     .then(() => {
-    //         new MainProcess();
-    //     });
+            console.log('<MAIN> IPC broker is ready !');
+            // Setup IPC Client (and renderer bridge)
+            ipcBus.connect()
+                .then(() => {
+                    new MainProcess();
+                });
+        });
+        ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+        ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+    }
 });
 

@@ -21,7 +21,9 @@ function doOpenPerfView(event) {
 }
 
 function doQueryBrokerState() {
-    processToMaster.send('queryState');
+//    processToMaster.send('queryState');
+    ipcBus.request(2000, '/electron-ipc-bus/queryState')
+        .then((ipcBusRequestResponse) => onIPC_BrokerStatusTopic(ipcBusRequestResponse.payload));
 }
 
 

@@ -13,6 +13,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _ipcOptions: IpcBusUtils.IpcOptions;
     private _subscriptions: IpcBusUtils.ChannelConnectionMap;
     private _requestSubscriptions: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionData>;
+    private _ipcBusBrokerClient: IpcBusBrokerClient;
 
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
@@ -22,6 +23,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
         this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
         this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
+
+        this._ipcBusBrokerClient = new IpcBusBrokerClient(this._ipcOptions, this);
     }
 
     // Set API
@@ -33,7 +36,9 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
             this._baseIpc.once('listening', (server: any) => {
                 this._ipcServer = server;
                 IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
-                resolve('started');
+                this._ipcBusBrokerClient.connect()
+                    .then(() => resolve('started'))
+                    .catch(() => reject('Broker client error'));
             });
             setTimeout(() => {
                 reject('timeout');
@@ -63,9 +68,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _onConnection(socket: any, server: any): void {
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
         IpcBusUtils.Logger.info('[IPCBus:Broker] socket.address=' + JSON.stringify(socket.address()));
-        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.localAddress=' + socket.localAddress);
-        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
-        IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
+        // IpcBusUtils.Logger.info('[IPCBus:Broker] socket.localAddress=' + socket.localAddress);
+        // IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
         IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remotePort=' + socket.remotePort);
         socket.on('error', (err: string) => {
             IpcBusUtils.Logger.info(`[IPCBus:Broker] Error on connection: ${err}`);
@@ -152,6 +156,40 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                         break;
                     }
             }
+        }
+    }
+}
+
+import {IpcBusSocketTransport} from './IpcBusNode';
+import {IpcBusCommonClient} from './IpcBusClient';
+
+class IpcBusBrokerClient  extends IpcBusCommonClient {
+    private _ipcBusBrokerServer: IpcBusBrokerServer;
+    private _queryStateLamdba: Function = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) => this.queryState(ipcBusEvent, replyChannel);
+
+    constructor(ipcOptions: IpcBusUtils.IpcOptions, ipcBusBrokerServer: IpcBusBrokerServer) {
+        super('Broker_' + process.pid, new IpcBusSocketTransport(ipcOptions));
+        this._ipcBusBrokerServer = ipcBusBrokerServer;
+    }
+
+    connect(timeoutDelay?: number): Promise<string> {
+        let p: Promise<string> = super.connect(timeoutDelay);
+        p.then(() => this.on('/electron-ipc-bus/queryState', this._queryStateLamdba));
+        return p;
+    }
+
+    close() {
+        super.close();
+        this.off('/electron-ipc-bus/queryState', this._queryStateLamdba);
+    }
+
+    queryState(ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) {
+        let queryState = this._ipcBusBrokerServer.queryState();
+        if (ipcBusEvent.request) {
+            ipcBusEvent.request.resolve(queryState);
+        }
+        else if (replyChannel != null) {
+            this.send(replyChannel, queryState);
         }
     }
 }
