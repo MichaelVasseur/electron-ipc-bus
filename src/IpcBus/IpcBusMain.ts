@@ -84,6 +84,12 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
             super.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName}});
         });
+        // ForEach is supposed to support deletion during the iteration !
+        this._requestChannels.forEach((connData, channel) => {
+            if (connData.connKey === webContentsId) {
+                this._requestChannels.delete(channel);
+            }
+        });
     }
 
     onHandshake(event: any): void {

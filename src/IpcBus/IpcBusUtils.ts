@@ -182,22 +182,16 @@ export class ChannelConnectionMap {
             }
             else {
                 if (peerName == null) {
-                    let peerNamesTemp = new Array<string>();
-                    for (let peerName of connData.peerNames.keys()) {
-                        peerNamesTemp.push(peerName);
-                    }
-                    let len = peerNamesTemp.length;
                     // Test callback first to manage performance
                     if ((callback instanceof Function) === true) {
-                        for (let i = 0; i < len; ++i) {
-                            connData.peerNames.delete(peerNamesTemp[i]);
-                            callback(channel, peerNamesTemp[i], connData);
-                        }
+                        // ForEach is supposed to support deletion during the iteration !
+                        connData.peerNames.forEach((count, peerName) => {
+                            connData.peerNames.delete(peerName);
+                            callback(channel, peerName, connData);
+                        });
                     }
                     else {
-                        for (let i = 0; i < len; ++i) {
-                            connData.peerNames.delete(peerNamesTemp[i]);
-                        }
+                        connData.peerNames.clear();
                     }
                 }
                 else {
@@ -267,16 +261,10 @@ export class ChannelConnectionMap {
     public releaseConnection(connKey: string, callback?: ChannelConnectionMap.MapHandler) {
         this._info(`ReleaseConn: connKey = ${connKey}`);
 
-        // Store keys in an intermediate array
-        // Not sure iterating and removing at the same time is well supported 
-        let channelsTmp = new Array<string>();
-        for (let channel of this._channelsMap.keys()) {
-            channelsTmp.push(channel);
-        }
-        let len = channelsTmp.length;
-        for (let i = 0; i < len; ++i) {
-            this._release(channelsTmp[i], connKey, null, false, callback);
-        }
+        // ForEach is supposed to support deletion during the iteration !
+        this._channelsMap.forEach((connsMap, channel) => {
+            this._release(channel, connKey, null, false, callback);
+        });
     }
 
     public forEachChannel(channel: string, callback: ChannelConnectionMap.ForEachHandler) {
