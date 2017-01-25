@@ -24,13 +24,13 @@ export class IpcBusIpcRendererTransport extends IpcBusTransport {
         if (peerNameOrUndefined) {
             peerName = peerNameOrUndefined;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${peerName}`);
-            this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
+            this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this.onEventHandler(name, ipcBusData, ipcBusEvent, args);
         } else {
             peerName = eventOrPeerName;
             IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${peerName}`);
-            this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
+            this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this.onEventHandler(name, ipcBusData, ipcBusEvent, args);
         }
-        this._onEventReceived(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, {}, {channel: '', sender: { peerName: peerName}}, []);
+        this.onEventHandler(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, {}, {channel: '', sender: { peerName: peerName}}, []);
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
     };
 

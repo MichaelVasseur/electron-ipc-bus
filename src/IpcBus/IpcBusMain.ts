@@ -26,34 +26,27 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
     }
 
     // Override the base method, we forward message to renderer/s
-    protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+    forwardEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
-            case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE:
-                this._onMessageEventReceived(name, ipcBusData, ipcBusEvent, args);
+            case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
+                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
+                this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
+                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
+                    connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
+                });
                 break;
-            case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE:
-                this._onRequestResponseEventReceived(name, ipcBusData, ipcBusEvent, args);
+            }
+            case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
+                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.peerName}`);
+                let connData: IpcBusUtils.ChannelConnectionMap.ConnectionData = this._requestChannels.get(ipcBusData.replyChannel);
+                if (connData) {
+                    this._requestChannels.delete(ipcBusData.replyChannel);
+                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${connData.connKey}`);
+                    connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
+                }
                 break;
-        }
-        super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
-    }
-
-    protected _onMessageEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
-        this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
-            connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
-        });
-    }
-
-    protected _onRequestResponseEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.peerName}`);
-        let connData: IpcBusUtils.ChannelConnectionMap.ConnectionData = this._requestChannels.get(ipcBusData.replyChannel);
-        if (connData) {
-            this._requestChannels.delete(ipcBusData.replyChannel);
-            IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${connData.connKey}`);
-            connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
+            }
         }
     }
 
@@ -161,6 +154,7 @@ export class IpcBusMainClient extends IpcBusCommonClient {
     // Master is in charge to dispatch renderer events, so it can be called very often even if it has no listeners on its own.
     // For optimization-purpose we test if there are real master listeners for the channel before proceeding
     protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+        (this._ipcBusTransport as IpcBusRendererBridge).forwardEventReceived(name, ipcBusData, ipcBusEvent, args);
         if (super.listenerCount(ipcBusEvent.channel) > 0) {
             super._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }

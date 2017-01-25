@@ -406,7 +406,7 @@ var NodeProcess = (function () {
 // Startup
 electronApp.on('ready', function () {
 
-    var bLocalBrokerState = true;
+    var bLocalBrokerState = false;
 
     if (bLocalBrokerState) {
         // Broker in Master process

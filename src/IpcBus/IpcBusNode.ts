@@ -20,7 +20,7 @@ export class IpcBusSocketTransport extends IpcBusTransport {
         this._baseIpc = new BaseIpc();
         this._baseIpc.on('data', (data: any) => {
             if (BaseIpc.Cmd.isCmd(data)) {
-                this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
+                this.onEventHandler(data.name, data.args[0], data.args[1], data.args[2]);
             }
         });
     }

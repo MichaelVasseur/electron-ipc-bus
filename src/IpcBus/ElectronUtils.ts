@@ -14,13 +14,11 @@ export function GuessElectronProcessType(): string {
     let processType = process.type;
     // May be null in Electron sandbox mode or in a Node Process
     if (processType == null) {
-        const ipcRend = electron.ipcRenderer;
-        if (ipcRend != null) {
+        if (electron.ipcRenderer) {
             processType = 'renderer';
         }
         else {
-            const ipcMain = electron.ipcMain;
-            if (ipcMain != null) {
+            if (electron.ipcMain) {
                 processType = 'browser';
             }
         }

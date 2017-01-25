@@ -4,7 +4,7 @@ import { IpcBusClient } from './IpcBusInterfaces';
 import { IpcBusBroker } from './IpcBusInterfaces';
 // export * from './IpcBusInterfaces';
 
-import { IpcBusBrokerServer } from './IpcBusBrokerServer';
+import { IpcBusBrokerServer } from './IpcBusBroker';
 import * as IpcBusUtils from './IpcBusUtils';
 
 /** @internal */
