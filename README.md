@@ -52,6 +52,7 @@ Ex:
     var queryState = ipcBusBroker.queryState() 
 
 Returns the list of pair <channel, peerName> subscriptions. Format may change from one version to another.
+This information can be retrieved from an IpcBusClient through the channel : /electron-ipc-bus/queryState
 
 
 ## Ipc Bus client
