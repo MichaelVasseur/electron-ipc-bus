@@ -37,7 +37,6 @@ export class IpcBusCommonClient extends EventEmitter
         this._ipcBusTransport.onEventHandler = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
     }
 
-
     protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE: {

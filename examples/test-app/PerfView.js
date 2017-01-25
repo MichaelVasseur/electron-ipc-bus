@@ -63,7 +63,7 @@ function onIPCBus_TestPerformanceResult(uuid) {
         var cell1 = row.insertCell(-1);
         var cell2 = row.insertCell(-1);
         var cell3 = row.insertCell(-1);
-        cell0.innerHTML = `${msgTestStart.test.type} (${msgTestStart.test.bufferSize})`;
+        cell0.innerHTML = `${msgTestStart.test.typeCommand} ${msgTestStart.test.typeArgs} (${msgTestStart.test.bufferSize})`;
         cell1.innerHTML = `#${msgTestStart.start.peerName} (${msgTestStart.type})`;
         cell2.innerHTML = `#${msgTestStop.stop.peerName} (${msgTestStop.type})`;
         cell3.setAttribute('delay', delay);

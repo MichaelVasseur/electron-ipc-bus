@@ -114,13 +114,11 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         const webContents = event.sender;
         IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
-            case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL :
-            {
+            case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL : {
                 this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.peerName);
                 break;
             }
-            case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL :
-            {
+            case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL : {
                 if (ipcBusData.unsubscribeAll) {
                     this._channelRendererRefs.releasePeerName(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName);
                 }
@@ -129,13 +127,11 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
                 }
                 break;
             }
-            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE :
-            {
+            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE : {
                 this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionData(webContents.id, webContents));
                 break;
             }
-            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL :
-            {
+            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL : {
                 this._requestChannels.delete(ipcBusData.replyChannel);
                 break;
             }
