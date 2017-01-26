@@ -24,7 +24,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _requestChannels: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionData>;
     private _ipcBusBrokerClient: IpcBusBrokerClient;
 
-    private _queryStateLamdba: Function = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) => this._onQueryState(ipcBusEvent, replyChannel);
+    private _queryStateLamdba: IpcBusInterfaces.IpcBusListener = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) => this._onQueryState(ipcBusEvent, replyChannel);
 
     constructor(ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
@@ -54,7 +54,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
                     this._ipcBusBrokerClient.connect()
                         .then(() => {
-                            this._ipcBusBrokerClient.on('/electron-ipc-bus/queryState', this._queryStateLamdba);
+                            this._ipcBusBrokerClient.on(IpcBusInterfaces.IpcBusClient.QUERYSTATE_CHANNEL, this._queryStateLamdba);
                             resolve('started');
                         })
                         .catch((err) => reject(`Broker client error = ${err}`));
@@ -70,7 +70,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
 
     stop() {
         if (this._ipcServer) {
-            this._ipcBusBrokerClient.off('/electron-ipc-bus/queryState', this._queryStateLamdba);
+            this._ipcBusBrokerClient.off(IpcBusInterfaces.IpcBusClient.QUERYSTATE_CHANNEL, this._queryStateLamdba);
             this._ipcBusBrokerClient.close();
             this._ipcServer.close();
             this._ipcServer = null;

@@ -22,7 +22,7 @@ function doOpenPerfView(event) {
 
 function doQueryBrokerState() {
 //    processToMaster.send('queryState');
-    ipcBus.request(2000, '/electron-ipc-bus/queryState')
+    ipcBus.request(2000, ipcBus_QUERYSTATE_CHANNEL)
         .then((ipcBusRequestResponse) => onIPC_BrokerStatusTopic(ipcBusRequestResponse.payload));
 }
 

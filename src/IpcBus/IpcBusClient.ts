@@ -41,8 +41,7 @@ export class IpcBusCommonClient extends EventEmitter
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE: {
                 IpcBusUtils.Logger.info(`[IpcBusClient] Emit message received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
-                let argsEmit: any[] = [ipcBusEvent.channel, ipcBusEvent].concat(args);
-                this.emit.apply(this, argsEmit);
+                this.emit(ipcBusEvent.channel, ipcBusEvent, ...args);
                 break;
             }
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
@@ -57,8 +56,7 @@ export class IpcBusCommonClient extends EventEmitter
                         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, {channel: ipcBusData.replyChannel, sender: {peerName: this._peerName}}, [err]);
                     }
                 };
-                let argsEmit: any[] = [ipcBusEvent.channel, ipcBusEvent].concat(args);
-                this.emit.apply(this, argsEmit);
+                this.emit(ipcBusEvent.channel, ipcBusEvent, ...args);
                 break;
             }
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
@@ -148,30 +146,30 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     // EventEmitter API
-    addListener(channel: string, listener: Function): this {
+    addListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.addListener(channel, listener);
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});
         return this;
     }
 
-    removeListener(channel: string, listener: Function): this {
+    removeListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.removeListener(channel, listener);
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});
         return this;
     }
 
-    on(channel: string, listener: Function): this {
+    on(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         return this.addListener(channel, listener);
     }
 
-    once(channel: string, listener: Function): this {
+    once(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.once(channel, listener);
         // removeListener will be automatically called by NodeJS when callback has been triggered
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});
         return this;
     }
 
-    off(channel: string, listener: Function): this {
+    off(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         return this.removeListener(channel, listener);
     }
 
@@ -184,13 +182,13 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     // Added in Node 6...
-    prependListener(channel: string, listener: Function): this {
+    prependListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.prependListener(channel, listener);
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});
         return this;
     }
 
-    prependOnceListener(channel: string, listener: Function): this {
+    prependOnceListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.prependOnceListener(channel, listener);
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: this._peerName}});
         return this;

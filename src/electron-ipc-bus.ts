@@ -1,7 +1,8 @@
-export {IpcBusEvent} from './IpcBus/IpcBusInterfaces';
+export {IpcBusRequest} from './IpcBus/IpcBusInterfaces';
 export {IpcBusRequestResponse} from './IpcBus/IpcBusInterfaces';
-export {IpcBusClient} from './IpcBus/IpcBusInterfaces';
-export {IpcBusBroker} from './IpcBus/IpcBusInterfaces';
+export {IpcBusSender} from './IpcBus/IpcBusInterfaces';
+export {IpcBusEvent} from './IpcBus/IpcBusInterfaces';
+export {IpcBusListener} from './IpcBus/IpcBusInterfaces';
 
 import {IpcBusClient} from './IpcBus/IpcBusInterfaces';
 import {IpcBusBroker} from './IpcBus/IpcBusInterfaces';
@@ -9,6 +10,8 @@ import {IpcBusBroker} from './IpcBus/IpcBusInterfaces';
 import {_CreateIpcBusBroker} from './IpcBus/IpcBusApi';
 import {_CreateIpcBus} from './IpcBus/IpcBusApi';
 import {_ActivateIpcBusTrace} from './IpcBus/IpcBusApi';
+
+export const QUERYSTATE_CHANNEL = IpcBusClient.QUERYSTATE_CHANNEL;
 
 export function CreateIpcBusBroker(busPath?: string): IpcBusBroker {
     return _CreateIpcBusBroker(busPath);

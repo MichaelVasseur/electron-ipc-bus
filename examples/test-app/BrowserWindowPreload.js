@@ -4,6 +4,7 @@
 'use strict';
 
 window.ipcBus = require('electron-ipc-bus').CreateIpcBus();
+window.ipcBus_QUERYSTATE_CHANNEL = require('electron-ipc-bus').QUERYSTATE_CHANNEL;
 require('electron-ipc-bus').ActivateIpcBusTrace(true);
 
 window.ipcRenderer = require('electron').ipcRenderer;
