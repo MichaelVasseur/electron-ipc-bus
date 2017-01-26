@@ -139,14 +139,16 @@ ipcBus.close()
 - listener: IpcBusListener
 
 Listens to channel, when a new message arrives listener would be called with listener(event, args...).
-NOTE: on, prependListener, once and prependOnceListener methods are supported as well
+
+NOTE: ***on***, ***prependListener***, ***once*** and ***prependOnceListener*** methods are supported as well
 
 #### removeListener(channel, listener)
 - channel: string
 - listener: IpcBusListener
 
 Removes the specified listener from the listener array for the specified channel.
-NOTE: off is supported as well
+
+NOTE: ***off*** method is supported as well
 
 #### removeAllListeners([channel])
 channel: String (optional)
@@ -170,7 +172,16 @@ ipcBus.send("Hello!", { name: "My age !"}, "is", 10)
 - channel : string
 - ...args any[]
 
-Send a request message on specified channel. the returned promise is settled when a result is available.
+Send a request message on specified channel. The returned Promise is settled when a result is available. 
+The timeout defines how many times we wait for the response.
+The Promise provides an IpcBusRequestResponse object :
+```ts
+interface IpcBusRequestResponse {
+    event: IpcBusEvent;
+    payload?: Object | string;
+    err?: string;
+}
+```
 
 ```js
 ipcBus.request(2000, "compute", "2*PI*9")
@@ -178,7 +189,7 @@ ipcBus.request(2000, "compute", "2*PI*9")
         console.log("channel = " + ipcBusRequestResponse.event.channel + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.event.sender.peerName);
      }
      .catch(ipcBusRequestResponse) {
-        console.log("err = " + ipcBusRequestResponse.payload);
+        console.log("err = " + ipcBusRequestResponse.err);
      }
 ```
 
@@ -197,7 +208,7 @@ ipcBus.on("Hello!", HelloHandler)
 
 ### IpcBusEvent object
 ```ts
-IpcBusEvent {
+interface IpcBusEvent {
     channel: string;
     sender: IpcBusSender {
         peerName: string;
