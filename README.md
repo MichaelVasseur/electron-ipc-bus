@@ -45,7 +45,7 @@ const ipcBusBroker = ipcBusModule.CreateIpcBusBroker();
 
 ### Methods
 
-#### start([timeoutDelay]) : Promise<string>
+#### start([timeoutDelay]) : Promise < string >
 - timeoutDelay : number (milliseconds)
 
 ```js
@@ -148,10 +148,20 @@ The IpcBusClient is an instance of the EventEmitter class.
 When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
 The callback must follow the IpcBusListener signature.
 
-### Listening Methods
-The IpcBusClient has the following methods:
+Only one IpcBusClient is created by Process/Renderer. If you ask for more the same instance will be returned.
 
-#### connect([timeoutDelay]) : Promise<string>
+### Property
+
+#### peerName
+For debugging purpose, each IpcBusClient is identified by a peerName. 
+The peerName is uniq and computed from the type of the process : 
+- Master
+- Renderer + WebContents Id
+- Node + Process Id
+
+### Listening Methods
+
+#### connect([timeoutDelay]) : Promise < string >
 - timeoutDelay : number (milliseconds)
 
 ```js
@@ -196,7 +206,7 @@ Arguments will be serialized in JSON internally and hence no functions or protot
 ipcBus.send("Hello!", { name: "My age !"}, "is", 10)
 ```
 
-#### request(timeoutDelay, channel [, ...args]) : Promise<IpcBusRequestResponse>
+#### request(timeoutDelay, channel [, ...args]) : Promise < IpcBusRequestResponse >
 - timeoutDelay : number (milliseconds)
 - channel : string
 - ...args any[]
@@ -255,12 +265,7 @@ The event object passed to the listener has the following properties:
 channel delivering the message
 
 #### event.sender.peerName: string
-
-For debugging purpose, each sender is identified by a peerName. 
-The peerName is computed automatically from the type of the process : 
-- Master
-- Renderer + WebContents Id
-- Node + Process Id
+peerName of the sender
 
 #### event.request [optional] : IpcBusRequest
 if present the message is a request.
