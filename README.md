@@ -6,7 +6,15 @@ For performance purpose, it is better to instanciate the broker in an independen
 
 This Ipc bus works with Chromium/Electron in sandbox mode and with Chromium affinity case (several webpages hosted in the same renderer process)
 
-## Ipc Bus Broker (IpcBusBroker interface)
+## IpcBusBroker
+### Interface
+```ts
+interface IpcBusBroker {
+    start(timeoutDelay?: number): Promise<string>;
+    stop(): void;
+    queryState(): Object;
+}
+```
 ### Initialization of the Broker (in a node process)
 
 ```js
@@ -66,7 +74,28 @@ Returns the list of pair <channel, peerName> subscriptions. Format may change fr
 This information can be retrieved from an IpcBusClient through the channel : /electron-ipc-bus/queryState
 
 
-## Ipc Bus client (IpcBusClient interface)
+## IpcBusClient
+### Interface
+```ts
+interface IpcBusClient extends events.EventEmitter {
+    readonly peerName: string;
+    connect(timeoutDelay?: number): Promise<string>;
+    close(): void;
+    send(channel: string, ...args: any[]): void;
+    request(timeoutDelay: number, channel: string, ...args: any[]): Promise<IpcBusRequestResponse>;
+
+    // EventEmitter overriden API
+    addListener(channel: string, listener: IpcBusListener): this;
+    removeListener(channel: string, listener: IpcBusListener): this;
+    on(channel: string, listener: IpcBusListener): this;
+    once(channel: string, listener: IpcBusListener): this;
+    off(channel: string, listener: IpcBusListener): this;
+
+    // Added in Node 6...
+    prependListener(channel: string, listener: IpcBusListener): this;
+    prependOnceListener(channel: string, listener: IpcBusListener): this;
+}
+```
 
 ### Initialization in the Main/Browser Node process
 
