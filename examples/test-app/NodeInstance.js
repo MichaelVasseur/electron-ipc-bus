@@ -11,7 +11,7 @@ const path = require('path');
 const child_process = require('child_process');
 
 const ipcBusModule = require('electron-ipc-bus');
-const ipcBus = ipcBusModule.CreateIpcBus();
+const ipcBus = ipcBusModule.CreateIpcBusClient();
 ipcBusModule.ActivateIpcBusTrace(true);
 
 const PerfTests = require('./PerfTests.js');

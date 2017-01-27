@@ -1,6 +1,6 @@
 var PerfTests = function _PerfTests(type) {
     const _ipcBusModule = require('electron-ipc-bus');
-    var _ipcBus = _ipcBusModule.CreateIpcBus();
+    var _ipcBus = _ipcBusModule.CreateIpcBusClient();
     var _type = type;
 
     this.doPerformanceTests = function _doPerformanceTests(testParams) {

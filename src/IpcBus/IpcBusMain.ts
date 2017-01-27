@@ -10,7 +10,7 @@ import * as IpcBusInterfaces from './IpcBusInterfaces';
 class IpcBusRendererBridge extends IpcBusSocketTransport {
     _ipcObj: any;
     _channelRendererRefs: IpcBusUtils.ChannelConnectionMap;
-    _requestChannels: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionData>;
+    _requestChannels: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionInfo>;
     _webContents: any;
 //    _lambdaCleanUpHandler: Function;
 
@@ -18,7 +18,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         super(ipcOptions);
         this._ipcObj = require('electron').ipcMain;
         this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IPCBus:Bridge]');
-        this._requestChannels = new Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionData>();
+        this._requestChannels = new Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionInfo>();
         this._webContents = require('electron').webContents;
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
         //     this.rendererCleanUp(webContentsId);
@@ -39,7 +39,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
             }
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
                 IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.peerName}`);
-                let connData: IpcBusUtils.ChannelConnectionMap.ConnectionData = this._requestChannels.get(ipcBusData.replyChannel);
+                let connData = this._requestChannels.get(ipcBusData.replyChannel);
                 if (connData) {
                     this._requestChannels.delete(ipcBusData.replyChannel);
                     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${connData.connKey}`);
@@ -128,7 +128,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE : {
-                this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionData(webContents.id, webContents));
+                this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionInfo(webContents.id, webContents));
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL : {

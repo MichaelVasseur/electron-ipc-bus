@@ -82,7 +82,7 @@ export class IpcBusCommonClient extends EventEmitter
                 IpcBusUtils.Logger.info(`[IpcBusClient] Peer #${localIpcBusEvent.sender.peerName} replied to request on ${generatedChannel}`);
                 // Unregister locally
                 super.removeListener(generatedChannel, localRequestCallback);
-                // Unrgister remotely
+                // Unregister remotely
                 // this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, IpcBusData, ipcBusEvent);
                 // The channel is not generated one
                 localIpcBusEvent.channel = channel;
@@ -113,7 +113,7 @@ export class IpcBusCommonClient extends EventEmitter
                 if (super.listenerCount(generatedChannel) > 0) {
                     // Unregister locally
                     super.removeListener(generatedChannel, localRequestCallback);
-                    // Unrgister remotely
+                    // Unregister remotely
                     this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent);
                     IpcBusUtils.Logger.info(`[IpcBusClient] reject: timeout`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {event: {channel: channel, sender: {peerName: ''}}, err: 'timeout'};

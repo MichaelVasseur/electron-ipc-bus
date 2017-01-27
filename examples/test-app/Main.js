@@ -26,7 +26,7 @@ console.log('IPC Bus Path : ' + busPath);
 // IPC Bus
 const ipcBusModule = require('electron-ipc-bus');
 // const ipcBus = ipcBusModule.CreateIpcBusForClient('browser', busPath);
-const ipcBus = ipcBusModule.CreateIpcBus(busPath);
+const ipcBus = ipcBusModule.CreateIpcBusClient(busPath);
 ipcBusModule.ActivateIpcBusTrace(true);
 
 // Startup
@@ -405,7 +405,7 @@ var NodeProcess = (function () {
 
 // Startup
 electronApp.on('ready', function () {
-    var bLocalBrokerState = false;
+    var bLocalBrokerState = true;
 
     if (bLocalBrokerState) {
         // Broker in Master process
