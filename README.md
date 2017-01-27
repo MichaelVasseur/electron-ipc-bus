@@ -6,6 +6,66 @@ For performance purpose, it is better to instanciate the broker in an independen
 
 This Ipc bus works with Chromium/Electron in sandbox mode and with Chromium affinity case (several webpages hosted in the same renderer process)
 
+# Installation
+npm install electron-ipc-bus
+
+dependencies
+https://github.com/oleics/node-easy-ipc
+https://github.com/pkrumins/node-lazy
+
+
+# Usage
+
+```js
+// Load modules
+const ipcBusModule = require("electron-ipc-bus");
+const electronApp = require('electron').app;
+
+// Configuration
+const ipcBusPath = 50494;
+// const ipcBusPath = '/myfavorite/path';
+
+// Startup
+electronApp.on('ready', function () {
+    // Create broker
+    const ipcBusBroker = ipcBusModule.CreateIpcBusBroker(ipcBusPath);
+
+    // Start broker
+    ipcBusBroker.start()
+
+    // Create client
+        .then((msg) => {
+            const ipcBusClient = ipcBusModule.CreateIpcBusClient(ipcBusPath);
+            ipcBusClient.connect()
+
+    // Chatting on channel 'greeting'
+                .then((msg) => {
+                    ipcBusClient.addListener('greeting', (ipcBusEvent, greetingMsg) => {
+                        if (ipcBusEvent.request) {
+                            ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.peerName);
+                        }
+                        else {
+                            ipcBusClient.send('greeting-reply', 'thanks to all listeners')
+                            console.log(greetingMsg);
+                        }
+                    });
+
+                    ipcBusClient.addListener('greeting-reply', (ipcBusEvent, greetingReplyMsg) => {
+                        console.log(greetingReplyMsg);
+                    });
+
+                    ipcBusClient.send('greeting', 'hello everyone!');
+
+                    ipcBusClient.request(2000, 'greeting', 'hello partner!')
+                        .then((ipcBusRequestResponse) => {
+                            console.log(ipcBusRequestResponse.event.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                        });
+                });
+        });
+});
+
+```
+
 ## IpcBusBroker
 ### Interface
 ```ts
@@ -54,7 +114,7 @@ ipcBusBroker.start()
         .catch((err) => console.log(err))
 ````
 
-Start the messages dispatcher.
+Start the broker dispatcher.
 If succeeded the msg is 'started' (do not rely on it, subject to change). 
 If failed (timeout or any other internal error), ***err*** contains the error message.
 
@@ -101,7 +161,7 @@ interface IpcBusClient extends events.EventEmitter {
 
 ```js
 const ipcBusModule = require("electron-ipc-bus");
-const ipcBus = ipcBusModule.CreateIpcBus([busPath]);
+const ipcBus = ipcBusModule.CreateIpcBusClient([busPath]);
 ````
 
 The require() loads the module. CreateIpcBus setups the client with the ***busPath*** that was used to start the broker.
@@ -109,28 +169,28 @@ If ***busPath*** is not specified, the framework tries to get it from the comman
  
 Ex, busPath set by code:
 ```js
-const ipcBus = ipcBusModule.CreateIpcBus('/my-ipc-bus-path');
+const ipcBus = ipcBusModule.CreateIpcBusClient('/my-ipc-bus-path');
 ```
 
 Ex, busPath set by command line: electron . --bus-path=***value***
 ```js    
-const ipcBus = ipcBusModule.CreateIpcBus();
+const ipcBus = ipcBusModule.CreateIpcBusClient();
 ```
 
 ### Initialization in a Node single process
  
 Ex, busPath set by code:
 ```js
-const ipcBus = ipcBusModule.CreateIpcBus('/my-ipc-bus-path');
+const ipcBus = ipcBusModule.CreateIpcBusClient('/my-ipc-bus-path');
 ```
 Ex, busPath set by command line: electron . --bus-path=***value***
 ```js 
-const ipcBus = ipcBusModule.CreateIpcBus();
+const ipcBus = ipcBusModule.CreateIpcBusClient();
 ```
 ### Initialization in a Renderer (Sandboxed or not) process
 ```js
 const ipcBusModule = require("electron-ipc-bus");
-const ipcBus = ipcBusModule.CreateIpcBus();
+const ipcBus = ipcBusModule.CreateIpcBusClient();
 ```
 
 NOTE : If the renderer is running in sandboxed mode, the code above
@@ -139,14 +199,14 @@ Otherwise, the Electron's ipcRenderer is not accessible and the client cannot wo
 The code below to make the client accessible to the the Web page scripts.
 
 ```js
-window.ipcBus = require('electron-ipc-bus').CreateIpcBus();
+window.ipcBus = require('electron-ipc-bus').CreateIpcBusClient();
 ```
 
 ## How to use
 The IpcBusClient is an instance of the EventEmitter class.
 
 When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
-The callback must follow the IpcBusListener signature.
+The callback must follow the IpcBusListener signature (see below).
 
 Only one IpcBusClient is created by Process/Renderer. If you ask for more the same instance will be returned.
 
@@ -159,7 +219,7 @@ The peerName is uniq and computed from the type of the process :
 - Renderer + WebContents Id
 - Node + Process Id
 
-### Listening Methods
+### Connectivity Methods
 
 #### connect([timeoutDelay]) : Promise < string >
 - timeoutDelay : number (milliseconds)
@@ -193,6 +253,19 @@ NOTE: ***off*** method is supported as well
 channel: String (optional)
 
 Removes all listeners, or those of the specified channel.
+
+### IpcBusListener(event, ...args) callback
+- event: IpcBusEvent
+- ...args: any[]): void;
+
+The first parameter of the callback is always an event which contains the channel and the origin of the message (sender).
+
+```js
+function HelloHandler(ipcBusEvent, content) {
+    console.log("Received '" + content + "' on channel '" + ipcBusEvent.channel +"' from #" + ipcBusEvent.sender.peerName)
+}
+ipcBus.on("Hello!", HelloHandler)
+```
 
 ### Posting Methods
 #### send(channel [, ...args])
@@ -232,19 +305,6 @@ ipcBus.request(2000, "compute", "2*PI*9")
      }
 ```
 
-### IpcBusListener(event, ...args) callback
-- event: IpcBusEvent
-- ...args: any[]): void;
-
-The first parameter of the callback is always an event which contains the channel and the origin of the message (sender).
-
-```js
-function HelloHandler(ipcBusEvent, content) {
-    console.log("Received '" + content + "' on channel '" + ipcBusEvent.channel +"' from #" + ipcBusEvent.sender.peerName)
-}
-ipcBus.on("Hello!", HelloHandler)
-```
-
 ### IpcBusEvent object
 ```ts
 interface IpcBusEvent {
@@ -268,8 +328,8 @@ channel delivering the message
 peerName of the sender
 
 #### event.request [optional] : IpcBusRequest
-if present the message is a request.
-Listener can resolve the request by calling event.request.resolve with proper response 
+if present, the message is a request.
+Listener can resolve the request by calling event.request.resolve with the response 
 or can reject the request by calling event.request.reject with an error message.
 
 ## Test application
@@ -293,3 +353,12 @@ To run the application in sandboxed mode :
     npm run start-sandboxed
 
  
+# MIT License
+
+Copyright (c) 2017 Michael Vasseur and Emmanuel Kimmerlin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

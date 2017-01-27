@@ -28,7 +28,7 @@ import * as ElectronUtils from './ElectronUtils';
 let _ipcBusClient: IpcBusClient = null;
 
 /** @internal */
-function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusClient {
+function CreateIpcBusClientForProcess(processType: string, busPath?: string): IpcBusClient {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     IpcBusUtils.Logger.info(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
 
@@ -55,8 +55,8 @@ function CreateIpcBusForProcess(processType: string, busPath?: string): IpcBusCl
 }
 
 /** @internal */
-export function _CreateIpcBus(busPath?: string): IpcBusClient {
-    return CreateIpcBusForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
+export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
+    return CreateIpcBusClientForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
 }
 
 /** @internal */

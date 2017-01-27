@@ -1,0 +1,20 @@
+{
+  "name": "ipc-bus-tests",
+  "version": "1.0.0",
+  "description": "Basic Tests for IPC subsystem",
+  "main": "Sample.js",
+  "scripts": {
+    "start": "electron .",
+    "start-sandboxed": "electron . --enable-sandbox",
+    "build" : "npm run build-ipc",
+    "build-ipc": "npm uninstall electron-ipc-bus && npm install electron-ipc-bus"
+  },
+  "author": "Thomson Reuters",
+  "homepage": "http://www.thomsonreuters.com",
+  "devDependencies": {
+    "electron": "1.4.10"
+  },
+  "dependencies": {
+    "electron-ipc-bus" : "file:../../"
+  }
+}

@@ -405,7 +405,6 @@ var NodeProcess = (function () {
 
 // Startup
 electronApp.on('ready', function () {
-
     var bLocalBrokerState = false;
 
     if (bLocalBrokerState) {
