@@ -307,21 +307,14 @@ export class ChannelConnectionMap {
 /** @internal */
 export namespace ChannelConnectionMap {
     /** @internal */
-    export class ConnectionInfo {
+    export class ConnectionData {
         readonly connKey: string;
         readonly conn: any;
+        peerNames: Map<string, number> = new Map<string, number>();
 
         constructor(connKey: string, conn: any) {
             this.connKey = connKey;
             this.conn = conn;
-        }
-    }
-
-    export class ConnectionData extends ConnectionInfo {
-        peerNames: Map<string, number> = new Map<string, number>();
-
-        constructor(connKey: string, conn: any) {
-            super(connKey, conn);
         }
     }
 

@@ -10,7 +10,7 @@ import * as IpcBusInterfaces from './IpcBusInterfaces';
 class IpcBusRendererBridge extends IpcBusSocketTransport {
     _ipcObj: any;
     _channelRendererRefs: IpcBusUtils.ChannelConnectionMap;
-    _requestChannels: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionInfo>;
+    _requestChannels: Map<string, any>;
     _webContents: any;
 //    _lambdaCleanUpHandler: Function;
 
@@ -18,7 +18,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         super(ipcOptions);
         this._ipcObj = require('electron').ipcMain;
         this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IPCBus:Bridge]');
-        this._requestChannels = new Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionInfo>();
+        this._requestChannels = new Map<string, any>();
         this._webContents = require('electron').webContents;
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
         //     this.rendererCleanUp(webContentsId);
@@ -39,11 +39,11 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
             }
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
                 IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.peerName}`);
-                let connData = this._requestChannels.get(ipcBusData.replyChannel);
-                if (connData) {
+                let webContents = this._requestChannels.get(ipcBusData.replyChannel);
+                if (webContents) {
                     this._requestChannels.delete(ipcBusData.replyChannel);
-                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${connData.connKey}`);
-                    connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
+                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${webContents.id}`);
+                    webContents.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
                 }
                 break;
             }
@@ -73,13 +73,13 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         return p;
     }
 
-    rendererCleanUp(webContentsId: string): void {
+    rendererCleanUp(webContents: any, webContentsId: string): void {
         this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
             super.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName}});
         });
         // ForEach is supposed to support deletion during the iteration !
-        this._requestChannels.forEach((connData, channel) => {
-            if (connData.connKey === webContentsId) {
+        this._requestChannels.forEach((webContentsForRequest, channel) => {
+            if (webContentsForRequest === webContents) {
                 this._requestChannels.delete(channel);
             }
         });
@@ -91,7 +91,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         // Have to closure the webContentsId as webContents is undefined when destroyed !!!
         let webContentsId = webContents.id;
         webContents.addListener('destroyed', () => {
-            this.rendererCleanUp(webContentsId);
+            this.rendererCleanUp(webContents, webContentsId);
         });
         // webContents.addListener('destroyed', this._lambdaCleanUpHandler);
         webContents.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, peerName);
@@ -107,7 +107,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
         const webContents = event.sender;
         // Do not know how to manage that !
         // webContents.removeListener('destroyed', this._lambdaCleanUpHandler);
-        this.rendererCleanUp(webContents.id);
+        this.rendererCleanUp(webContents, webContents.id);
     }
 
     onRendererMessage(event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
@@ -128,7 +128,7 @@ class IpcBusRendererBridge extends IpcBusSocketTransport {
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE : {
-                this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionInfo(webContents.id, webContents));
+                this._requestChannels.set(ipcBusData.replyChannel, webContents);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL : {

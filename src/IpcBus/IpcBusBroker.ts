@@ -21,7 +21,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;
     private _subscriptions: IpcBusUtils.ChannelConnectionMap;
-    private _requestChannels: Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionInfo>;
+    private _requestChannels: Map<string, any>;
     private _ipcBusBrokerClient: IpcBusBrokerClient;
 
     private _queryStateLamdba: IpcBusInterfaces.IpcBusListener = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) => this._onQueryState(ipcBusEvent, replyChannel);
@@ -30,7 +30,7 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
         this._subscriptions = new IpcBusUtils.ChannelConnectionMap('[IPCBus:Broker]');
-        this._requestChannels = new Map<string, IpcBusUtils.ChannelConnectionMap.ConnectionInfo>();
+        this._requestChannels = new Map<string, any>();
         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
         this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
         this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
@@ -111,8 +111,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
     private _onClose(err: any, socket: any, server: any): void {
         this._subscriptions.releaseConnection(socket.remotePort);
         // ForEach is supposed to support deletion during the iteration !
-        this._requestChannels.forEach((connData, channel) => {
-            if (connData.connKey === socket.remotePort) {
+        this._requestChannels.forEach((socketForRequest, channel) => {
+            if (socketForRequest.remotePort === socket.remotePort) {
                 this._requestChannels.delete(channel);
             }
         });
@@ -148,8 +148,8 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                     IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
 
+                    // Send data to subscribed connections
                     this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                        // Send data to subscribed connections
                         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
                     });
                     break;
@@ -160,9 +160,10 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.peerName}`);
 
                     // Register on the replyChannel
-                    this._requestChannels.set(ipcBusData.replyChannel, new IpcBusUtils.ChannelConnectionMap.ConnectionInfo(socket.remotePort, socket));
+                    this._requestChannels.set(ipcBusData.replyChannel, socket);
+
+                    // Request data to subscribed connections
                     this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                        // Request data to subscribed connections
                         BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
                     });
                     break;
@@ -172,11 +173,11 @@ export class IpcBusBrokerServer implements IpcBusInterfaces.IpcBusBroker {
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                     IpcBusUtils.Logger.info(`[IPCBus:Broker] Received response request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.peerName}`);
 
-                    let connData = this._requestChannels.get(ipcBusData.replyChannel);
-                    if (connData) {
+                    let socket = this._requestChannels.get(ipcBusData.replyChannel);
+                    if (socket) {
                         this._requestChannels.delete(ipcBusData.replyChannel);
                         // Send data to subscribed connections
-                        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
+                        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], socket);
                     }
                     break;
                 }
