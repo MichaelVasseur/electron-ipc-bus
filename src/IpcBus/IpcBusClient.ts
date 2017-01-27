@@ -6,7 +6,6 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 // This class implements the transaction between an EventEmitter and an ipc client : BrokerServer (easy-ipc) or Electron (ipcRenderer/ipcMain)
 /** @internal */
-
 export class IpcBusData {
     replyChannel?: string;
     resolve?: boolean;
@@ -14,6 +13,7 @@ export class IpcBusData {
     unsubscribeAll?: boolean;
 }
 
+/** @internal */
 export abstract class IpcBusTransport {
     // A bit ugly but efficient ;-)
     public onEventHandler: Function;
@@ -30,10 +30,10 @@ export class IpcBusCommonClient extends EventEmitter
     protected _ipcBusTransport: IpcBusTransport;
     protected _peerName: string;
 
-    constructor(peerName: string, ipcBusEventEmitter: IpcBusTransport) {
+    constructor(peerName: string, ipcBusTransport: IpcBusTransport) {
         super();
         this._peerName = peerName;
-        this._ipcBusTransport = ipcBusEventEmitter;
+        this._ipcBusTransport = ipcBusTransport;
         this._ipcBusTransport.onEventHandler = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
     }
 

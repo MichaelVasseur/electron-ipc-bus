@@ -1,18 +1,15 @@
 # electron-ipc-bus
 A safe Ipc bus for applications built on Electron. 
+This Ipc bus offers a common API for exchanging data between any Electron process : Node, Master and renderer Processes.
 
-Dispatching of messages is managed by a broker. The broker can be instanciated in a node or in a the master process (not in renderer).
-For performance purpose, it is better to instanciate the broker in an independent node process.
-
-This Ipc bus works with Chromium/Electron in sandbox mode and with Chromium affinity case (several webpages hosted in the same renderer process)
+This Ipc bus works with a Chromium/Electron in sandbox mode and with Chromium affinity case (several webpages hosted in the same renderer process)
 
 # Installation
 npm install electron-ipc-bus
 
-dependencies
-https://github.com/oleics/node-easy-ipc
+Dependencies:  
+https://github.com/oleics/node-easy-ipc  
 https://github.com/pkrumins/node-lazy
-
 
 # Usage
 
@@ -66,8 +63,12 @@ electronApp.on('ready', function () {
 
 ```
 
-## IpcBusBroker
-### Interface
+# IpcBusBroker
+Dispatching of messages is managed by a broker. You must have only one single Broker for the whole application.
+The broker can be instanciated in a node or in a the master process (not in renderer).  
+For performance purpose, it is better to instanciate the broker in an independent node process.
+
+## Interface
 ```ts
 interface IpcBusBroker {
     start(timeoutDelay?: number): Promise<string>;
@@ -75,7 +76,8 @@ interface IpcBusBroker {
     queryState(): Object;
 }
 ```
-### Initialization of the Broker (in a node process)
+
+## Initialization of the Broker (in a node process)
 
 ```js
 const ipcBusModule = require("electron-ipc-bus");
@@ -103,9 +105,9 @@ Ex, busPath set by command line: electron . --bus-path=***value***
 const ipcBusBroker = ipcBusModule.CreateIpcBusBroker();
 ```
 
-### Methods
+## Methods
 
-#### start([timeoutDelay]) : Promise < string >
+### start([timeoutDelay]) : Promise < string >
 - timeoutDelay : number (milliseconds)
 
 ```js
@@ -118,13 +120,13 @@ Start the broker dispatcher.
 If succeeded the msg is 'started' (do not rely on it, subject to change). 
 If failed (timeout or any other internal error), ***err*** contains the error message.
 
-#### stop()
+### stop()
 
 ```js
 ipcBusBroker.stop() 
 ```
 
-#### queryState() - for debugging purpose only
+### queryState() - for debugging purpose only
 
 ```js
 var queryState = ipcBusBroker.queryState() 
@@ -134,8 +136,15 @@ Returns the list of pair <channel, peerName> subscriptions. Format may change fr
 This information can be retrieved from an IpcBusClient through the channel : /electron-ipc-bus/queryState
 
 
-## IpcBusClient
-### Interface
+# IpcBusClient
+The IpcBusClient is an instance of the EventEmitter class.
+
+When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
+The callback must follow the IpcBusListener signature (see below).
+
+Only one IpcBusClient is created by Process/Renderer. If you ask for more the same instance will be returned.
+
+## Interface
 ```ts
 interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
@@ -157,7 +166,7 @@ interface IpcBusClient extends events.EventEmitter {
 }
 ```
 
-### Initialization in the Main/Browser Node process
+## Initialization in the Main/Browser Node process
 
 ```js
 const ipcBusModule = require("electron-ipc-bus");
@@ -177,7 +186,7 @@ Ex, busPath set by command line: electron . --bus-path=***value***
 const ipcBus = ipcBusModule.CreateIpcBusClient();
 ```
 
-### Initialization in a Node single process
+## Initialization in a Node single process
  
 Ex, busPath set by code:
 ```js
@@ -187,7 +196,7 @@ Ex, busPath set by command line: electron . --bus-path=***value***
 ```js 
 const ipcBus = ipcBusModule.CreateIpcBusClient();
 ```
-### Initialization in a Renderer (Sandboxed or not) process
+## Initialization in a Renderer (Sandboxed or not) process
 ```js
 const ipcBusModule = require("electron-ipc-bus");
 const ipcBus = ipcBusModule.CreateIpcBusClient();
@@ -202,38 +211,30 @@ The code below to make the client accessible to the the Web page scripts.
 window.ipcBus = require('electron-ipc-bus').CreateIpcBusClient();
 ```
 
-## How to use
-The IpcBusClient is an instance of the EventEmitter class.
+## Property
 
-When you register a callback to a specified channel. Each time a message is received on this channel, the callback is called.
-The callback must follow the IpcBusListener signature (see below).
-
-Only one IpcBusClient is created by Process/Renderer. If you ask for more the same instance will be returned.
-
-### Property
-
-#### peerName
+### peerName
 For debugging purpose, each IpcBusClient is identified by a peerName. 
 The peerName is uniq and computed from the type of the process : 
 - Master
 - Renderer + WebContents Id
 - Node + Process Id
 
-### Connectivity Methods
+## Connectivity Methods
 
-#### connect([timeoutDelay]) : Promise < string >
+### connect([timeoutDelay]) : Promise < string >
 - timeoutDelay : number (milliseconds)
 
 ```js
 ipcBus.connect().then((eventName) => console.log("Connected to Ipc bus !"))
 ```
 
-#### close()
+### close()
 ```js
 ipcBus.close()
 ```
 
-#### addListener(channel, listener)
+### addListener(channel, listener)
 - channel: string
 - listener: IpcBusListener
 
@@ -241,7 +242,7 @@ Listens to channel, when a new message arrives listener would be called with lis
 
 NOTE: ***on***, ***prependListener***, ***once*** and ***prependOnceListener*** methods are supported as well
 
-#### removeListener(channel, listener)
+### removeListener(channel, listener)
 - channel: string
 - listener: IpcBusListener
 
@@ -249,12 +250,12 @@ Removes the specified listener from the listener array for the specified channel
 
 NOTE: ***off*** method is supported as well
 
-#### removeAllListeners([channel])
+### removeAllListeners([channel])
 channel: String (optional)
 
 Removes all listeners, or those of the specified channel.
 
-### IpcBusListener(event, ...args) callback
+## IpcBusListener(event, ...args) callback
 - event: IpcBusEvent
 - ...args: any[]): void;
 
@@ -267,8 +268,8 @@ function HelloHandler(ipcBusEvent, content) {
 ipcBus.on("Hello!", HelloHandler)
 ```
 
-### Posting Methods
-#### send(channel [, ...args])
+## Posting Methods
+### send(channel [, ...args])
 - channel : string
 - ...args any[]
 
@@ -279,7 +280,7 @@ Arguments will be serialized in JSON internally and hence no functions or protot
 ipcBus.send("Hello!", { name: "My age !"}, "is", 10)
 ```
 
-#### request(timeoutDelay, channel [, ...args]) : Promise < IpcBusRequestResponse >
+### request(timeoutDelay, channel [, ...args]) : Promise < IpcBusRequestResponse >
 - timeoutDelay : number (milliseconds)
 - channel : string
 - ...args any[]
@@ -305,7 +306,7 @@ ipcBus.request(2000, "compute", "2*PI*9")
      }
 ```
 
-### IpcBusEvent object
+## IpcBusEvent object
 ```ts
 interface IpcBusEvent {
     channel: string;
@@ -320,19 +321,19 @@ interface IpcBusEvent {
 ```
 The event object passed to the listener has the following properties:
 
-#### event.channel: string
+### event.channel: string
 
 channel delivering the message
 
-#### event.sender.peerName: string
+### event.sender.peerName: string
 peerName of the sender
 
-#### event.request [optional] : IpcBusRequest
+### event.request [optional] : IpcBusRequest
 if present, the message is a request.
 Listener can resolve the request by calling event.request.resolve with the response 
 or can reject the request by calling event.request.reject with an error message.
 
-## Test application
+# Test application
 
 The test-app folder contains all sources of the testing application.
 NOTE : This folder is not packaged by NPM.
@@ -352,7 +353,11 @@ To run the application in sandboxed mode :
 
     npm run start-sandboxed
 
- 
+# Potential enhancements
+* Support several brokers each with its own buspath in order to dispatch the traffic.
+* Universal logger working in any kind of context (especially from a renderer).
+
+
 # MIT License
 
 Copyright (c) 2017 Michael Vasseur and Emmanuel Kimmerlin
