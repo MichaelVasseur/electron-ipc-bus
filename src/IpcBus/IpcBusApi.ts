@@ -2,10 +2,14 @@
 // import * as IpcBusInterfaces from './IpcBusInterfaces';
 import { IpcBusClient } from './IpcBusInterfaces';
 import { IpcBusBroker } from './IpcBusInterfaces';
+import { IpcBusRequestResponse } from './IpcBusInterfaces';
 // export * from './IpcBusInterfaces';
 
 import { IpcBusBrokerServer } from './IpcBusBroker';
 import * as IpcBusUtils from './IpcBusUtils';
+
+import { IpcBusServiceImpl } from './IpcBusService';
+import { IpcBusService } from './IpcBusInterfaces';
 
 /** @internal */
 export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
@@ -57,6 +61,35 @@ function CreateIpcBusClientForProcess(processType: string, busPath?: string): Ip
 /** @internal */
 export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
     return CreateIpcBusClientForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
+}
+
+/** @internal */
+export function _CreateIpcBusService(serviceName: string): IpcBusService {
+    return new IpcBusServiceImpl(_ipcBusClient, serviceName);
+}
+
+/** @internal */
+export function _IsIpcBusServiceAvailable(serviceName: string): Promise<boolean> {
+
+    return new Promise<boolean>((resolve, reject) => {
+
+        return _ipcBusClient
+            .request(1000, '/electron-ipc-bus/ipc-service-available', { name : serviceName })
+            .then(  (res: IpcBusRequestResponse) => resolve(<boolean>res.payload),
+                    (res: IpcBusRequestResponse) => reject(res.payload));
+    });
+}
+
+/** @internal */
+export function _CallIpcBusService<T>(serviceName: string, callHandlerName: string, timeout: number, ...callArgs: any[]): Promise<T> {
+
+    return new Promise<T>((resolve, reject) => {
+
+        const serviceMsg = { callHandlerName: callHandlerName, callArgs: callArgs };
+        _ipcBusClient
+            .request(timeout, IpcBusServiceImpl.getServiceChannel(serviceName), serviceMsg)
+            .then((res: IpcBusRequestResponse) => resolve(<T>res.payload), (res: IpcBusRequestResponse) => reject(res.err));
+    });
 }
 
 /** @internal */

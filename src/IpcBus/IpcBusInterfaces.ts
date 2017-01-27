@@ -55,3 +55,9 @@ export interface IpcBusBroker {
     queryState(): Object;
 }
 
+export interface IpcBusService {
+    start(): void;
+    stop(): void;
+    registerCallHandler(name: string, handler: Function): void;
+}
+
