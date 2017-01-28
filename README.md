@@ -363,8 +363,9 @@ npm run start-sandboxed
 ```
 
 # Possible enhancements
-* Support several brokers each with its own buspath in order to dispatch the traffic.
+* Support several brokers each with its own buspath in order to distribute the traffic load.
 * Universal logger working in any kind of context (especially from a renderer).
+* Define a friendly peerName
 
 # MIT License
 
