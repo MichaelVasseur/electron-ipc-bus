@@ -45,19 +45,59 @@ export interface IpcBusClient extends events.EventEmitter {
     prependOnceListener(channel: string, listener: IpcBusListener): this;
 }
 
-export namespace IpcBusClient {
-    export const QUERYSTATE_CHANNEL = '/electron-ipc-bus/queryState';
+export namespace Const {
+    // Special channels
+    export const IPCBUS_CHANNEL_QUERY_STATE = '/electron-ipc-bus/queryState';
+    export const IPCBUS_CHANNEL_SERVICE_AVAILABLE = '/electron-ipc-bus/serviceAvailable';
+    // Special events
+    export const IPCBUS_SERVICE_EVENT_START = 'service-event-start';
+    export const IPCBUS_SERVICE_EVENT_STOP = 'service-event-stop';
 }
 
 export interface IpcBusBroker {
+
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
     queryState(): Object;
+    isServiceAvailable(serviceName: string): boolean;
+}
+
+export interface IpcBusServiceCall {
+    handlerName: string;
+    args: any[];
+}
+
+export interface IpcBusServiceCallHandler {
+    (call: IpcBusServiceCall, request: IpcBusRequest): void;
 }
 
 export interface IpcBusService {
     start(): void;
     stop(): void;
-    registerCallHandler(name: string, handler: Function): void;
+    registerCallHandler(name: string, handler: IpcBusServiceCallHandler): void;
+}
+
+export interface IpcBusServiceEvent {
+    eventName: string;
+    args: any[];
+}
+
+export interface IpcBusServiceEventHandler {
+    (event: IpcBusServiceEvent): void;
+}
+
+export interface IpcBusServiceProxy {
+    isAvailable: boolean;
+    checkAvailability(): Promise<boolean>;
+    call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T>;
+    // EventEmitter API
+    addListener(event: string, listener: IpcBusServiceEventHandler): this;
+    removeListener(event: string, listener: IpcBusServiceEventHandler): this;
+    on(event: string, listener: IpcBusServiceEventHandler): this;
+    once(event: string, listener: IpcBusServiceEventHandler): this;
+    off(event: string, listener: IpcBusServiceEventHandler): this;
+    removeAllListeners(event?: string): this;
+    prependListener(event: string, listener: IpcBusServiceEventHandler): this;
+    prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
 }
 

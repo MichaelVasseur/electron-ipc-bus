@@ -1,15 +1,16 @@
 
 // import * as IpcBusInterfaces from './IpcBusInterfaces';
 import { IpcBusClient } from './IpcBusInterfaces';
-import { IpcBusBroker } from './IpcBusInterfaces';
-import { IpcBusRequestResponse } from './IpcBusInterfaces';
+//import { IpcBusRequestResponse } from './IpcBusInterfaces';
 // export * from './IpcBusInterfaces';
-
-import { IpcBusBrokerServer } from './IpcBusBroker';
 import * as IpcBusUtils from './IpcBusUtils';
 
-import { IpcBusServiceImpl } from './IpcBusService';
+import { IpcBusBrokerImpl } from './IpcBusBrokerImpl';
+import { IpcBusBroker } from './IpcBusInterfaces';
+import { IpcBusServiceImpl } from './IpcBusServiceImpl';
 import { IpcBusService } from './IpcBusInterfaces';
+import { IpcBusServiceProxyImpl } from './IpcBusServiceProxyImpl';
+import { IpcBusServiceProxy } from './IpcBusInterfaces';
 
 /** @internal */
 export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
@@ -18,7 +19,7 @@ export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
         IpcBusUtils.Logger.info(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
-        ipcBusBroker = new IpcBusBrokerServer(ipcOptions) as IpcBusBroker;
+        ipcBusBroker = new IpcBusBrokerImpl(ipcOptions) as IpcBusBroker;
     }
     return ipcBusBroker;
 }
@@ -69,27 +70,8 @@ export function _CreateIpcBusService(serviceName: string): IpcBusService {
 }
 
 /** @internal */
-export function _IsIpcBusServiceAvailable(serviceName: string): Promise<boolean> {
-
-    return new Promise<boolean>((resolve, reject) => {
-
-        return _ipcBusClient
-            .request(1000, '/electron-ipc-bus/ipc-service-available', { name : serviceName })
-            .then(  (res: IpcBusRequestResponse) => resolve(<boolean>res.payload),
-                    (res: IpcBusRequestResponse) => reject(res.payload));
-    });
-}
-
-/** @internal */
-export function _CallIpcBusService<T>(serviceName: string, callHandlerName: string, timeout: number, ...callArgs: any[]): Promise<T> {
-
-    return new Promise<T>((resolve, reject) => {
-
-        const serviceMsg = { callHandlerName: callHandlerName, callArgs: callArgs };
-        _ipcBusClient
-            .request(timeout, IpcBusServiceImpl.getServiceChannel(serviceName), serviceMsg)
-            .then((res: IpcBusRequestResponse) => resolve(<T>res.payload), (res: IpcBusRequestResponse) => reject(res.err));
-    });
+export function _CreateIpcBusServiceProxy(serviceName: string): IpcBusServiceProxy {
+    return new IpcBusServiceProxyImpl(_ipcBusClient, serviceName);
 }
 
 /** @internal */
