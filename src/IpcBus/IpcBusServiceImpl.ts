@@ -7,7 +7,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 /** @internal */
 export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _callHandlers: Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>;
-    private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
+    private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient, private _serviceName: string) {
 
@@ -16,15 +16,21 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
 
     start(): void {
         this._ipcBusClient.addListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
+        this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, {});
     }
 
     stop(): void {
+        this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP, {});
         this._ipcBusClient.removeListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
     }
 
     registerCallHandler(name: string, handler: IpcBusInterfaces.IpcBusServiceCallHandler): void {
-
         this._callHandlers.set(name, handler);
+    }
+
+    sendEvent(name: string, ...args: any[]): void {
+        const eventMsg = { eventName: name, args: args };
+        this._ipcBusClient.send(IpcBusUtils.getServiceEventChannel(this._serviceName), eventMsg);
     }
 
     private _onCallReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceCall) {

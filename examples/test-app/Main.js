@@ -25,8 +25,7 @@ console.log('IPC Bus Path : ' + busPath);
 
 // IPC Bus
 const ipcBusModule = require('electron-ipc-bus');
-// const ipcBus = ipcBusModule.CreateIpcBusForClient('browser', busPath);
-const ipcBus = ipcBusModule.CreateIpcBusClient(busPath);
+const ipcBusClient = ipcBusModule.CreateIpcBusClient(busPath);
 ipcBusModule.ActivateIpcBusTrace(true);
 
 // Startup
@@ -65,6 +64,9 @@ var MainProcess = (function () {
     const peerName = 'Main';
 
     function MainProcess() {
+
+        console.log('<MAIN> MainProcess is running');
+
         var self = this;
         var processId = 1;
         var perfView = null;
@@ -82,7 +84,11 @@ var MainProcess = (function () {
         processMainFromView.on('start-performance-tests', doPerformanceTests)
         processMainFromView.on('queryState', doQueryState);
 
-        var perfTests = new PerfTests('browser');
+        console.log('<MAIN> ProcessConnect ready');
+
+        //var perfTests = new PerfTests('browser');
+
+        //console.log('<MAIN> PerfTest ready');
 
         const mainWindow = new BrowserWindow({
             width: width, height: 800,
@@ -103,6 +109,8 @@ var MainProcess = (function () {
         });
 
         mainWindow.loadURL(commonViewUrl);
+
+        console.log('<MAIN> Main window ready');
 
         var processMainToView = new ProcessConnector('browser', mainWindow.webContents);
         mainWindow.webContents.on('dom-ready', function () {
@@ -184,24 +192,24 @@ var MainProcess = (function () {
 
         function onIPCElectron_Subscribe(topicName) {
             console.log('Master - onIPCElectron_Subscribe:' + topicName);
-            ipcBus.on(topicName, onIPCElectron_ReceivedMessage);
+            ipcBusClient.on(topicName, onIPCElectron_ReceivedMessage);
             processMainToView.postSubscribeDone(topicName);
         }
 
         function onIPCElectron_Unsubscribe(topicName) {
             console.log('Master - onIPCElectron_Subscribe:' + topicName);
-            ipcBus.off(topicName, onIPCElectron_ReceivedMessage);
+            ipcBusClient.off(topicName, onIPCElectron_ReceivedMessage);
             processMainToView.postUnsubscribeDone(topicName);
         }
 
         function onIPCElectron_SendMessage(topicName, topicMsg) {
             console.log('Master - onIPCElectron_SendMessage : topic:' + topicName + ' msg:' + topicMsg);
-            ipcBus.send(topicName, topicMsg);
+            ipcBusClient.send(topicName, topicMsg);
         }
 
         function onIPCElectron_RequestMessage(topicName, topicMsg) {
             console.log('Master - onIPCElectron_RequestMessage : topic:' + topicName + ' msg:' + topicMsg);
-            ipcBus.request(2000, topicName, topicMsg)
+            ipcBusClient.request(2000, topicName, topicMsg)
                 .then((requestPromiseResponse) => {
                     processMainToView.postRequestThen(requestPromiseResponse);
                 })
@@ -419,7 +427,7 @@ electronApp.on('ready', function () {
             });
         console.log('<MAIN> IPC broker is ready !');
         // Setup IPC Client (and renderer bridge)
-        ipcBus.connect()
+        ipcBusClient.connect()
             .then(() => {
                 new MainProcess();
             });
@@ -432,13 +440,28 @@ electronApp.on('ready', function () {
 
             console.log('<MAIN> IPC broker is ready !');
             // Setup IPC Client (and renderer bridge)
-            ipcBus.connect()
+            ipcBusClient.connect()
                 .then(() => {
+                    console.log('<MAIN> Connected to broker !');
+
+                    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time');
+                    timeServiceProxy.call('getCurrent').then(
+                            (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
+                            (err) => console.error(`<MAIN> Time service returned error : ${err}`));
+                    const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time');
+                    timeService.registerCallHandler('getCurrent', (call, request) => {
+                        request.resolve(new Date().getTime());
+                    });
+                    timeService.start();
+                    timeServiceProxy.checkAvailability().then(() => {
+                        console.log(`<MAIN> Time Service availability = ${timeServiceProxy.isAvailable}`);
+                    });
+
                     new MainProcess();
                 });
         });
-        ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
-        ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+        //ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+        //ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
     }
 });
 

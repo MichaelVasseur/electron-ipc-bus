@@ -55,8 +55,8 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
                     this._ipcBusBrokerClient.connect()
                         .then(() => {
-                            this._ipcBusBrokerClient.on(IpcBusInterfaces.Const.IPCBUS_CHANNEL_QUERY_STATE, this._queryStateLamdba);
-                            this._ipcBusBrokerClient.on(IpcBusInterfaces.Const.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceAvailableLambda);
+                            this._ipcBusBrokerClient.on(IpcBusInterfaces.IPCBUS_CHANNEL_QUERY_STATE, this._queryStateLamdba);
+                            this._ipcBusBrokerClient.on(IpcBusInterfaces.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceAvailableLambda);
                             resolve('started');
                         })
                         .catch((err) => reject(`Broker client error = ${err}`));
@@ -72,8 +72,8 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
 
     stop() {
         if (this._ipcServer) {
-            this._ipcBusBrokerClient.off(IpcBusInterfaces.Const.IPCBUS_CHANNEL_QUERY_STATE, this._queryStateLamdba);
-            this._ipcBusBrokerClient.off(IpcBusInterfaces.Const.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceAvailableLambda);
+            this._ipcBusBrokerClient.off(IpcBusInterfaces.IPCBUS_CHANNEL_QUERY_STATE, this._queryStateLamdba);
+            this._ipcBusBrokerClient.off(IpcBusInterfaces.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceAvailableLambda);
             this._ipcBusBrokerClient.close();
             this._ipcServer.close();
             this._ipcServer = null;
@@ -107,6 +107,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
 
     private _onServiceAvailable(ipcBusEvent: IpcBusInterfaces.IpcBusEvent, serviceName: string) {
         const availability = this.isServiceAvailable(serviceName);
+        IpcBusUtils.Logger.info(`[IPCBus:Broker] Service '${serviceName}' availability : ${availability}`);
         if (ipcBusEvent.request) {
             ipcBusEvent.request.resolve(availability);
         }

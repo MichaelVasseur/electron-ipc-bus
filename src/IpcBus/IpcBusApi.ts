@@ -65,13 +65,13 @@ export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
 }
 
 /** @internal */
-export function _CreateIpcBusService(serviceName: string): IpcBusService {
-    return new IpcBusServiceImpl(_ipcBusClient, serviceName);
+export function _CreateIpcBusService(client: IpcBusClient, serviceName: string): IpcBusService {
+    return new IpcBusServiceImpl(client, serviceName);
 }
 
 /** @internal */
-export function _CreateIpcBusServiceProxy(serviceName: string): IpcBusServiceProxy {
-    return new IpcBusServiceProxyImpl(_ipcBusClient, serviceName);
+export function _CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: string): IpcBusServiceProxy {
+    return new IpcBusServiceProxyImpl(client, serviceName);
 }
 
 /** @internal */

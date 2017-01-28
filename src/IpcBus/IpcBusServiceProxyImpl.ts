@@ -8,7 +8,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 /** @internal */
 export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterfaces.IpcBusServiceProxy {
     private _eventHandlers: Map<string, IpcBusInterfaces.IpcBusServiceEventHandler>;
-    private _eventReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(event, <IpcBusInterfaces.IpcBusServiceEvent>args[0]);
+    private _eventReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onEventReceived(event, <IpcBusInterfaces.IpcBusServiceEvent>args[0]);
     private _isAvailable: boolean;
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient,
@@ -22,8 +22,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
         // Register service start/stop events
         const self = this;
-        this.addListener(IpcBusInterfaces.Const.IPCBUS_SERVICE_EVENT_START, () => self._onServiceStart());
-        this.addListener(IpcBusInterfaces.Const.IPCBUS_SERVICE_EVENT_STOP, () => self._onServiceStop());
+        this.addListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, () => self._onServiceStart());
+        this.addListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP, () => self._onServiceStop());
     }
 
     get isAvailable(): boolean {
@@ -36,31 +36,31 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
             const self = this;
             this._ipcBusClient
-                .request(2000, IpcBusInterfaces.Const.IPCBUS_CHANNEL_SERVICE_AVAILABLE, { name : this._serviceName })
+                .request(2000, IpcBusInterfaces.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceName)
                 .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => {
                     self._isAvailable = <boolean>res.payload;
+                    IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${self._isAvailable}`);
                     resolve(self._isAvailable);
                 },
                 (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.payload));
         });
     }
 
-    call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T> {
+    call<T>(name: string, timeout: number, ...args: any[]): Promise<T> {
         const self = this;
+        const callMsg = { handlerName: name, args: args };
         if (this.isAvailable) {
             return new Promise<T>((resolve, reject) => {
-                const serviceMsg = { handlerName: handlerName, args: args };
                 self._ipcBusClient
-                    .request(timeout, IpcBusUtils.getServiceCallChannel(self._serviceName), serviceMsg)
+                    .request(timeout, IpcBusUtils.getServiceCallChannel(self._serviceName), callMsg)
                     .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
                             (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
             });
         } else {
             return new Promise<T>((resolve, reject) => {
-                self.once(IpcBusInterfaces.Const.IPCBUS_SERVICE_EVENT_START, () => {
-                        const serviceMsg = { handlerName: handlerName, args: args };
+                self.once(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, () => {
                         this._ipcBusClient
-                            .request(timeout, IpcBusUtils.getServiceCallChannel(this._serviceName), serviceMsg)
+                            .request(timeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
                             .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
                                     (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
                     });
@@ -135,12 +135,10 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     }
 
     private _onServiceStart() {
-
         this._isAvailable = true;
     }
 
     private _onServiceStop() {
-
         this._isAvailable = false;
     }
 }

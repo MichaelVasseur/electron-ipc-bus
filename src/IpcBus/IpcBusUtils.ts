@@ -22,7 +22,7 @@ function uuid(): string {
 
 /** @internal */
 export function GenerateReplyChannel(): string {
-    return 'replyChannel/' + uuid();
+    return '/electron-ipc-bus/request-reply/' + uuid();
 }
 
 /** @internal */

@@ -1,6 +1,13 @@
 /// <reference types='node' />
 import events = require('events');
 
+// Special channels
+export const IPCBUS_CHANNEL_QUERY_STATE: string = '/electron-ipc-bus/queryState';
+export const IPCBUS_CHANNEL_SERVICE_AVAILABLE = '/electron-ipc-bus/serviceAvailable';
+// Special events
+export const IPCBUS_SERVICE_EVENT_START = 'service-event-start';
+export const IPCBUS_SERVICE_EVENT_STOP = 'service-event-stop';
+
 export interface IpcBusRequest {
     resolve(payload: Object | string): void;
     reject(err: string): void;
@@ -45,15 +52,6 @@ export interface IpcBusClient extends events.EventEmitter {
     prependOnceListener(channel: string, listener: IpcBusListener): this;
 }
 
-export namespace Const {
-    // Special channels
-    export const IPCBUS_CHANNEL_QUERY_STATE = '/electron-ipc-bus/queryState';
-    export const IPCBUS_CHANNEL_SERVICE_AVAILABLE = '/electron-ipc-bus/serviceAvailable';
-    // Special events
-    export const IPCBUS_SERVICE_EVENT_START = 'service-event-start';
-    export const IPCBUS_SERVICE_EVENT_STOP = 'service-event-stop';
-}
-
 export interface IpcBusBroker {
 
     start(timeoutDelay?: number): Promise<string>;
@@ -75,6 +73,7 @@ export interface IpcBusService {
     start(): void;
     stop(): void;
     registerCallHandler(name: string, handler: IpcBusServiceCallHandler): void;
+    sendEvent(eventName: string, ...args: any[]): void;
 }
 
 export interface IpcBusServiceEvent {
