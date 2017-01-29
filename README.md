@@ -474,7 +474,7 @@ This asynchronously requests the service availability to the Broker.
 ipcMyServiceProxy.checkAvailability()
         .then(
             (availability) => console.log(`MyService availability = ${availability}`),
-            (err) => => console.log(`Failed to get MyService availability (${err})`));
+            (err) => console.log(`Failed to get MyService availability (${err})`));
 ```
 
 ### call<T>(handlerName: string, timeout: number, ...args: any[]): Promise< T >
@@ -486,7 +486,7 @@ This sends a service event message.
 ipcMyServiceProxy.call('getCurrentTime', 2000)
         .then(
             (currentTime) => console.log(`Current Time = ${currentTime}`),
-            (err) => => console.log(`Failed to get current time : ${err}`));
+            (err) => console.log(`Failed to get current time : ${err}`));
 ```
 
 
