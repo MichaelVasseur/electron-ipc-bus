@@ -3,8 +3,12 @@ export {IpcBusRequestResponse} from './IpcBus/IpcBusInterfaces';
 export {IpcBusSender} from './IpcBus/IpcBusInterfaces';
 export {IpcBusEvent} from './IpcBus/IpcBusInterfaces';
 export {IpcBusListener} from './IpcBus/IpcBusInterfaces';
+
 export {IPCBUS_CHANNEL_QUERY_STATE} from './IpcBus/IpcBusInterfaces';
 export {IPCBUS_CHANNEL_SERVICE_AVAILABLE} from './IpcBus/IpcBusInterfaces';
+
+export {IPCBUS_SERVICE_EVENT_START} from './IpcBus/IpcBusInterfaces';
+export {IPCBUS_SERVICE_EVENT_STOP} from './IpcBus/IpcBusInterfaces';
 
 import {IpcBusClient} from './IpcBus/IpcBusInterfaces';
 import {IpcBusBroker} from './IpcBus/IpcBusInterfaces';
