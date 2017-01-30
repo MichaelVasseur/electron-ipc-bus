@@ -12,6 +12,8 @@ ipcBusModule.ActivateIpcBusTrace(true);
 ipcBroker.start()
     .then((msg) => {
         console.log('IPC Broker instance : Started');
+
+        process.send({ event: 'ready' });
     })
     .catch((err) => {
         console.log('IPC Broker instance : ' + err);
@@ -27,7 +29,5 @@ function dispatchMessage(msg)
          process.send({event: 'queryState', result: queryState});
      }
 }
-
-process.send({ event: 'ready' });
 
 process.on('message', dispatchMessage);

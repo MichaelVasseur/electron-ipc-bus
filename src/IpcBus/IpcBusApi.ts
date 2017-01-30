@@ -1,11 +1,16 @@
 
 // import * as IpcBusInterfaces from './IpcBusInterfaces';
 import { IpcBusClient } from './IpcBusInterfaces';
-import { IpcBusBroker } from './IpcBusInterfaces';
+//import { IpcBusRequestResponse } from './IpcBusInterfaces';
 // export * from './IpcBusInterfaces';
-
-import { IpcBusBrokerServer } from './IpcBusBroker';
 import * as IpcBusUtils from './IpcBusUtils';
+
+import { IpcBusBrokerImpl } from './IpcBusBrokerImpl';
+import { IpcBusBroker } from './IpcBusInterfaces';
+import { IpcBusServiceImpl } from './IpcBusServiceImpl';
+import { IpcBusService } from './IpcBusInterfaces';
+import { IpcBusServiceProxyImpl } from './IpcBusServiceProxyImpl';
+import { IpcBusServiceProxy } from './IpcBusInterfaces';
 
 /** @internal */
 export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
@@ -14,7 +19,7 @@ export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     if (ipcOptions.isValid()) {
         IpcBusUtils.Logger.info(`CreateIpcBusBroker ipc options = ${ipcOptions}`);
-        ipcBusBroker = new IpcBusBrokerServer(ipcOptions) as IpcBusBroker;
+        ipcBusBroker = new IpcBusBrokerImpl(ipcOptions) as IpcBusBroker;
     }
     return ipcBusBroker;
 }
@@ -57,6 +62,16 @@ function CreateIpcBusClientForProcess(processType: string, busPath?: string): Ip
 /** @internal */
 export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
     return CreateIpcBusClientForProcess(ElectronUtils.GuessElectronProcessType(), busPath);
+}
+
+/** @internal */
+export function _CreateIpcBusService(client: IpcBusClient, serviceName: string): IpcBusService {
+    return new IpcBusServiceImpl(client, serviceName);
+}
+
+/** @internal */
+export function _CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: string): IpcBusServiceProxy {
+    return new IpcBusServiceProxyImpl(client, serviceName);
 }
 
 /** @internal */

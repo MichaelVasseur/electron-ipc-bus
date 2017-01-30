@@ -1,9 +1,13 @@
 # electron-ipc-bus
-A safe Ipc bus for applications built on Electron. 
+A safe IPC (Inter-Process Communication) bus for applications built on Electron. 
 
-This Ipc bus offers a common API for exchanging data between any Electron process : Node, Master and renderer Processes.
+This bus offers a common API for exchanging data between any Electron process : Node instances, Master and Renderer instances.
 
-This Ipc bus aims to work in all possible configurations, including with a Chromium/Electron in sandbox mode and with Chromium affinity case (several webpages hosted in the same renderer process).
+# Features
+* Publish/Subscribe oriented API
+* Works with sandboxed renderer process
+* Support for renderer affinity (several webpages hosted in the same renderer process)
+* Remote calls/events and pending messages management with Services
 
 # Installation
 ```Batchfile
@@ -339,6 +343,153 @@ The event object passed to the listener has the following properties:
 If present, the message is a request.
 Listener can resolve the request by calling ***event.request.resolve()*** with the response or can reject the request by calling ***event.request.reject()*** with an error message.
 
+
+# IpcBusService
+The ***IpcBusService*** creates an IPC endpoint that can be requested via remote calls and send events.
+
+## Interface
+```ts
+interface IpcBusService {
+    start(): void;
+    stop(): void;
+    registerCallHandler(name: string, handler: IpcBusServiceCallHandler): void;
+    sendEvent(eventName: string, ...args: any[]): void;
+}
+```
+
+## IpcBusServiceCall
+Message sent to a service to execute a remote call.
+```ts
+interface IpcBusServiceCall {
+    handlerName: string;
+    args: any[];
+}
+```
+
+## IpcBusServiceCallHandler
+Prototype of a method that will be executed to handle a service's call.
+```ts
+interface IpcBusServiceCallHandler {
+    (call: IpcBusServiceCall, request: IpcBusRequest): void;
+}
+```
+
+## Creation
+```js
+const ipcBusModule = require("electron-ipc-bus");
+...
+// ipcBusClient is a connected instance of IpcBusClient
+const ipcMyService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'myService');
+```
+
+## Methods
+
+### start(): void
+This makes the service to listen and serve incoming remote calls.
+The service also sends the ***IPCBUS_SERVICE_EVENT_START*** event.
+
+### stop(): void
+This makes the service to stop listen and serve incoming remote calls.
+The service also sends the ***IPCBUS_SERVICE_EVENT_STOP*** event.
+
+### registerCallHandler(name, handler): void
+- ***name***: string
+- ***handler***: IpcBusServiceCallHandler
+This sets the function that will be executed to serve the specified remote call.
+As this is run in the context of a promise, the function must call either request.resolve()
+or request.reject() to fulfill the promise.
+```js
+ipcMyService.registerCallHandler('getCurrentTime', (call, request) => {
+                        try {                        {
+                            request.resolve(new Date().getTime());
+                        } catch(e) {
+                            request.reject(e);
+                        }
+                    });
+```
+
+### sendEvent(name, ...args): void
+- ***name***: string
+- ***args***: any[]
+This sends a service event message.
+```js
+ipcMyService.sendEvent('timeChanged', new Date().getTime());
+```
+
+
+# IpcBusServiceProxy
+The ***IpcBusServiceProxy*** creates an IPC endpoint that can be used to execute calls on a service and listen its events.
+
+## Interface
+```ts
+interface IpcBusServiceProxy {
+    isAvailable: boolean;
+    checkAvailability(): Promise<boolean>;
+    call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T>;
+    addListener(event: string, listener: IpcBusServiceEventHandler): this;
+    removeListener(event: string, listener: IpcBusServiceEventHandler): this;
+    on(event: string, listener: IpcBusServiceEventHandler): this;
+    once(event: string, listener: IpcBusServiceEventHandler): this;
+    off(event: string, listener: IpcBusServiceEventHandler): this;
+    removeAllListeners(event?: string): this;
+    prependListener(event: string, listener: IpcBusServiceEventHandler): this;
+    prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
+```
+
+## IpcBusServiceEvent
+Message sent to a service's proxy to trigger the code associated to this event.
+```ts
+interface IpcBusServiceEvent {
+    eventName: string;
+    args: any[];
+}
+```
+
+## IpcBusServiceEventHandler
+Prototype of a method that will be executed to handle a service's call.
+```ts
+interface IpcBusServiceEventHandler {
+    (event: IpcBusServiceEvent): void;
+}
+```
+
+## Creation
+```js
+const ipcBusModule = require("electron-ipc-bus");
+...
+// ipcBusClient is a connected instance of IpcBusClient
+const ipcMyServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'myService');
+```
+
+## Properties
+
+### isAvailable: boolean
+Availability of the associated service (available means that the service is started).
+
+## Methods
+
+### checkAvailability(): Promise< boolean >
+This asynchronously requests the service availability to the Broker.
+```js
+ipcMyServiceProxy.checkAvailability()
+        .then(
+            (availability) => console.log(`MyService availability = ${availability}`),
+            (err) => console.log(`Failed to get MyService availability (${err})`));
+```
+
+### call<T>(handlerName: string, timeout: number, ...args: any[]): Promise< T >
+- ***handlerName***: string
+- ***timeout***: number
+- ***args***: any[]
+This sends a service event message.
+```js
+ipcMyServiceProxy.call('getCurrentTime', 2000)
+        .then(
+            (currentTime) => console.log(`Current Time = ${currentTime}`),
+            (err) => console.log(`Failed to get current time : ${err}`));
+```
+
+
 # Test application
 The test-app folder contains all sources of the testing application.
 
@@ -362,10 +513,12 @@ To run the application in sandboxed mode:
 npm run start-sandboxed
 ```
 
+
 # Possible enhancements
 * Support several brokers each with its own buspath in order to distribute the traffic load.
 * Universal logger working in any kind of context (especially from a renderer).
 * Define a friendly peerName
+
 
 # MIT License
 

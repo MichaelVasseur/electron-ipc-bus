@@ -22,7 +22,7 @@ function uuid(): string {
 
 /** @internal */
 export function GenerateReplyChannel(): string {
-    return 'replyChannel/' + uuid();
+    return '/electron-ipc-bus/request-reply/' + uuid();
 }
 
 /** @internal */
@@ -69,6 +69,21 @@ export function ExtractIpcOptions(busPath: string): IpcOptions {
         }
     }
     return ipcOptions;
+}
+
+// Helper to get a valid service channel namespace
+export function getServiceNamespace(serviceName: string): string {
+    return `/electron-ipc-bus/ipc-service/${serviceName}`;
+}
+
+// Helper to get the call channel related to given service
+export function getServiceCallChannel(serviceName: string): string {
+    return getServiceNamespace(serviceName) + '/call';
+}
+
+// Helper to get the event channel related to given service
+export function getServiceEventChannel(serviceName: string): string {
+    return getServiceNamespace(serviceName) + '/event';
 }
 
 /** @internal */
@@ -133,6 +148,10 @@ export class ChannelConnectionMap {
 
     private _error(str: string) {
        Logger.error(`[${this._name}] ${str}`);
+    }
+
+    public hasChannel(channel: string): boolean {
+        return this._channelsMap.has(channel);
     }
 
     public addRef(channel: string, connKey: string, conn: any, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
