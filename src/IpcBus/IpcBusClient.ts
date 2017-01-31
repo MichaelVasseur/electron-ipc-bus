@@ -141,8 +141,14 @@ export class IpcBusCommonClient extends EventEmitter
         this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, {}, {channel: channel, sender: {peerName: this._peerName}}, args);
     }
 
-    request(timeoutDelay: number, channel: string, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
-        return this._request(timeoutDelay, channel, args);
+    request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
+        if (typeof timeoutDelayOrChannel === 'number') {
+            // Exception may be raised regarding the args (length must be > 0 and have a string at 1st arg)
+            return this._request(timeoutDelayOrChannel, args[0], args.slice(1));
+        }
+        else {
+            return this._request(null, timeoutDelayOrChannel, args);
+        }
     }
 
     // EventEmitter API

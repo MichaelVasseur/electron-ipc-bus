@@ -30,6 +30,15 @@ const ipcBusPath = 50494;
 // const ipcBusPath = '/myfavorite/path';
 
 // Startup
+// Load modules
+const ipcBusModule = require("electron-ipc-bus");
+const electronApp = require('electron').app;
+
+// Configuration
+const ipcBusPath = 50494;
+// const ipcBusPath = '/myfavorite/path';
+
+// Startup
 electronApp.on('ready', function () {
     // Create broker
     const ipcBusBroker = ipcBusModule.CreateIpcBusBroker(ipcBusPath);
@@ -37,12 +46,12 @@ electronApp.on('ready', function () {
     // Start broker
     ipcBusBroker.start()
 
-        // Create client
+    // Create client
         .then((msg) => {
             const ipcBusClient = ipcBusModule.CreateIpcBusClient(ipcBusPath);
             ipcBusClient.connect()
 
-                // Chatting on channel 'greeting'
+    // Chatting on channel 'greeting'
                 .then((msg) => {
                     ipcBusClient.addListener('greeting', (ipcBusEvent, greetingMsg) => {
                         if (ipcBusEvent.request) {
@@ -60,14 +69,24 @@ electronApp.on('ready', function () {
 
                     ipcBusClient.send('greeting', 'hello everyone!');
 
-                    ipcBusClient.request(2000, 'greeting', 'hello partner!')
+                    ipcBusClient.request('greeting', 'hello partner!')
                         .then((ipcBusRequestResponse) => {
-                            console.log(ipcBusRequestResponse.event.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                            console.log(ipcBusRequestResponse.event.sender.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                        })
+                        .catch((err) => {
+                            console.log('I have no friend :-(');
+                        });
+
+                    ipcBusClient.request(1000, 'greeting', 'hello partner, please answer within 1sec!')
+                        .then((ipcBusRequestResponse) => {
+                            console.log(ipcBusRequestResponse.event.sender.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                        })
+                        .catch((err) => {
+                            console.log('I have no friend :-(');
                         });
                 });
         });
 });
-
 ```
 
 # IpcBusBroker
@@ -160,7 +179,7 @@ interface IpcBusClient extends events.EventEmitter {
     connect(timeoutDelay?: number): Promise<string>;
     close(): void;
     send(channel: string, ...args: any[]): void;
-    request(timeoutDelay: number, channel: string, ...args: any[]): Promise<IpcBusRequestResponse>;
+    request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusRequestResponse>;
 
     // EventEmitter overriden API
     addListener(channel: string, listener: IpcBusListener): this;
@@ -293,13 +312,19 @@ Arguments will be serialized in JSON internally and hence no functions or protot
 ipcBus.send("Hello!", { name: "My age !"}, "is", 10)
 ```
 
-### request(timeoutDelay, channel [, ...args]) : Promise < IpcBusRequestResponse >
-- ***timeoutDelay***: number (milliseconds)
-- ***channel***: string
+### request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise < IpcBusRequestResponse >
+- ***timeoutDelayOrChannel*** = timeoutDelay: number (milliseconds) | channel: string
 - ***...args***: any[]
 
-Sends a request message on specified ***channel***. The returned Promise is settled when a result is available. 
-The ***timeoutDelay*** defines how much time we're waiting for the response.
+Sends a request message on specified ***channel***. The returned Promise is settled when a result is available.
+
+This function can be used in 2 ways :
+* request(timeoutDelay: number, channel: string, ...args: any[]): Promise < IpcBusRequestResponse >
+if the first parameter is a number, this parameter ***timeoutDelay*** defines how much time we're waiting for the response. The 2nd parameter must be the channel.
+
+* request(channel: string, ...args: any[]): Promise < IpcBusRequestResponse >
+The ***channel*** is the... channel, a default timeout delay is applied.
+
 The Promise provides an ***IpcBusRequestResponse*** object:
 ```ts
 interface IpcBusRequestResponse {

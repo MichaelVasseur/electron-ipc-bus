@@ -37,9 +37,20 @@ electronApp.on('ready', function () {
 
                     ipcBusClient.send('greeting', 'hello everyone!');
 
-                    ipcBusClient.request(2000, 'greeting', 'hello partner!')
+                    ipcBusClient.request('greeting', 'hello partner!')
                         .then((ipcBusRequestResponse) => {
-                            console.log(ipcBusRequestResponse.event.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                            console.log(ipcBusRequestResponse.event.sender.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                        })
+                        .catch((err) => {
+                            console.log('I have no friend :-(');
+                        });
+
+                    ipcBusClient.request(1000, 'greeting', 'hello partner, please answer within 1sec!')
+                        .then((ipcBusRequestResponse) => {
+                            console.log(ipcBusRequestResponse.event.sender.peerName + ' replied ' + ipcBusRequestResponse.payload);
+                        })
+                        .catch((err) => {
+                            console.log('I have no friend :-(');
                         });
                 });
         });
