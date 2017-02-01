@@ -413,7 +413,7 @@ var NodeProcess = (function () {
 
 // Startup
 electronApp.on('ready', function () {
-    var bLocalBrokerState = true;
+    var bLocalBrokerState = false;
 
     if (bLocalBrokerState) {
         // Broker in Master process
@@ -445,13 +445,15 @@ electronApp.on('ready', function () {
                     console.log('<MAIN> Connected to broker !');
 
                     const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time');
-                    timeServiceProxy.call('getCurrent').then(
+                    timeServiceProxy.call('getCurrent', 3000).then(
                             (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
                             (err) => console.error(`<MAIN> Time service returned error : ${err}`));
-                    const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time');
-                    timeService.registerCallHandler('getCurrent', (call, request) => {
-                        request.resolve(new Date().getTime());
-                    });
+                    const timeServiceImpl = {};
+                    timeServiceImpl.getCurrent = function() {
+                        console.log('<MAIN> Service time is serving the current time !');
+                        return new Date().getTime();
+                    }
+                    const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
                     timeService.start();
                     timeServiceProxy.checkAvailability().then(() => {
                         console.log(`<MAIN> Time Service availability = ${timeServiceProxy.isAvailable}`);

@@ -9,9 +9,25 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _callHandlers: Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>;
     private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
 
-    constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient, private _serviceName: string) {
+    constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient, private _serviceName: string, private _serviceImpl: any = undefined) {
 
         this._callHandlers = new Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>();
+
+        if (this._serviceImpl) {
+            IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' HAS an implementation`);
+            // Register handlers for functions of service's Implementation
+            for (var memberName in this._serviceImpl) {
+                if (typeof this._serviceImpl[memberName] === 'function') {
+                    this.registerCallHandler(memberName, (call: IpcBusInterfaces.IpcBusServiceCall, request: IpcBusInterfaces.IpcBusRequest) => {
+                        request.resolve(this._serviceImpl[memberName](...call.args));
+                    });
+                }
+            }
+
+            // Setup event emitter hook
+        } else {
+            IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' does NOT have an implementation`);
+        }
     }
 
     start(): void {
@@ -26,6 +42,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
 
     registerCallHandler(name: string, handler: IpcBusInterfaces.IpcBusServiceCallHandler): void {
         this._callHandlers.set(name, handler);
+        IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' registered call handler '${name}'`);
     }
 
     sendEvent(name: string, ...args: any[]): void {
@@ -34,7 +51,6 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     }
 
     private _onCallReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceCall) {
-
         if (!this._callHandlers.has(msg.handlerName)) {
             event.request.reject(`Service '${this._serviceName}' does handle calls to '${msg.handlerName}' !`);
             IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' does handle calls to '${msg.handlerName}' !`);
