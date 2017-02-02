@@ -9,6 +9,19 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _callHandlers: Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>;
     private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
     private _prevImplEmit: Function = null;
+    private static _emitterFunctions = ['setMaxListeners',
+                                        'getMaxListeners',
+                                        'emit',
+                                        'addListener',
+                                        'on',
+                                        'prependListener',
+                                        'once',
+                                        'prependOnceListener',
+                                        'removeListener',
+                                        'removeAllListeners',
+                                        'listeners',
+                                        'listenerCount',
+                                        'eventNames'];
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient, private _serviceName: string, private _serviceImpl: any = undefined) {
 
@@ -17,9 +30,9 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         const self = this;
         if (this._serviceImpl) {
             IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' HAS an implementation`);
-            // Register handlers for functions of service's Implementation
+            // Register handlers for functions of service's Implementation (except the ones inherited from EventEmitter)
             for (let memberName in this._serviceImpl) {
-                if (typeof this._serviceImpl[memberName] === 'function') {
+                if (typeof this._serviceImpl[memberName] === 'function' && IpcBusServiceImpl._emitterFunctions.indexOf(memberName) === -1) {
                     this.registerCallHandler(memberName, (call: IpcBusInterfaces.IpcBusServiceCall, request: IpcBusInterfaces.IpcBusRequest) => {
                         IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is calling implementation's '${memberName}'`);
                         const result = self._serviceImpl[memberName](...call.args);

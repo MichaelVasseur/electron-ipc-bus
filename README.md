@@ -399,7 +399,7 @@ interface IpcBusServiceCallHandler {
 }
 ```
 
-## Creation
+## Creation (without an outer implementation)
 ```js
 const ipcBusModule = require("electron-ipc-bus");
 ...
@@ -407,11 +407,24 @@ const ipcBusModule = require("electron-ipc-bus");
 const ipcMyService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'myService');
 ```
 
+## Creation (with an outer instance)
+```js
+const ipcBusModule = require("electron-ipc-bus");
+...
+const myOuterServiceInstance = {};
+myOuterServiceInstance.test = () => { return 'This is a test'; };
+...
+// ipcBusClient is a connected instance of IpcBusClient
+const ipcMyService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'myService', myOuterServiceInstance);
+```
+NOTE : This constructor will automatically register all methods of ***myOuterServiceImpl*** as call handlers using ***registerCallHandler()***.
+
 ## Methods
 
 ### start(): void
 This makes the service to listen and serve incoming remote calls.
 The service also sends the ***IPCBUS_SERVICE_EVENT_START*** event.
+NOTE : If an outerrouter service's instance has been specified at construction time, ***start()*** will overload its This method will overload
 
 ### stop(): void
 This makes the service to stop listen and serve incoming remote calls.
@@ -514,6 +527,16 @@ ipcMyServiceProxy.call('getCurrentTime', 2000)
             (err) => console.log(`Failed to get current time : ${err}`));
 ```
 
+### EventEmitter interface ###
+- addListener(event: string, listener: IpcBusServiceEventHandler): this;
+- removeListener(event: string, listener: IpcBusServiceEventHandler): this;
+- on(event: string, listener: IpcBusServiceEventHandler): this;
+- once(event: string, listener: IpcBusServiceEventHandler): this;
+- off(event: string, listener: IpcBusServiceEventHandler): this;
+- removeAllListeners(event?: string): this;
+- prependListener(event: string, listener: IpcBusServiceEventHandler): this;
+- prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
+This allow to handle events emitted by remote RPC service. Please refers to the EventEmitter class documentation for more information.
 
 # Test application
 The test-app folder contains all sources of the testing application.
