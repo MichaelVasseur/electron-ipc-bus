@@ -528,6 +528,7 @@ ipcMyServiceProxy.call('getCurrentTime', 2000)
 ```
 
 ### EventEmitter interface ###
+This allow to handle events emitted by remote RPC service. Please refers to the EventEmitter class documentation for more information.
 - addListener(event: string, listener: IpcBusServiceEventHandler): this;
 - removeListener(event: string, listener: IpcBusServiceEventHandler): this;
 - on(event: string, listener: IpcBusServiceEventHandler): this;
@@ -536,7 +537,6 @@ ipcMyServiceProxy.call('getCurrentTime', 2000)
 - removeAllListeners(event?: string): this;
 - prependListener(event: string, listener: IpcBusServiceEventHandler): this;
 - prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
-This allow to handle events emitted by remote RPC service. Please refers to the EventEmitter class documentation for more information.
 
 # Test application
 The test-app folder contains all sources of the testing application.
