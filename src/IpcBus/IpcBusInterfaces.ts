@@ -89,7 +89,7 @@ export interface IpcBusServiceEventHandler {
 export interface IpcBusServiceProxy {
     isAvailable: boolean;
     checkAvailability(): Promise<boolean>;
-    call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T>;
+    call<T>(handlerName: string, ...args: any[]): Promise<T>;
     // EventEmitter API
     addListener(event: string, listener: IpcBusServiceEventHandler): this;
     removeListener(event: string, listener: IpcBusServiceEventHandler): this;

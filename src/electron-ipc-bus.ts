@@ -33,8 +33,8 @@ export function CreateIpcBusService(client: IpcBusClient, serviceName: string, s
     return _CreateIpcBusService(client, serviceName, serviceImpl);
 }
 
-export function CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: string): IpcBusServiceProxy {
-    return _CreateIpcBusServiceProxy(client, serviceName);
+export function CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: string, callTimeout: number = 1000): IpcBusServiceProxy {
+    return _CreateIpcBusServiceProxy(client, serviceName, callTimeout);
 }
 
 export function ActivateIpcBusTrace(enable: boolean): void {
