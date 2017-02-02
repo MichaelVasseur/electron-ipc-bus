@@ -9,6 +9,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterfaces.IpcBusServiceProxy {
     private _eventHandlers: Map<string, IpcBusInterfaces.IpcBusServiceEventHandler>;
     private _eventReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onEventReceived(event, <IpcBusInterfaces.IpcBusServiceEvent>args[0]);
+    private _delayedCalls = new Array<Function>();
     private _isAvailable: boolean;
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient,
@@ -21,9 +22,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         this.checkAvailability();
 
         // Register service start/stop events
-        const self = this;
-        this.addListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, () => self._onServiceStart());
-        this.addListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP, () => self._onServiceStop());
+        this.addListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, () => this._onServiceStart());
+        this.addListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP, () => this._onServiceStop());
     }
 
     get isAvailable(): boolean {
@@ -41,6 +41,9 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                     self._isAvailable = <boolean>res.payload;
                     IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${self._isAvailable}`);
                     resolve(self._isAvailable);
+                    if (self._isAvailable === true) {
+                        this._sendDelayedCalls();
+                    }
                 },
                 (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.payload));
         });
@@ -59,13 +62,15 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         } else {
             return new Promise<T>((resolve, reject) => {
                 IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Call to '${name}' from service '${this._serviceName}' delayed as the service is not available`);
-                self.once(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, () => {
-                        IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
-                        this._ipcBusClient
-                            .request(timeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
-                            .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
-                                    (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
-                    });
+
+                const delayedCall = () => {
+                    IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
+                    this._ipcBusClient
+                        .request(timeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
+                        .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
+                                (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
+                };
+                self._delayedCalls.push(delayedCall);
             });
         }
     }
@@ -118,6 +123,13 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         return this;
     }
 
+    private _sendDelayedCalls(): void {
+        this._delayedCalls.forEach((delayedCall: Function) => {
+            delayedCall();
+        });
+        this._delayedCalls.splice(0,this._delayedCalls.length);
+    }
+
     private _subscribeToBusIfRequired(): void {
         const channelName = IpcBusUtils.getServiceEventChannel(this._serviceName);
         if (this.eventNames().length > 0 && this._ipcBusClient.listenerCount(channelName) === 0) {
@@ -133,12 +145,15 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     }
 
     private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
+        IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' emitted event '${msg.eventName}'`);
         this.emit(msg.eventName, ...msg.args);
     }
 
     private _onServiceStart() {
         this._isAvailable = true;
         IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' IS available`);
+
+        this._sendDelayedCalls();
     }
 
     private _onServiceStop() {
