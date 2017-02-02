@@ -29,8 +29,8 @@ export function CreateIpcBusClient(busPath?: string): IpcBusClient {
     return _CreateIpcBusClient(busPath);
 }
 
-export function CreateIpcBusService(client: IpcBusClient, serviceName: string): IpcBusService {
-    return _CreateIpcBusService(client, serviceName);
+export function CreateIpcBusService(client: IpcBusClient, serviceName: string, serviceImpl: any = undefined): IpcBusService {
+    return _CreateIpcBusService(client, serviceName, serviceImpl);
 }
 
 export function CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: string): IpcBusServiceProxy {

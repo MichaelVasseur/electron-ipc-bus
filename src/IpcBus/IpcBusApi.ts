@@ -65,8 +65,8 @@ export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
 }
 
 /** @internal */
-export function _CreateIpcBusService(client: IpcBusClient, serviceName: string): IpcBusService {
-    return new IpcBusServiceImpl(client, serviceName);
+export function _CreateIpcBusService(client: IpcBusClient, serviceName: string, serviceImpl: any = undefined): IpcBusService {
+    return new IpcBusServiceImpl(client, serviceName, serviceImpl);
 }
 
 /** @internal */

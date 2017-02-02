@@ -7,6 +7,7 @@
 const util = require('util');
 const path = require('path');
 const child_process = require('child_process');
+const EventEmitter = require('events').EventEmitter;
 
 // Electron 
 const electronApp = require('electron').app;
@@ -26,7 +27,7 @@ console.log('IPC Bus Path : ' + busPath);
 // IPC Bus
 const ipcBusModule = require('electron-ipc-bus');
 const ipcBusClient = ipcBusModule.CreateIpcBusClient(busPath);
-ipcBusModule.ActivateIpcBusTrace(true);
+ipcBusModule.ActivateIpcBusTrace(false);
 
 // Startup
 let ipcBrokerProcess = null;
@@ -411,28 +412,55 @@ var NodeProcess = (function () {
 
 })();
 
+function TimeServiceImpl() {
+
+    EventEmitter.call(this);
+
+    this.getCurrent = function() {
+        console.log('<MAIN> Service time is serving the current time !');
+        const currentTime = new Date().getTime();
+        this.emit('currentTime', currentTime);
+        return currentTime;
+    };
+}
+
+util.inherits(TimeServiceImpl, EventEmitter);
+
+function startApp() {
+    console.log('<MAIN> Connected to broker !');
+
+    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time');
+    timeServiceProxy.on('test', () => console.log(`<MAIN> Received 'test' event from Time service`));
+    timeServiceProxy.call('getCurrent', 500).then(
+            (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
+            (err) => console.error(`<MAIN> Time service returned error : ${err}`));
+    const timeServiceImpl = new TimeServiceImpl();
+    const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
+    timeService.start();
+    timeServiceImpl.emit('test', {});
+
+    new MainProcess();
+}
+
 // Startup
 electronApp.on('ready', function () {
-    var bLocalBrokerState = true;
+    var bLocalBrokerState = false;
 
     if (bLocalBrokerState) {
         // Broker in Master process
+        console.log('<MAIN> Starting IPC broker ...');
         ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
         ipcBroker.start()
             .then((msg) => {
-                console.log("IPC Broker instance : Started");
+                console.log('<MAIN> IPC broker is ready !');
+                // Setup IPC Client (and renderer bridge)
+                ipcBusClient.connect()
+                    .then(() => startApp());
             })
             .catch((err) => {
                 console.log("IPC Broker instance : " + err);
             });
-        console.log('<MAIN> IPC broker is ready !');
-        // Setup IPC Client (and renderer bridge)
-        ipcBusClient.connect()
-            .then(() => {
-                new MainProcess();
-            });
-    }
-    else {
+    } else {
         // Setup Remote Broker
         console.log('<MAIN> Starting IPC broker ...');
         ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
@@ -441,24 +469,7 @@ electronApp.on('ready', function () {
             console.log('<MAIN> IPC broker is ready !');
             // Setup IPC Client (and renderer bridge)
             ipcBusClient.connect()
-                .then(() => {
-                    console.log('<MAIN> Connected to broker !');
-
-                    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time');
-                    timeServiceProxy.call('getCurrent').then(
-                            (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
-                            (err) => console.error(`<MAIN> Time service returned error : ${err}`));
-                    const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time');
-                    timeService.registerCallHandler('getCurrent', (call, request) => {
-                        request.resolve(new Date().getTime());
-                    });
-                    timeService.start();
-                    timeServiceProxy.checkAvailability().then(() => {
-                        console.log(`<MAIN> Time Service availability = ${timeServiceProxy.isAvailable}`);
-                    });
-
-                    new MainProcess();
-                });
+                .then(() => startApp());
         });
         //ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
         //ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
