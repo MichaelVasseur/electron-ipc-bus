@@ -416,8 +416,8 @@ function TimeServiceImpl() {
 
     EventEmitter.call(this);
 
-    this.getCurrent = function() {
-        console.log('<MAIN> Service time is serving the current time !');
+    this.getCurrent = function(source) {
+        console.log(`<MAIN> Service time is serving '${source}' with the current time !`);
         const currentTime = new Date().getTime();
         this.emit('currentTime', currentTime);
         return currentTime;
@@ -429,15 +429,29 @@ util.inherits(TimeServiceImpl, EventEmitter);
 function startApp() {
     console.log('<MAIN> Connected to broker !');
 
-    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time');
+    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 500);
     timeServiceProxy.on('test', () => console.log(`<MAIN> Received 'test' event from Time service`));
-    timeServiceProxy.call('getCurrent', 500).then(
+    timeServiceProxy
+        .call('getCurrent', 'Before')
+        .then(
             (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
             (err) => console.error(`<MAIN> Time service returned error : ${err}`));
     const timeServiceImpl = new TimeServiceImpl();
     const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
     timeService.start();
     timeServiceImpl.emit('test', {});
+    timeServiceProxy
+        .checkAvailability()
+        .then((availability) => {
+            if (availability === true) {
+                timeServiceProxy
+                    .wrapper
+                    .getCurrent('After')
+                    .then(
+                        (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
+                        (err) => console.error(`<MAIN> Time service returned error : ${err}`));
+            }
+        });
 
     new MainProcess();
 }

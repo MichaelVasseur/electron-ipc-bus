@@ -496,7 +496,7 @@ interface IpcBusServiceEventHandler {
 const ipcBusModule = require("electron-ipc-bus");
 ...
 // ipcBusClient is a connected instance of IpcBusClient
-const ipcMyServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'myService');
+const ipcMyServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'myService', 2000); // 2000 ms for call timeout (default is 1000 ms)
 ```
 
 ## Properties
@@ -521,7 +521,7 @@ ipcMyServiceProxy.checkAvailability()
 - ***args***: any[]
 This sends a service event message.
 ```js
-ipcMyServiceProxy.call('getCurrentTime', 2000)
+ipcMyServiceProxy.call('getCurrentTime')
         .then(
             (currentTime) => console.log(`Current Time = ${currentTime}`),
             (err) => console.log(`Failed to get current time : ${err}`));

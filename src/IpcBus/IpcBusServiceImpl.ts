@@ -67,8 +67,13 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         // Listening to call messages
         this._ipcBusClient.addListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
 
-        // The service is started
-        this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, {});
+        // The service is started, send available call handlers to clients
+        let callHandlerNames = this._callHandlers.keys();
+        const handlerNames = new Array<string>();
+        for (let handlerName of callHandlerNames) {
+            handlerNames.push(handlerName);
+        }
+        this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, handlerNames);
 
         IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STARTED`);
     }
