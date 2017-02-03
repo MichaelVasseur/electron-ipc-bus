@@ -3,6 +3,7 @@ A safe IPC (Inter-Process Communication) bus for applications built on Electron.
 
 This bus offers a common API for exchanging data between any Electron process : Node instances, Master and Renderer instances.
 
+
 # Features
 * Publish/Subscribe oriented API
 * Works with sandboxed renderer process
@@ -17,6 +18,13 @@ npm install electron-ipc-bus
 Dependencies
 * https://github.com/oleics/node-easy-ipc
 * https://github.com/pkrumins/node-lazy
+
+
+# Technical Overview
+
+## Objective
+![Electron's processes](https://github.com/MichaelVasseur/electron-ipc-bus/tree/master/doc/electron_processes.svg)
+
 
 # Usage
 
