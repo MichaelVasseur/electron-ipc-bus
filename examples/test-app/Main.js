@@ -430,7 +430,8 @@ function startApp() {
     console.log('<MAIN> Connected to broker !');
 
     const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 500);
-    timeServiceProxy.on('test', () => console.log(`<MAIN> Received 'test' event from Time service`));
+    timeServiceProxy.on('emitted_event', () => console.log(`<MAIN> Received 'emitted_event' event from Time service`));
+    timeServiceProxy.on('not_emitted_event', () => console.log(`<MAIN> Received 'not_emitted_event' event from Time service`));
     timeServiceProxy
         .call('getCurrent', 'Before')
         .then(
@@ -439,7 +440,10 @@ function startApp() {
     const timeServiceImpl = new TimeServiceImpl();
     const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
     timeService.start();
-    timeServiceImpl.emit('test', {});
+    timeService.stop();
+    timeServiceImpl.emit('not_emitted_event', {});
+    timeService.start();
+    timeServiceImpl.emit('emitted_event', {});
     timeServiceProxy
         .checkAvailability()
         .then((availability) => {
