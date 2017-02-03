@@ -23,7 +23,7 @@ Dependencies
 # Technical Overview
 
 ## Objective
-![Electron's processes](https://github.com/MichaelVasseur/electron-ipc-bus/tree/master/doc/electron_processes.svg)
+![Electron's processes](https://github.com/MichaelVasseur/electron-ipc-bus/blob/Doc_Update/doc/electron_processes.svg)
 
 
 # Usage
