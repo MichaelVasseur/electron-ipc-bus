@@ -21,8 +21,14 @@ export interface IpcBusRequestResponse {
     err?: string;
 }
 
+export interface IpcBusProcess {
+    type: string;
+    pid: number;
+}
+
 export interface IpcBusSender {
     peerName: string;
+    peerProcess: IpcBusProcess;
 }
 
 export interface IpcBusEvent {
@@ -37,7 +43,7 @@ export interface IpcBusListener {
 
 export interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
-    connect(timeoutDelay?: number): Promise<string>;
+    connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string>;
     close(): void;
 
     send(channel: string, ...args: any[]): void;
@@ -56,11 +62,8 @@ export interface IpcBusClient extends events.EventEmitter {
 }
 
 export interface IpcBusBroker {
-
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
-    queryState(): Object;
-    isServiceAvailable(serviceName: string): boolean;
 }
 
 export interface IpcBusServiceCall {
@@ -109,4 +112,3 @@ export interface IpcBusServiceProxy {
     prependListener(event: string, listener: IpcBusServiceEventHandler): this;
     prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
 }
-

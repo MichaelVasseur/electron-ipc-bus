@@ -9,10 +9,10 @@ const ipcBusPath = 50494;
 // Startup
 electronApp.on('ready', function () {
     // Create broker
-    const ipcBusBroker = ipcBusModule.CreateIpcBusBroker(ipcBusPath);
+    const ipcBusBrokerNode = ipcBusModule.CreateIpcBusBrokerNode(ipcBusPath);
 
     // Start broker
-    ipcBusBroker.start()
+    ipcBusBrokerNode.start()
 
     // Create client
         .then((msg) => {
