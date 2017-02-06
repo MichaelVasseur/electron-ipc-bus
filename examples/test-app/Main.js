@@ -89,6 +89,7 @@ var MainProcess = (function () {
         console.log('<MAIN> ProcessConnect ready');
 
         var perfTests = new PerfTests('browser', busPath);
+        perfTests.connect();
         console.log('<MAIN> PerfTest ready');
 
         const mainWindow = new BrowserWindow({

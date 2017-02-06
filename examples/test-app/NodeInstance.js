@@ -118,6 +118,7 @@ ipcBus.connect()
         }
         msgs = [];
         perfTests = new PerfTests('node');
+        perfTests.connect();
 });
 
 process.on('message', dispatchMessage);

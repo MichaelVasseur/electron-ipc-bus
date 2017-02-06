@@ -8,6 +8,8 @@ window.ipcBus_QUERYSTATE_CHANNEL = require('electron-ipc-bus').IPCBUS_CHANNEL_QU
 require('electron-ipc-bus').ActivateIpcBusTrace(true);
 
 window.ipcRenderer = require('electron').ipcRenderer;
-window.PerfTests = require('./PerfTests.js');
+
+const PerfTests = require('./PerfTests.js');
+window.perfTests = new PerfTests('renderer');
 
 

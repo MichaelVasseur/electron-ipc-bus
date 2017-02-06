@@ -18,12 +18,12 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     private _onHandshake(eventOrPid: any, pidOrUndefined: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (pidOrUndefined) {
-            this.peer.process.pid = pidOrUndefined;
-            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this.peer.name}`);
+            this._ipcBusPeer.process.pid = pidOrUndefined;
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._ipcBusPeer.name}`);
             this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         } else {
-            this.peer.process.pid = pidOrUndefined;
-            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this.peer.name}`);
+            this._ipcBusPeer.process.pid = eventOrPid;
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._ipcBusPeer.name}`);
             this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);

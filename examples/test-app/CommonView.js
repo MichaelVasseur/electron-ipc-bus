@@ -249,7 +249,6 @@ function onIPC_BrokerStatusTopic(ipcContent) {
 }
 
 var processToMonitor = null;
-var perfTests = null;
 
 ipcRenderer.on('initializeWindow', function (event, data) {
     // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
@@ -306,7 +305,7 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
-                perfTests = new PerfTests('renderer');
+                perfTests.connect();
             });
     }
     if (args['type'] === 'node') {
