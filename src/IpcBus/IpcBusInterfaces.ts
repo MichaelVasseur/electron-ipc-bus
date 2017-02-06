@@ -22,7 +22,7 @@ export interface IpcBusRequestResponse {
 }
 
 export interface IpcBusProcess {
-    type: string;
+    type: 'browser' | 'renderer' | 'node';
     pid: number;
 }
 

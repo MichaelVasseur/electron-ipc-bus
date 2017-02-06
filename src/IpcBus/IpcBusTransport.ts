@@ -18,15 +18,15 @@ export class IpcBusData {
 export abstract class IpcBusTransport {
     protected _id: string;
     protected _ipcBusPeer: IpcBusInterfaces.IpcBusPeer;
-    readonly ipcOptions: IpcBusUtils.IpcOptions;
     protected _requestFunctions: Map<string, Function>;
 
+    readonly ipcOptions: IpcBusUtils.IpcOptions;
     public eventEmitter: EventEmitter;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
-        this._id = IpcBusUtils.uuid();
         this._ipcBusPeer = { name: '', process: ipcBusProcess };
         this.ipcOptions = ipcOptions;
+        this._id = IpcBusUtils.uuid();
         this._requestFunctions = new Map<string, Function>();
     }
 

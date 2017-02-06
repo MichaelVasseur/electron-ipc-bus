@@ -8,7 +8,7 @@ import {IpcBusTransportNode} from './IpcBusTransportNode';
 /** @internal */
 export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInterfaces.IpcBusBridge  {
     private _ipcObj: any;
-    private _channelRendererRefs: IpcBusUtils.ChannelConnectionMap;
+    private _channelRendererRefs: IpcBusUtils.ChannelConnectionMap<number>;
     private _requestChannels: Map<string, any>;
     private _webContents: any;
 //    _lambdaCleanUpHandler: Function;
@@ -16,7 +16,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
         this._ipcObj = require('electron').ipcMain;
-        this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IpcBusBridgeImpl]');
+        this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap<number>('[IpcBusBridgeImpl]');
         this._requestChannels = new Map<string, any>();
         this._webContents = require('electron').webContents;
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
@@ -82,9 +82,10 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
-    private _rendererCleanUp(webContents: any, webContentsId: string): void {
-        this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
-            let peer: IpcBusInterfaces.IpcBusPeer = {name: peerName, process: { type: 'renderer', pid: parseInt(webContentsId)}};
+    private _rendererCleanUp(webContents: any, webContentsId: number): void {
+        let peer: IpcBusInterfaces.IpcBusPeer = {name: '', process: { type: 'renderer', pid: webContentsId}};
+        this._channelRendererRefs.releaseConnection(webContentsId, (channel: string, peerName: string, connData: any) => {
+            peer.name = peerName;
             this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: peer});
         });
         // ForEach is supposed to support deletion during the iteration !

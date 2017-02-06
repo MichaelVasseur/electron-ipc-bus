@@ -108,13 +108,13 @@ export class Logger {
 };
 
 /** @internal */
-export class ChannelConnectionMap {
+export class ChannelConnectionMap<T> {
     private _name: string;
-    private _channelsMap: Map<string, Map<string, ChannelConnectionMap.ConnectionData>>;
+    private _channelsMap: Map<string, Map<T, ChannelConnectionMap.ConnectionData<T>>>;
 
     constructor(name: string) {
         this._name = name;
-        this._channelsMap = new Map<string, Map<string, ChannelConnectionMap.ConnectionData>>();
+        this._channelsMap = new Map<string, Map<T, ChannelConnectionMap.ConnectionData<T>>>();
     }
 
     private _info(str: string) {
@@ -133,12 +133,12 @@ export class ChannelConnectionMap {
         return this._channelsMap.has(channel);
     }
 
-    public addRef(channel: string, connKey: string, conn: any, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+    public addRef(channel: string, connKey: T, conn: any, peerName: string, callback?: ChannelConnectionMap.MapHandler<T>) {
         this._info(`AddRef: '${channel}', connKey = ${connKey}`);
 
         let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
-            connsMap = new Map<string, ChannelConnectionMap.ConnectionData>();
+            connsMap = new Map<T, ChannelConnectionMap.ConnectionData<T>>();
             // This channel has NOT been subscribed yet, add it to the map
             this._channelsMap.set(channel, connsMap);
             // this._info(`AddRef: channel '${channel}' is added`);
@@ -146,7 +146,7 @@ export class ChannelConnectionMap {
         let connData = connsMap.get(connKey);
         if (connData == null) {
             // This channel has NOT been already subscribed by this connection
-            connData = new ChannelConnectionMap.ConnectionData(connKey, conn);
+            connData = new ChannelConnectionMap.ConnectionData<T>(connKey, conn);
             connsMap.set(connKey, connData);
             // this._info(`AddRef: connKey = ${connKey} is added`);
         }
@@ -166,7 +166,7 @@ export class ChannelConnectionMap {
         }
     }
 
-    private _release(channel: string, connKey: string, peerName: string, removeAll: boolean, callback?: ChannelConnectionMap.MapHandler) {
+    private _release(channel: string, connKey: T, peerName: string, removeAll: boolean, callback?: ChannelConnectionMap.MapHandler<T>) {
         this._info(`Release: '${channel}', connKey = ${connKey}`);
 
         let connsMap = this._channelsMap.get(channel);
@@ -237,7 +237,7 @@ export class ChannelConnectionMap {
         }
     }
 
-    // public releaseAll(channel: string, callback?: ChannelConnectionMap.MapHandler) {
+    // public releaseAll(channel: string, callback?: ChannelConnectionMap.MapHandler<T>) {
     //     this._info(`releaseAll: channel = ${channel}`);
     //     let connsMap = this._channelsMap.get(channel);
     //     if (connsMap == null) {
@@ -247,16 +247,16 @@ export class ChannelConnectionMap {
     //     // releaseConnection
     // }
 
-    public release(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+    public release(channel: string, connKey: T, peerName: string, callback?: ChannelConnectionMap.MapHandler<T>) {
         this._release(channel, connKey, peerName, false, callback);
     }
 
-    public releasePeerName(channel: string, connKey: string, peerName: string, callback?: ChannelConnectionMap.MapHandler) {
+    public releasePeerName(channel: string, connKey: T, peerName: string, callback?: ChannelConnectionMap.MapHandler<T>) {
         this._info(`releasePeerName: connKey = ${connKey}, peerName = ${peerName}`);
         this._release(channel, connKey, peerName, true, callback);
     }
 
-    public releaseConnection(connKey: string, callback?: ChannelConnectionMap.MapHandler) {
+    public releaseConnection(connKey: T, callback?: ChannelConnectionMap.MapHandler<T>) {
         this._info(`ReleaseConn: connKey = ${connKey}`);
 
         // ForEach is supposed to support deletion during the iteration !
@@ -265,7 +265,7 @@ export class ChannelConnectionMap {
         });
     }
 
-    public forEachChannel(channel: string, callback: ChannelConnectionMap.ForEachHandler) {
+    public forEachChannel(channel: string, callback: ChannelConnectionMap.ForEachHandler<T>) {
         this._info(`forEachChannel: '${channel}'`);
 
         if ((callback instanceof Function) === false) {
@@ -285,7 +285,7 @@ export class ChannelConnectionMap {
         }
     }
 
-    public forEach(callback: ChannelConnectionMap.ForEachHandler) {
+    public forEach(callback: ChannelConnectionMap.ForEachHandler<T>) {
         this._info('forEach');
 
         if ((callback instanceof Function) === false) {
@@ -305,25 +305,25 @@ export class ChannelConnectionMap {
 /** @internal */
 export namespace ChannelConnectionMap {
     /** @internal */
-    export class ConnectionData {
-        readonly connKey: string;
+    export class ConnectionData<T> {
+        readonly connKey: T;
         readonly conn: any;
         peers: Map<string, number> = new Map<string, number>();
 
-        constructor(connKey: string, conn: any) {
+        constructor(connKey: T, conn: any) {
             this.connKey = connKey;
             this.conn = conn;
         }
     }
 
     /** @internal */
-    export interface MapHandler {
-        (channel: string, peerName: string, connData: ConnectionData): void;
+    export interface MapHandler<T> {
+        (channel: string, peerName: string, connData: ConnectionData<T>): void;
     };
 
     /** @internal */
-    export interface ForEachHandler {
-        (ConnectionData: ConnectionData, channel: string): void;
+    export interface ForEachHandler<T> {
+        (ConnectionData: ConnectionData<T>, channel: string): void;
     };
 };
 

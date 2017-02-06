@@ -14,7 +14,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc: BaseIpc;
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;
-    private _subscriptions: IpcBusUtils.ChannelConnectionMap;
+    private _subscriptions: IpcBusUtils.ChannelConnectionMap<string>;
     private _requestChannels: Map<string, any>;
     private _ipcBusPeers: Map<string, IpcBusInterfaces.IpcBusPeer>;
     private _ipcBusBrokerClient: IpcBusCommonClient;
@@ -25,7 +25,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
-        this._subscriptions = new IpcBusUtils.ChannelConnectionMap('[IpcBusBrokerImpl]');
+        this._subscriptions = new IpcBusUtils.ChannelConnectionMap<string>('[IpcBusBrokerImpl]');
         this._requestChannels = new Map<string, any>();
         this._ipcBusPeers = new Map<string, IpcBusInterfaces.IpcBusPeer>();
         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
@@ -147,7 +147,6 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     this._ipcBusPeers.delete(ipcBusData.id);
                     break;
                 }
-
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL: {
                     const ipcBusData: IpcBusData = data.args[0];
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
