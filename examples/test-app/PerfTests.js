@@ -1,6 +1,12 @@
-var PerfTests = function _PerfTests(type) {
+var PerfTests = function _PerfTests(type, busPath) {
     const _ipcBusModule = require('electron-ipc-bus');
-    var _ipcBus = _ipcBusModule.CreateIpcBusClient();
+    var _ipcBus = _ipcBusModule.CreateIpcBusClient(busPath);
+    _ipcBus.connect('perfTestsBus')
+        .then((msg) => {
+            _ipcBus.on('test-performance-trace', (ipcBusEvent, activateTrace) => this.onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace));
+            _ipcBus.on('test-performance-run', (ipcBusEvent, testParams) => this.onIPCBus_TestPerformanceRun(ipcBusEvent, testParams));
+            _ipcBus.on('test-performance-'+ _type, (ipcBusEvent, msgContent) => this.onIPCBus_TestPerformance(ipcBusEvent, msgContent));
+        });
     var _type = type;
 
     this.doPerformanceTests = function _doPerformanceTests(testParams) {
@@ -101,10 +107,6 @@ var PerfTests = function _PerfTests(type) {
             }
         }
     }
-
-    _ipcBus.on('test-performance-trace', (ipcBusEvent, activateTrace) => this.onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace));
-    _ipcBus.on('test-performance-run', (ipcBusEvent, testParams) => this.onIPCBus_TestPerformanceRun(ipcBusEvent, testParams));
-    _ipcBus.on('test-performance-'+ _type, (ipcBusEvent, msgContent) => this.onIPCBus_TestPerformance(ipcBusEvent, msgContent));
 
     function allocateString(seed, num) {
         num = Number(num) / 100;

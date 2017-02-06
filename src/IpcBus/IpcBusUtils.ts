@@ -16,6 +16,8 @@ export const IPC_BUS_EVENT_SENDMESSAGE = 'IpcBusEvent:onSendMessage';
 export const IPC_BUS_EVENT_REQUESTMESSAGE = 'IpcBusEvent:onRequestMessage';
 export const IPC_BUS_EVENT_REQUESTRESPONSE = 'IpcBusEvent:onRequestResponse';
 
+export const IPC_BUS_TIMEOUT = 20000;
+
 function uuid(): string {
     return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
 }

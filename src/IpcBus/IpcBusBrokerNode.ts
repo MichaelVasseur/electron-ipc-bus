@@ -36,7 +36,7 @@ export class IpcBusBrokerNode implements IpcBusInterfaces.IpcBusBroker {
     // IpcBusBroker API
     start(timeoutDelay?: number): Promise<string> {
         if (timeoutDelay == null) {
-            timeoutDelay = 2000;
+            timeoutDelay = IpcBusUtils.IPC_BUS_TIMEOUT;
         }
         let p = new Promise<string>((resolve, reject) => {
             this._baseIpc.once('listening', (server: any) => {

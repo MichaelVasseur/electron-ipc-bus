@@ -52,7 +52,7 @@ export class IpcBusBrokerRenderer implements IpcBusInterfaces.IpcBusBroker {
     // Set API
     start(timeoutDelay?: number): Promise<string> {
         if (timeoutDelay == null) {
-            timeoutDelay = 2000;
+            timeoutDelay = IpcBusUtils.IPC_BUS_TIMEOUT;
         }
         let p = new Promise<string>((resolve, reject) => {
             this._ipcBusTransport.ipcConnect(timeoutDelay)

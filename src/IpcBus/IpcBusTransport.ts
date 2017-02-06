@@ -9,6 +9,7 @@ export class IpcBusData {
     unsubscribeAll?: boolean;
 }
 
+/** @internal */
 export abstract class IpcBusTransport {
     readonly ipcBusProcess: IpcBusInterfaces.IpcBusProcess;
     readonly ipcOptions: IpcBusUtils.IpcOptions;
@@ -48,5 +49,3 @@ export function CreateIpcBusTransport(ipcOptions: IpcBusUtils.IpcOptions): IpcBu
     }
     return ipcBusTransport;
 }
-
-

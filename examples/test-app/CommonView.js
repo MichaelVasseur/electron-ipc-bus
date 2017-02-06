@@ -160,7 +160,7 @@ function onIPCBus_OnRequestThen(requestPromiseResponse) {
     var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'black';
-        topicRespElt.value = requestPromiseResponse.payload + ' from (' + requestPromiseResponse.event.sender.peerName + ')';
+        topicRespElt.value = requestPromiseResponse.payload + ' from (' + JSON.stringify(requestPromiseResponse.event.sender) + ')';
     }
 }
 
@@ -211,7 +211,7 @@ function onIPC_Received(ipcBusEvent, ipcContent) {
             ipcBusEvent.request.resolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
-        ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
+        ipcContent += ' from (' + JSON.stringify(ipcBusEvent.sender) + ')';
         topicReceivedElt.value += ipcContent + '\n';
     }
 }
@@ -227,7 +227,7 @@ function onIPC_EmitReceived(ipcBusEvent, ipcContent1, ipcContent2, ipcContent3) 
             ipcBusEvent.requestResolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
-        ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
+        ipcContent += ' from (' + JSON.stringify(ipcBusEvent.sender) + ')';
         topicReceivedElt.value += ipcContent + '\n';
     }
 }

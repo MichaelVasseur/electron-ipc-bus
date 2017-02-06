@@ -4,8 +4,7 @@ import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 
 import {EventEmitter} from 'events';
-import {IpcBusTransport} from './IpcBusTransport';
-import {IpcBusData} from './IpcBusTransport';
+import {IpcBusTransport, IpcBusData} from './IpcBusTransport';
 
 
 // Implementation for a common IpcBusClient
@@ -58,7 +57,7 @@ export class IpcBusCommonClient extends EventEmitter
 
     private _request(timeoutDelay: number, channel: string, args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
         if ((timeoutDelay == null) || (timeoutDelay <= 0)) {
-            timeoutDelay = 2000;
+            timeoutDelay = IpcBusUtils.IPC_BUS_TIMEOUT;
         }
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
@@ -116,7 +115,7 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string> {
-        let timeoutDelay: number = 2000;
+        let timeoutDelay: number = IpcBusUtils.IPC_BUS_TIMEOUT;
         if ((typeof timeoutDelayOrPeerName === 'number') && (timeoutDelayOrPeerName > 0)) {
             timeoutDelay = timeoutDelayOrPeerName;
         }
