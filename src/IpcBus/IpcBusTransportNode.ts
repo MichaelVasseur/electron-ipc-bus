@@ -9,8 +9,8 @@ import {IpcBusTransport, IpcBusData} from './IpcBusTransport';
 // Implementation for Node process
 /** @internal */
 export class IpcBusTransportNode extends IpcBusTransport {
-    private _baseIpc: BaseIpc;
-    private _busConn: any;
+    protected _baseIpc: BaseIpc;
+    protected _busConn: any;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
@@ -48,7 +48,11 @@ export class IpcBusTransportNode extends IpcBusTransport {
         this._busConn = null;
     }
 
-    ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
+    ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
+       this._ipcPushCommand(command, ipcBusData, {channel: channel, sender: this.ipcBusSender}, args);
+    }
+
+    protected _ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
         if (args) {
             BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
         }

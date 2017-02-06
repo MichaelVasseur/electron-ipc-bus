@@ -43,11 +43,11 @@ export abstract class IpcBusTransport {
                 ipcBusEvent.request = {
                     resolve: (payload: Object | string) => {
                         ipcBusData.resolve = true;
-                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, { channel: ipcBusData.replyChannel, sender: this._ipcBusSender }, [payload]);
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusData.replyChannel, [payload]);
                     },
                     reject: (err: string) => {
                         ipcBusData.reject = true;
-                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, { channel: ipcBusData.replyChannel, sender: this._ipcBusSender }, [err]);
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusData.replyChannel, [err]);
                     }
                 };
                 this.eventEmitter.emit(ipcBusEvent.channel, ipcBusEvent, ...args);
@@ -71,7 +71,6 @@ export abstract class IpcBusTransport {
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
             const ipcBusData: IpcBusData = { replyChannel: IpcBusUtils.GenerateReplyChannel() };
-            const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = { channel: channel, sender: this._ipcBusSender };
 
             // Prepare reply's handler, we have to change the replyChannel to channel
             const localRequestCallback = (localIpcBusData: IpcBusData, localIpcBusEvent: IpcBusInterfaces.IpcBusEvent, responsePromise: any) => {
@@ -102,13 +101,13 @@ export abstract class IpcBusTransport {
             // Register locally
             this._requestFunctions.set(ipcBusData.replyChannel, localRequestCallback);
             // Execute request
-            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, args);
+            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, channel, args);
 
             // Clean-up
             setTimeout(() => {
                 if (this._requestFunctions.delete(ipcBusData.replyChannel)) {
                     // Unregister remotely
-                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent);
+                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, channel);
                     IpcBusUtils.Logger.info(`[IpcBusClient] reject: timeout`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = { event: { channel: channel, sender: this._ipcBusSender }, err: 'timeout' };
                     reject(response);
@@ -130,7 +129,7 @@ export abstract class IpcBusTransport {
     }
 
     abstract ipcClose(): void;
-    abstract ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void;
+    abstract ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void;
 }
 
 import { IpcBusTransportNode } from './IpcBusTransportNode';

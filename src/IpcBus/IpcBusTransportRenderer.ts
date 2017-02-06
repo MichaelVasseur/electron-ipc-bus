@@ -83,8 +83,8 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         }
     }
 
-    ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
-       this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, ipcBusEvent, args);
+    ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
+       this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, {channel: channel, sender: this.ipcBusSender}, args);
     }
 }
 

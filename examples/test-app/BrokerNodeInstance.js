@@ -6,10 +6,10 @@
 console.log('IPC Broker instance : Starting')
 
 const ipcBusModule = require('electron-ipc-bus');
-const ipcBrokerNode = ipcBusModule.CreateIpcBusBrokerNode();
+const ipcBroker = ipcBusModule.CreateIpcBusBroker();
 ipcBusModule.ActivateIpcBusTrace(true);
 
-ipcBrokerNode.start()
+ipcBroker.start()
     .then((msg) => {
         console.log('IPC Broker instance : Started');
 
@@ -25,7 +25,7 @@ function dispatchMessage(msg)
     console.log('IPC Broker instance : receive message:' + JSON.stringify(msg));
      var msgJSON = JSON.parse(msg);
      if (msgJSON.action === 'queryState') {
-         let queryState = ipcBrokerNode.queryState();
+         let queryState = ipcBroker.queryState();
          process.send({event: 'queryState', result: queryState});
      }
 }

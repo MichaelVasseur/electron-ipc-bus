@@ -30,9 +30,9 @@ const ipcBusClient = ipcBusModule.CreateIpcBusClient(busPath);
 ipcBusModule.ActivateIpcBusTrace(true);
 
 // Startup
-let ipcBrokerNodeProcess = null;
-let ipcBrokerNode = null;
-let ipcBrokerRenderer = null;
+let ipcBrokerProcess = null;
+let ipcBroker = null;
+let ipcBridge = null;
 
 
 // Load node-import without wrapping to variable. 
@@ -169,16 +169,16 @@ var MainProcess = (function () {
         }
 
         function doQueryState() {
-            if (ipcBrokerNode) {
-                var queryState = ipcBrokerNode.queryState();
+            if (ipcBroker) {
+                var queryState = ipcBroker.queryState();
                 mainWindow.webContents.send('get-queryState', queryState);
             }
-            if (ipcBrokerNodeProcess) {
-                ipcBrokerNodeProcess.once('message', (msgJSON) => {
+            if (ipcBrokerProcess) {
+                ipcBrokerProcess.once('message', (msgJSON) => {
                     var queryState = msgJSON.result;
                     mainWindow.webContents.send('get-queryState', queryState);
                 });
-                ipcBrokerNodeProcess.send(JSON.stringify({action: 'queryState'}));
+                ipcBrokerProcess.send(JSON.stringify({action: 'queryState'}));
                 
             }
         }
@@ -492,10 +492,10 @@ function startApp() {
 }
 
 function prepareApp() {
-    ipcBrokerRenderer = ipcBusModule.CreateIpcBusBrokerRenderer(busPath);
-    ipcBrokerRenderer.start()
+    ipcBridge = ipcBusModule.CreateIpcBusBridge(busPath);
+    ipcBridge.start()
         .then((msg) => {
-            console.log('<MAIN> IPC broker RENDERER is ready !');
+            console.log('<MAIN> IPC bridge is ready !');
             // Setup IPC Client (and renderer bridge)
             ipcBusClient.connect('MainBus')
                 .then(() => startApp());
@@ -506,13 +506,13 @@ function prepareApp() {
 electronApp.on('ready', function () {
     var bLocalBrokerState = true;
 
-    console.log('<MAIN> Starting IPC broker NODE ...');
+    console.log('<MAIN> Starting IPC broker ...');
     if (bLocalBrokerState) {
         // Broker in Master process
-        ipcBrokerNode = ipcBusModule.CreateIpcBusBrokerNode(busPath);
-        ipcBrokerNode.start()
+        ipcBroker = ipcBusModule.CreateIpcBusBroker(busPath);
+        ipcBroker.start()
             .then((msg) => {
-                console.log('<MAIN> IPC broker NODE is ready !');
+                console.log('<MAIN> IPC broker is ready !');
                 prepareApp();
             })
             .catch((err) => {
@@ -520,9 +520,9 @@ electronApp.on('ready', function () {
             });
     } else {
         // Setup Remote Broker
-        ipcBrokerNodeProcess = spawnNodeInstance('BrokerNodeInstance.js');
-        ipcBrokerNodeProcess.on('message', function (msg) {
-            console.log('<MAIN> IPC broker NODE is ready !');
+        ipcBrokerProcess = spawnNodeInstance('BrokerNodeInstance.js');
+        ipcBrokerProcess.on('message', function (msg) {
+            console.log('<MAIN> IPC broker is ready !');
             prepareApp();
         });
         // ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });

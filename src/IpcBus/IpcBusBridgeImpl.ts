@@ -84,7 +84,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     private _rendererCleanUp(webContents: any, webContentsId: string): void {
         this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
-            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName, peerProcess: this.ipcBusSender.peerProcess}});
+            this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName, peerProcess: this.ipcBusSender.peerProcess}});
         });
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((webContentsForRequest, channel) => {
@@ -145,7 +145,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             default :
                 break;
         }
-        this.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
+        this._ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
     }
 }
 
