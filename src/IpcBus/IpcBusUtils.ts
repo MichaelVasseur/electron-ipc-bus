@@ -1,7 +1,6 @@
 // Constants
 export const IPC_BUS_RENDERER_HANDSHAKE = 'IpcBusRenderer:Handshake';
 export const IPC_BUS_RENDERER_CONNECT = 'IpcBusRenderer:Connect';
-export const IPC_BUS_RENDERER_CLOSE = 'IpcBusRenderer:Close';
 export const IPC_BUS_RENDERER_COMMAND = 'IpcBusRenderer:Command';
 export const IPC_BUS_RENDERER_EVENT = 'IpcBusRenderer:Event';
 

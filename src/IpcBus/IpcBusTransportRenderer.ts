@@ -33,18 +33,18 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     private _ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
         let p = new Promise<string>((resolve, reject) => {
             super.ipcConnect(timeoutDelay, peerName)
-            .then((msg) => {
-                this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
-                    resolve('connected');
+                .then((msg) => {
+                    this._ipcObj.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, () => {
+                        resolve('connected');
+                    });
+                    setTimeout(() => {
+                        reject('timeout');
+                    }, timeoutDelay);
+                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+                })
+                .catch((err) => {
+                    reject(err);
                 });
-                setTimeout(() => {
-                    reject('timeout');
-                }, timeoutDelay);
-                this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
-            })
-            .catch((err) => {
-                reject(err);
-            });
         });
         return p;
     }
@@ -60,7 +60,6 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                     this._onHandshake(eventOrPid, pidOrUndefined);
                     this._ipcConnect(timeoutDelay, peerName)
                         .then((msg) => {
-                            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
                             resolve(msg);
                         })
                         .catch((err) => {
@@ -80,13 +79,12 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         if (this._ipcObj) {
             this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
             this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
-            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
             this._ipcObj = null;
         }
     }
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
-       ipcBusData.id = this._id;
+       ipcBusData.peerId = this._peerId;
        this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, {channel: channel, sender: this.peer}, args);
     }
 }

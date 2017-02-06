@@ -14,10 +14,11 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc: BaseIpc;
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;
+    private _ipcBusBrokerClient: IpcBusCommonClient;
+
     private _subscriptions: IpcBusUtils.ChannelConnectionMap<string>;
     private _requestChannels: Map<string, any>;
     private _ipcBusPeers: Map<string, IpcBusInterfaces.IpcBusPeer>;
-    private _ipcBusBrokerClient: IpcBusCommonClient;
 
     private _queryStateLamdba: IpcBusInterfaces.IpcBusListener = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) => this._onQueryState(ipcBusEvent, replyChannel);
     private _serviceAvailableLambda: IpcBusInterfaces.IpcBusListener = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, serviceName: string) => this._onServiceAvailable(ipcBusEvent, serviceName);
@@ -138,13 +139,13 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                 {
                     const ipcBusData: IpcBusData = data.args[0];
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
-                    this._ipcBusPeers.set(ipcBusData.id, ipcBusEvent.sender);
+                    this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_CLOSE :
                 {
                     const ipcBusData: IpcBusData = data.args[0];
-                    this._ipcBusPeers.delete(ipcBusData.id);
+                    this._ipcBusPeers.delete(ipcBusData.peerId);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL: {
@@ -152,7 +153,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Subscribe to channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
 
-                    this._subscriptions.addRef(ipcBusEvent.channel, socket.remotePort, socket, ipcBusData.id);
+                    this._subscriptions.addRef(ipcBusEvent.channel, socket.remotePort, socket, ipcBusData.peerId);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL: {
@@ -161,10 +162,10 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
 
                     if (ipcBusData.unsubscribeAll) {
-                        this._subscriptions.releasePeerName(ipcBusEvent.channel, socket.remotePort, ipcBusData.id);
+                        this._subscriptions.releasePeerName(ipcBusEvent.channel, socket.remotePort, ipcBusData.peerId);
                     }
                     else {
-                        this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusData.id);
+                        this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusData.peerId);
                     }
                     break;
                 }

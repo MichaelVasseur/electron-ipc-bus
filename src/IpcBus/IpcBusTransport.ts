@@ -7,7 +7,7 @@ import { EventEmitter } from 'events';
 
 /** @internal */
 export class IpcBusData {
-    id?: string;
+    peerId?: string;
     replyChannel?: string;
     resolve?: boolean;
     reject?: boolean;
@@ -16,7 +16,7 @@ export class IpcBusData {
 
 /** @internal */
 export abstract class IpcBusTransport {
-    protected _id: string;
+    protected _peerId: string;
     protected _ipcBusPeer: IpcBusInterfaces.IpcBusPeer;
     protected _requestFunctions: Map<string, Function>;
 
@@ -26,7 +26,7 @@ export abstract class IpcBusTransport {
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcBusPeer = { name: '', process: ipcBusProcess };
         this.ipcOptions = ipcOptions;
-        this._id = IpcBusUtils.uuid();
+        this._peerId = IpcBusUtils.uuid();
         this._requestFunctions = new Map<string, Function>();
     }
 

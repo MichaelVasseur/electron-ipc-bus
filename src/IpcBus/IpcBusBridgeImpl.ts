@@ -8,9 +8,12 @@ import {IpcBusTransportNode} from './IpcBusTransportNode';
 /** @internal */
 export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInterfaces.IpcBusBridge  {
     private _ipcObj: any;
+    private _webContents: any;
+
     private _channelRendererRefs: IpcBusUtils.ChannelConnectionMap<number>;
     private _requestChannels: Map<string, any>;
-    private _webContents: any;
+    private _webContentPeerIds: Map<number, string>;
+
 //    _lambdaCleanUpHandler: Function;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
@@ -18,6 +21,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         this._ipcObj = require('electron').ipcMain;
         this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap<number>('IpcBusBridgeImpl');
         this._requestChannels = new Map<string, any>();
+        this._webContentPeerIds = new Map<number, string>();
         this._webContents = require('electron').webContents;
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
         //     this.rendererCleanUp(webContentsId);
@@ -58,10 +62,6 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 .then((msg) => {
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
                         , (event: any) => this._onHandshake(event));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CONNECT
-                        , (event: any) => this._onConnect(event));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_CLOSE
-                        , (event: any) => this._onClose(event));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
                         , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
@@ -77,16 +77,15 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
     stop() {
         this.ipcClose();
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
-        this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
-        this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
     private _rendererCleanUp(webContents: any, webContentsId: number): void {
         let peer: IpcBusInterfaces.IpcBusPeer = {name: '', process: { type: 'renderer', pid: webContentsId}};
+        let ipcBusData: IpcBusData = {peerId: this._webContentPeerIds.get(webContentsId) };
         this._channelRendererRefs.releaseConnection(webContentsId, (channel: string, peerName: string, connData: any) => {
             peer.name = peerName;
-            this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: peer});
+            this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, ipcBusData, {channel: channel, sender: peer});
         });
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((webContentsForRequest, channel) => {
@@ -107,22 +106,22 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         webContents.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, webContents.id);
     }
 
-    private _onConnect(event: any): void {
-        const webContents = event.sender;
-        webContents.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, webContents.id);
-    }
-
-    private _onClose(event: any): void {
-        const webContents = event.sender;
-        // Do not know how to manage that !
-        // webContents.removeListener('destroyed', this._lambdaCleanUpHandler);
-        this._rendererCleanUp(webContents, webContents.id);
-    }
-
     private _onRendererMessage(event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         const webContents = event.sender;
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.name} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
+            case IpcBusUtils.IPC_BUS_COMMAND_CONNECT : {
+                this._webContentPeerIds.set(webContents.id, ipcBusData.peerId);
+                webContents.send(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, webContents.id);
+                break;
+            }
+            case IpcBusUtils.IPC_BUS_COMMAND_CLOSE : {
+                // Do not know how to manage that !
+                // webContents.removeListener('destroyed', this._lambdaCleanUpHandler);
+                this._rendererCleanUp(webContents, webContents.id);
+                this._webContentPeerIds.delete(webContents.id);
+                break;
+            }
             case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL : {
                 this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.name);
                 break;

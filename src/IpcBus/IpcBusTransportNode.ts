@@ -26,20 +26,20 @@ export class IpcBusTransportNode extends IpcBusTransport {
     ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
         let p = new Promise<string>((resolve, reject) => {
             super.ipcConnect(timeoutDelay, peerName)
-            .then((msg) => {
-                this._baseIpc.on('connect', (conn: any) => {
-                    this._busConn = conn;
-                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
-                    resolve(msg);
+                .then((msg) => {
+                    this._baseIpc.on('connect', (conn: any) => {
+                        this._busConn = conn;
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+                        resolve(msg);
+                    });
+                    setTimeout(() => {
+                        reject('timeout');
+                    }, timeoutDelay);
+                    this._baseIpc.connect(this.ipcOptions.port, this.ipcOptions.host);
+                })
+                .catch((err) => {
+                    reject(err);
                 });
-                setTimeout(() => {
-                    reject('timeout');
-                }, timeoutDelay);
-                this._baseIpc.connect(this.ipcOptions.port, this.ipcOptions.host);
-            })
-            .catch((err) => {
-                reject(err);
-            });
         });
         return p;
     }
@@ -55,7 +55,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     protected _ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
-        ipcBusData.id = this._id;
+        ipcBusData.peerId = this._peerId;
         if (args) {
             BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
         }
