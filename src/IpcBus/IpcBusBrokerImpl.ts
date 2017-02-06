@@ -162,7 +162,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
 
                     if (ipcBusData.unsubscribeAll) {
-                        this._subscriptions.releasePeerName(ipcBusEvent.channel, socket.remotePort, ipcBusData.peerId);
+                        this._subscriptions.releaseAll(ipcBusEvent.channel, socket.remotePort);
                     }
                     else {
                         this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusData.peerId);
