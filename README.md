@@ -148,7 +148,7 @@ const ipcBusBroker = ipcBusModule.CreateIpcBusBroker();
 ## Methods
 
 ### start([timeoutDelay]) : Promise < string >
-- timeoutDelay : number (milliseconds)
+- ***timeoutDelay*** : number (milliseconds)
 
 ```js
 ipcBusBroker.start() 
@@ -176,7 +176,7 @@ Returns the list of pair <channel, peer> subscriptions. Format may change from o
 This information can be retrieved from an IpcBusClient through the channel : /electron-ipc-bus/queryState
 
 ### isServiceAvailable(serviceName): boolean 
-- serviceName: string
+- ***serviceName***: string
 
 ```js
 ipcBusBroker.isServiceAvailable('mySettings') 
@@ -231,7 +231,7 @@ const ipcBusBridge = ipcBusModule.CreateIpcBusBridge();
 ## Methods
 
 ### start([timeoutDelay]) : Promise < string >
-- timeoutDelay : number (milliseconds)
+- ***timeoutDelay*** : number (milliseconds)
 
 ```js
 ipcBusBridge.start() 
@@ -262,7 +262,7 @@ Only one ***IpcBusClient*** per Process/Renderer is created. If you ask for more
 ```ts
 interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
-    connect(timeoutDelay?: number): Promise<string>;
+    connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string>;
     close(): void;
     send(channel: string, ...args: any[]): void;
     request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusRequestResponse>;
@@ -331,17 +331,30 @@ window.ipcBus = require('electron-ipc-bus').CreateIpcBusClient();
 
 ## Property
 
-### peerName
-For debugging purpose, each ***IpcBusClient*** is identified by a peerName. 
-The peerName is unique and computed from the type of the process: 
-- Master
-- Renderer + WebContents Id
-- Node + Process Id
+### peer
+For debugging purpose, each ***IpcBusClient*** is identified by a peer.
+```js
+interface IpcBusProcess {
+    type: string;
+    pid: number;
+}
+
+interface IpcBusPeer {
+    name: string;
+    process: IpcBusProcess;
+}
+```
+it contains the name of the peer, this name can be changed during the connection.
+it contains the process context of the peer : type and pid.
+- type: Master, pid : Process Id
+- type: Node, pid: Process Id
+- type: Renderer, pid: WebContents Id
 
 ## Connectivity Methods
 
-### connect([timeoutDelay]) : Promise < string >
-- ***timeoutDelay***: number (milliseconds)
+### connect([timeoutDelayOrPeerName?: number | string[, peerName?: string]]) : Promise < string >
+- ***timeoutDelayOrPeerName*** = timeoutDelay: number (milliseconds) | peerName: string
+- ***peerName*** = peerName: string
 
 ```js
 ipcBus.connect().then((eventName) => console.log("Connected to Ipc bus !"))

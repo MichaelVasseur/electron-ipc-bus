@@ -43,20 +43,21 @@ export interface IpcBusListener {
 
 export interface IpcBusClient extends events.EventEmitter {
     peer: IpcBusPeer;
+
     connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string>;
     close(): void;
 
     send(channel: string, ...args: any[]): void;
     request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusRequestResponse>;
 
-    // EventEmitter overriden API
+    // EventEmitter API
     addListener(channel: string, listener: IpcBusListener): this;
     removeListener(channel: string, listener: IpcBusListener): this;
     on(channel: string, listener: IpcBusListener): this;
     once(channel: string, listener: IpcBusListener): this;
     off(channel: string, listener: IpcBusListener): this;
 
-    // Added in Node 6...
+    // EventEmitter API - Added in Node 6...
     prependListener(channel: string, listener: IpcBusListener): this;
     prependOnceListener(channel: string, listener: IpcBusListener): this;
 }
