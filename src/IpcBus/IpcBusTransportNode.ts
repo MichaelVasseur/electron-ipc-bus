@@ -4,8 +4,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
-import {IpcBusTransport} from './IpcBusTransport';
-import {IpcBusData} from './IpcBusTransport';
+import {IpcBusTransport, IpcBusData} from './IpcBusTransport';
 
 // Implementation for Node process
 /** @internal */
