@@ -429,21 +429,37 @@ util.inherits(TimeServiceImpl, EventEmitter);
 function startApp() {
     console.log('<MAIN> Connected to broker !');
 
+    // Create the proxy (client-side)
     const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 500);
+    
+    // Subscribe to remote events (client-side)
     timeServiceProxy.on('emitted_event', () => console.log(`<MAIN> Received 'emitted_event' event from Time service`));
     timeServiceProxy.on('not_emitted_event', () => console.log(`<MAIN> Received 'not_emitted_event' event from Time service`));
+    
+    // Make a remote call (client-side)
+    // NOTE: This call might be delayed as the remote service may not be ready yet !
     timeServiceProxy
         .call('getCurrent', 'Before')
         .then(
             (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
             (err) => console.error(`<MAIN> Time service returned error : ${err}`));
+    
+    // Create the exposed instance (server-side)
     const timeServiceImpl = new TimeServiceImpl();
+    
+    // Create and start the service (server-side)
     const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
     timeService.start();
+
+    // Check that event is not published on the bus when the service is stopped
     timeService.stop();
     timeServiceImpl.emit('not_emitted_event', {});
+    
+    // Check that event is published on the bus when the service is started
     timeService.start();
     timeServiceImpl.emit('emitted_event', {});
+    
+    // Check service's availability and make a remote call when it is available
     timeServiceProxy
         .checkAvailability()
         .then((availability) => {
