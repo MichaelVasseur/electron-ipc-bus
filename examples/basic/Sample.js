@@ -56,13 +56,13 @@ electronApp.on('ready', function () {
                             console.log('I have no friend :-(');
                         });
 
-                    // ipcBusClient1.request(1000, 'greeting', 'hello partner, please answer within 1sec!')
-                    //     .then((ipcBusRequestResponse) => {
-                    //         console.log(JSON.stringify(ipcBusRequestResponse.event.sender) + ' replied ' + ipcBusRequestResponse.payload);
-                    //     })
-                    //     .catch((err) => {
-                    //         console.log('I have no friend :-(');
-                    //     });
+                    ipcBusClient1.request(1000, 'greeting', 'hello partner, please answer within 1sec!')
+                        .then((ipcBusRequestResponse) => {
+                            console.log(JSON.stringify(ipcBusRequestResponse.event.sender) + ' replied ' + ipcBusRequestResponse.payload);
+                        })
+                        .catch((err) => {
+                            console.log('I have no friend :-(');
+                        });
                 });
         });
 });
