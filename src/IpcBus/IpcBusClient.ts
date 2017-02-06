@@ -20,8 +20,8 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     // IpcBusClient API
-    get peerName(): string {
-        return this._ipcBusTransport.ipcBusSender.peerName;
+    get peer(): IpcBusInterfaces.IpcBusPeer {
+        return this._ipcBusTransport.peer;
     }
 
     connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string> {

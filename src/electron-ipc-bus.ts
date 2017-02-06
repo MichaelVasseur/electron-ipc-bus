@@ -1,6 +1,6 @@
 export {IpcBusRequest} from './IpcBus/IpcBusInterfaces';
 export {IpcBusRequestResponse} from './IpcBus/IpcBusInterfaces';
-export {IpcBusSender} from './IpcBus/IpcBusInterfaces';
+export {IpcBusPeer} from './IpcBus/IpcBusInterfaces';
 export {IpcBusEvent} from './IpcBus/IpcBusInterfaces';
 export {IpcBusListener} from './IpcBus/IpcBusInterfaces';
 

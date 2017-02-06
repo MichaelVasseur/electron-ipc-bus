@@ -31,7 +31,7 @@ var PerfTests = function _PerfTests(type, busPath) {
                 type: _type, 
                 stop: {
                     timeStamp: dateNow,
-                    peerName: _ipcBus.peerName,
+                    peerName: _ipcBus.peer.name,
                 }
             };
             _ipcBus.send('test-performance-stop', msgTestStop);
@@ -59,7 +59,7 @@ var PerfTests = function _PerfTests(type, busPath) {
             test: testParams,
             type: _type, 
             start: {
-                peerName: _ipcBus.peerName,
+                peerName: _ipcBus.peer.name,
             }
         };
 

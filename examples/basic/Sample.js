@@ -9,7 +9,7 @@ const ipcBusPath = 50494;
 // Startup
 electronApp.on('ready', function () {
     // Create broker
-    const ipcBusBrokerNode = ipcBusModule.CreateIpcBusBrokerNode(ipcBusPath);
+    const ipcBusBrokerNode = ipcBusModule.CreateIpcBusBroker(ipcBusPath);
 
     // Start broker
     ipcBusBrokerNode.start()
@@ -23,27 +23,27 @@ electronApp.on('ready', function () {
     // Chatting on channel 'greeting'
                     ipcBusClient1.addListener('greeting', (ipcBusEvent, greetingMsg) => {
                         if (ipcBusEvent.request) {
-                            ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.peerName);
+                            ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.name);
                         }
                         else {
                             ipcBusClient1.send('greeting-reply', 'thanks to all listeners')
                         }
-                        console.log(ipcBusClient1.peerName + ' received ' + ipcBusEvent.channel + ':' + greetingMsg);
+                        console.log(ipcBusClient1.peer.name + ' received ' + ipcBusEvent.channel + ':' + greetingMsg);
                     });
 
                     ipcBusClient2.addListener('greeting', (ipcBusEvent, greetingMsg) => {
                         if (ipcBusEvent.request) {
-                            ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.peerName);
+                            ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.name);
                         }
                         else {
                             ipcBusClient2.send('greeting-reply', 'thanks to all listeners')
                         }
-                        console.log(ipcBusClient2.peerName + ' received ' + ipcBusEvent.channel + ':' + greetingMsg);
+                        console.log(ipcBusClient2.peer.name + ' received ' + ipcBusEvent.channel + ':' + greetingMsg);
                     });
 
                     ipcBusClient1.addListener('greeting-reply', (ipcBusEvent, greetingReplyMsg) => {
                         console.log(greetingReplyMsg);
-                        console.log(ipcBusClient1.peerName + ' received ' + ipcBusEvent.channel + ':' + greetingReplyMsg);
+                        console.log(ipcBusClient1.peer.name + ' received ' + ipcBusEvent.channel + ':' + greetingReplyMsg);
                     });
 
                     ipcBusClient2.send('greeting', 'hello everyone!');

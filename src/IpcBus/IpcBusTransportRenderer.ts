@@ -18,12 +18,12 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     private _onHandshake(eventOrPid: any, pidOrUndefined: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (pidOrUndefined) {
-            this._ipcBusSender.peerProcess.pid = pidOrUndefined;
-            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._ipcBusSender.peerProcess}`);
+            this.peer.process.pid = pidOrUndefined;
+            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this.peer.name}`);
             this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         } else {
-            this._ipcBusSender.peerProcess.pid = pidOrUndefined;
-            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._ipcBusSender.peerProcess}`);
+            this.peer.process.pid = pidOrUndefined;
+            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this.peer.name}`);
             this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
@@ -60,6 +60,7 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                     this._onHandshake(eventOrPid, pidOrUndefined);
                     this._ipcConnect(timeoutDelay, peerName)
                         .then((msg) => {
+                            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
                             resolve(msg);
                         })
                         .catch((err) => {
@@ -77,6 +78,7 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
 
     ipcClose(): void {
         if (this._ipcObj) {
+            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
             this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
             this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
             this._ipcObj = null;
@@ -84,7 +86,8 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     }
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
-       this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, {channel: channel, sender: this.ipcBusSender}, args);
+       ipcBusData.id = this._id;
+       this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, {channel: channel, sender: this.peer}, args);
     }
 }
 

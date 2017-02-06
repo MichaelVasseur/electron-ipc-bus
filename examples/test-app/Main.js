@@ -184,9 +184,9 @@ var MainProcess = (function () {
         }
 
         function onIPCElectron_ReceivedMessage(ipcBusEvent, ipcContent) {
-            console.log('Master - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.peerName);
+            console.log('Master - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.name);
             if (ipcBusEvent.request) {
-                ipcBusEvent.request.resolve(ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName);
+                ipcBusEvent.request.resolve(ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.name);
             }
             processMainToView.postReceivedMessage(ipcBusEvent, ipcContent);
         }

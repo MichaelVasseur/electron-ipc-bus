@@ -17,6 +17,8 @@ npm install electron-ipc-bus
 Dependencies
 * https://github.com/oleics/node-easy-ipc
 * https://github.com/pkrumins/node-lazy
+* https://www.npmjs.com/package/uuid
+
 
 # Usage
 

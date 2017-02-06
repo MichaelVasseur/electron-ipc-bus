@@ -29,6 +29,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
             .then((msg) => {
                 this._baseIpc.on('connect', (conn: any) => {
                     this._busConn = conn;
+                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
                     resolve(msg);
                 });
                 setTimeout(() => {
@@ -44,15 +45,17 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     ipcClose() {
+        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
         this._busConn.end();
         this._busConn = null;
     }
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
-       this._ipcPushCommand(command, ipcBusData, {channel: channel, sender: this.ipcBusSender}, args);
+       this._ipcPushCommand(command, ipcBusData, {channel: channel, sender: this.peer}, args);
     }
 
     protected _ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
+        ipcBusData.id = this._id;
         if (args) {
             BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
         }

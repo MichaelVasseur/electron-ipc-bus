@@ -28,7 +28,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
-                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.peerName}`);
+                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
                 this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
                     IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
                     connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
@@ -36,7 +36,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 break;
             }
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
-                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.peerName}`);
+                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.name}`);
                 let webContents = this._requestChannels.get(ipcBusData.replyChannel);
                 if (webContents) {
                     this._requestChannels.delete(ipcBusData.replyChannel);
@@ -84,7 +84,8 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     private _rendererCleanUp(webContents: any, webContentsId: string): void {
         this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
-            this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName, peerProcess: this.ipcBusSender.peerProcess}});
+            let peer: IpcBusInterfaces.IpcBusPeer = {name: peerName, process: { type: 'renderer', pid: parseInt(webContentsId)}};
+            this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: peer});
         });
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((webContentsForRequest, channel) => {
@@ -119,18 +120,18 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     private _onRendererMessage(event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         const webContents = event.sender;
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.peerName} post ${command} on '${ipcBusEvent.channel}'`);
+        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.name} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
             case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL : {
-                this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.peerName);
+                this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.name);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL : {
                 if (ipcBusData.unsubscribeAll) {
-                    this._channelRendererRefs.releasePeerName(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName);
+                    this._channelRendererRefs.releasePeerName(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.name);
                 }
                 else {
-                    this._channelRendererRefs.release(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.peerName);
+                    this._channelRendererRefs.release(ipcBusEvent.channel, webContents.id, ipcBusEvent.sender.name);
                 }
                 break;
             }

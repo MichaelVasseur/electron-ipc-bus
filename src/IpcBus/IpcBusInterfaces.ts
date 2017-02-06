@@ -26,14 +26,14 @@ export interface IpcBusProcess {
     pid: number;
 }
 
-export interface IpcBusSender {
-    peerName: string;
-    peerProcess: IpcBusProcess;
+export interface IpcBusPeer {
+    name: string;
+    process: IpcBusProcess;
 }
 
 export interface IpcBusEvent {
     channel: string;
-    sender: IpcBusSender;
+    sender: IpcBusPeer;
     request?: IpcBusRequest;
 }
 
@@ -42,7 +42,7 @@ export interface IpcBusListener {
 }
 
 export interface IpcBusClient extends events.EventEmitter {
-    readonly peerName: string;
+    peer: IpcBusPeer;
     connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string>;
     close(): void;
 
