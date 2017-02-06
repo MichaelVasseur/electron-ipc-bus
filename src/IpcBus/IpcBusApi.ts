@@ -23,7 +23,7 @@ export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     let processType = ElectronUtils.GuessElectronProcessType();
-    IpcBusUtils.Logger.info(`_CreateIpcBusBroker process type = ${processType}, ipc options = ${ipcOptions}`);
+    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`_CreateIpcBusBroker process type = ${processType}, ipc options = ${ipcOptions}`);
     switch (processType) {
         case 'browser':
         case 'node':
@@ -45,7 +45,7 @@ export function _CreateIpcBusBridge(busPath?: string): IpcBusBridge {
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
     let processType = ElectronUtils.GuessElectronProcessType();
-    IpcBusUtils.Logger.info(`_CreateIpcBusBridge process type = ${processType}, ipc options = ${ipcOptions}`);
+    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`_CreateIpcBusBridge process type = ${processType}, ipc options = ${ipcOptions}`);
     switch (processType) {
         case 'browser':
             if (ipcOptions.isValid()) {
@@ -87,5 +87,5 @@ export function _CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: str
 
 /** @internal */
 export function _ActivateIpcBusTrace(enable: boolean): void {
-    IpcBusUtils.Logger.enable(enable);
+    IpcBusUtils.Logger.enable = enable;
 }

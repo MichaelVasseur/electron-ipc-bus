@@ -28,19 +28,19 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
-                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
                 this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
-                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
                     connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
                 });
                 break;
             }
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
-                IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.name}`);
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.name}`);
                 let webContents = this._requestChannels.get(ipcBusData.replyChannel);
                 if (webContents) {
                     this._requestChannels.delete(ipcBusData.replyChannel);
-                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${webContents.id}`);
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send response received on '${ipcBusData.replyChannel}' to peer #Renderer_${webContents.id}`);
                     webContents.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
                 }
                 break;
@@ -64,7 +64,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                         , (event: any) => this._onClose(event));
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
                         , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
-                    IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
                     resolve(msg);
                 })
                 .catch((err) => {
@@ -120,7 +120,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     private _onRendererMessage(event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         const webContents = event.sender;
-        IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.name} post ${command} on '${ipcBusEvent.channel}'`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.name} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
             case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL : {
                 this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusEvent.sender.name);

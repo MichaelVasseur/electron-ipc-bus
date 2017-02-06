@@ -37,7 +37,6 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
 
         //  Register call handlers for exposed instance's method
         if (this._exposedInstance) {
-            IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' HAS an implementation`);
             // Register handlers for functions of service's Implementation (except the ones inherited from EventEmitter)
             // Looking in legacy class
             for (let memberName in this._exposedInstance) {
@@ -58,7 +57,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 }
             }
         } else {
-            IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' does NOT have an implementation`);
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' does NOT have an implementation`);
         }
     }
 
@@ -69,7 +68,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             this._prevImplEmit = this._exposedInstance['emit'];
             this._exposedInstance['emit'] = (eventName: string, ...args: any[]) => {
 
-                IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is emitting event '${eventName}'`);
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is emitting event '${eventName}'`);
 
                 // Emit the event on IPC
                 this.sendEvent(eventName, args);
@@ -78,7 +77,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 this._prevImplEmit(eventName, ...args);
             };
 
-            IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' will send events emitted by its implementation`);
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' will send events emitted by its implementation`);
         }
 
         // The service is started, send available call handlers to clients
@@ -93,7 +92,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
 
         this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, new IpcBusInterfaces.ServiceStatus(true, this._getCallHandlerNames()));
 
-        IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STARTED`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STARTED`);
     }
 
     stop(): void {
@@ -110,17 +109,17 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         // No more listening to call messages
         this._ipcBusClient.removeListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
 
-        IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STOPPED`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STOPPED`);
     }
 
     registerCallHandler(name: string, handler: IpcBusInterfaces.IpcBusServiceCallHandler): void {
         this._callHandlers.set(name, handler);
-        IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' registered call handler '${name}'`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' registered call handler '${name}'`);
     }
 
     unregisterCallHandler(name: string): void {
         this._callHandlers.delete(name);
-        IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' unregistered call handler '${name}'`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' unregistered call handler '${name}'`);
     }
 
     sendEvent(name: string, ...args: any[]): void {
@@ -131,7 +130,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _onCallReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceCall) {
         if (!this._callHandlers.has(msg.handlerName)) {
             event.request.reject(`Service '${this._serviceName}' does NOT handle calls to '${msg.handlerName}' !`);
-            IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' does NOT handle calls to '${msg.handlerName}' !`);
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' does NOT handle calls to '${msg.handlerName}' !`);
         } else {
 
             try {
@@ -141,7 +140,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             } catch (e) {
 
                 event.request.reject(e);
-                IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' encountered an exception while processing call to '${msg.handlerName}' : ${e}`);
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' encountered an exception while processing call to '${msg.handlerName}' : ${e}`);
             }
         }
     }

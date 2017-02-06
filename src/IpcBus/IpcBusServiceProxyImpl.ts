@@ -72,10 +72,10 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
             });
         } else {
             return new Promise<T>((resolve, reject) => {
-                IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Call to '${name}' from service '${this._serviceName}' delayed as the service is not available`);
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Call to '${name}' from service '${this._serviceName}' delayed as the service is not available`);
 
                 const delayedCall = () => {
-                    IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
                     this._ipcBusClient
                         .request(self._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
                         .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
@@ -152,7 +152,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                 return self.call<Object>(handlerName, ...args);
             };
             this._wrapper[handlerName] = proc;
-            IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${self._serviceName}' added '${handlerName}' to its wrapper`);
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${self._serviceName}' added '${handlerName}' to its wrapper`);
         });
     }
 
@@ -178,7 +178,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     }
 
     private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
-        IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' emitted event '${msg.eventName}'`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' emitted event '${msg.eventName}'`);
         this.emit(msg.eventName, msg);
     }
 

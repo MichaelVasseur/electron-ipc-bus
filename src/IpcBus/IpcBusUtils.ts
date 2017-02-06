@@ -92,43 +92,18 @@ export function getServiceEventChannel(serviceName: string): string {
 
 /** @internal */
 export class Logger {
-    private static _enable: boolean = false;
-    private static _init: boolean = Logger._initialize();
+    public static enable: boolean = false;
 
-    private static _initialize(): boolean {
-        Logger.enable(Logger._enable);
-        Logger._init = true;    // to prevent ts error on not used parameter
-        return true;
-    }
-
-    private static _info(msg: string) {
+    static info(msg: string) {
         console.log(msg);
     }
 
-    private static _warn(msg: string) {
+    static warn(msg: string) {
         console.warn(msg);
     }
 
-    private static _error(msg: string) {
+    static error(msg: string) {
         console.error(msg);
-    }
-
-    static info(msg: string) {}
-    static warn (msg: string) {};
-    static error(msg: string) {};
-
-    static enable(enable: boolean) {
-        Logger._enable = enable;
-        if (enable) {
-            Logger.info = Logger._info;
-            Logger.warn = Logger._warn ;
-            Logger.error = Logger._error;
-        }
-        else {
-            Logger.info = function() {};
-            Logger.warn = function() {};
-            Logger.error = function() {};
-        }
     }
 };
 
