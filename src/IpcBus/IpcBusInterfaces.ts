@@ -64,6 +64,13 @@ export interface IpcBusClient extends events.EventEmitter {
 export interface IpcBusBroker {
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
+    queryState(): Object;
+    isServiceAvailable(serviceName: string): boolean;
+}
+
+export interface IpcBusBridge {
+    start(timeoutDelay?: number): Promise<string>;
+    stop(): void;
 }
 
 export interface IpcBusServiceCall {

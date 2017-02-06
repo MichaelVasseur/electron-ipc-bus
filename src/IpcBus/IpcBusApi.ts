@@ -6,36 +6,59 @@ import { IpcBusClient } from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 
 import { IpcBusBroker } from './IpcBusInterfaces';
+import { IpcBusBridge } from './IpcBusInterfaces';
 import { IpcBusServiceImpl } from './IpcBusServiceImpl';
 import { IpcBusService } from './IpcBusInterfaces';
 import { IpcBusServiceProxyImpl } from './IpcBusServiceProxyImpl';
 import { IpcBusServiceProxy } from './IpcBusInterfaces';
 
-import { IpcBusBrokerNode } from './IpcBusBrokerNode';
-import { IpcBusBrokerRenderer } from './IpcBusBrokerRenderer';
+import { IpcBusBrokerImpl } from './IpcBusBrokerImpl';
+import { IpcBusBridgeImpl } from './IpcBusBridgeImpl';
+
+import * as ElectronUtils from './ElectronUtils';
 
 /** @internal */
-export function _CreateIpcBusBrokerNode(busPath?: string): IpcBusBroker {
+export function _CreateIpcBusBroker(busPath?: string): IpcBusBroker {
     let ipcBusBroker: IpcBusBroker = null;
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
-    if (ipcOptions.isValid()) {
-        IpcBusUtils.Logger.info(`_CreateIpcBusBrokerNode ipc options = ${ipcOptions}`);
-        ipcBusBroker = new IpcBusBrokerNode(ipcOptions) as IpcBusBroker;
+    let processType = ElectronUtils.GuessElectronProcessType();
+    IpcBusUtils.Logger.info(`_CreateIpcBusBroker process type = ${processType}, ipc options = ${ipcOptions}`);
+    switch (processType) {
+        case 'browser':
+        case 'node':
+            if (ipcOptions.isValid()) {
+                ipcBusBroker = new IpcBusBrokerImpl({ type: processType, pid: process.pid }, ipcOptions);
+            }
+            break;
+        // not supported process
+        case 'renderer':
+        default:
+            break;
     }
     return ipcBusBroker;
 }
 
 /** @internal */
-export function _CreateIpcBusBrokerRenderer(busPath?: string): IpcBusBroker {
-    let ipcBusBroker: IpcBusBroker = null;
+export function _CreateIpcBusBridge(busPath?: string): IpcBusBridge {
+    let ipcBusBridge: IpcBusBridge = null;
 
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
-    if (ipcOptions.isValid()) {
-        IpcBusUtils.Logger.info(`_CreateIpcBusBrokerRenderer ipc options = ${ipcOptions}`);
-        ipcBusBroker = new IpcBusBrokerRenderer(ipcOptions) as IpcBusBroker;
+    let processType = ElectronUtils.GuessElectronProcessType();
+    IpcBusUtils.Logger.info(`_CreateIpcBusBridge process type = ${processType}, ipc options = ${ipcOptions}`);
+    switch (processType) {
+        case 'browser':
+            if (ipcOptions.isValid()) {
+                ipcBusBridge = new IpcBusBridgeImpl({ type: processType, pid: process.pid }, ipcOptions);
+            }
+            break;
+        // not supported process
+        case 'renderer':
+        case 'node':
+        default:
+            break;
     }
-    return ipcBusBroker;
+    return ipcBusBridge;
 }
 
 import { IpcBusCommonClient } from './IpcBusClient';

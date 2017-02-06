@@ -1,31 +1,30 @@
 import * as IpcBusUtils from './IpcBusUtils';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
-import {CreateIpcBusTransport, IpcBusTransport, IpcBusData} from './IpcBusTransport';
+import {IpcBusData} from './IpcBusTransport';
+import {IpcBusTransportNode} from './IpcBusTransportNode';
 
 // This class ensures the transfer of data between Broker and Renderer/s using ipcMain
 /** @internal */
-export class IpcBusBrokerRenderer implements IpcBusInterfaces.IpcBusBroker {
-    private _ipcBusTransport: IpcBusTransport;
+export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInterfaces.IpcBusBridge  {
     private _ipcObj: any;
     private _channelRendererRefs: IpcBusUtils.ChannelConnectionMap;
     private _requestChannels: Map<string, any>;
     private _webContents: any;
 //    _lambdaCleanUpHandler: Function;
 
-    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
+    constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
+        super(ipcBusProcess, ipcOptions);
         this._ipcObj = require('electron').ipcMain;
-        this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IpcBusBrokerRenderer]');
+        this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap('[IpcBusBridgeImpl]');
         this._requestChannels = new Map<string, any>();
         this._webContents = require('electron').webContents;
-        this._ipcBusTransport = CreateIpcBusTransport(ipcOptions);
-        this._ipcBusTransport._onEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
         //     this.rendererCleanUp(webContentsId);
         // };
     }
 
-    private _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
+    protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
@@ -49,13 +48,13 @@ export class IpcBusBrokerRenderer implements IpcBusInterfaces.IpcBusBroker {
         }
     }
 
-    // Set API
+    // IpcBusBridge API
     start(timeoutDelay?: number): Promise<string> {
         if (timeoutDelay == null) {
             timeoutDelay = IpcBusUtils.IPC_BUS_TIMEOUT;
         }
         let p = new Promise<string>((resolve, reject) => {
-            this._ipcBusTransport.ipcConnect(timeoutDelay)
+            this.ipcConnect(timeoutDelay)
                 .then((msg) => {
                     this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
                         , (event: any) => this._onHandshake(event));
@@ -76,7 +75,7 @@ export class IpcBusBrokerRenderer implements IpcBusInterfaces.IpcBusBroker {
     }
 
     stop() {
-        this._ipcBusTransport.ipcClose();
+        this.ipcClose();
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_CLOSE);
@@ -85,7 +84,7 @@ export class IpcBusBrokerRenderer implements IpcBusInterfaces.IpcBusBroker {
 
     private _rendererCleanUp(webContents: any, webContentsId: string): void {
         this._channelRendererRefs.releaseConnection(webContentsId, (channel, peerName, connData) => {
-            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName, peerProcess: this._ipcBusTransport.ipcBusProcess}});
+            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, {channel: channel, sender: {peerName: peerName, peerProcess: this.ipcBusSender.peerProcess}});
         });
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((webContentsForRequest, channel) => {
@@ -146,7 +145,7 @@ export class IpcBusBrokerRenderer implements IpcBusInterfaces.IpcBusBroker {
             default :
                 break;
         }
-        this._ipcBusTransport.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
+        this.ipcPushCommand(command, ipcBusData, ipcBusEvent, args);
     }
 }
 

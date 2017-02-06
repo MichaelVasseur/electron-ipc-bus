@@ -23,16 +23,22 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     /// IpcBusTrandport API
-    ipcConnect(timeoutDelay: number): Promise<string> {
+    ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
         let p = new Promise<string>((resolve, reject) => {
-            this._baseIpc.on('connect', (conn: any) => {
-                this._busConn = conn;
-                resolve('connected');
+            super.ipcConnect(timeoutDelay, peerName)
+            .then((msg) => {
+                this._baseIpc.on('connect', (conn: any) => {
+                    this._busConn = conn;
+                    resolve(msg);
+                });
+                setTimeout(() => {
+                    reject('timeout');
+                }, timeoutDelay);
+                this._baseIpc.connect(this.ipcOptions.port, this.ipcOptions.host);
+            })
+            .catch((err) => {
+                reject(err);
             });
-            setTimeout(() => {
-                reject('timeout');
-            }, timeoutDelay);
-            this._baseIpc.connect(this.ipcOptions.port, this.ipcOptions.host);
         });
         return p;
     }

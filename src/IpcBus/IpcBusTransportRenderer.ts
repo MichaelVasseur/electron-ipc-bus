@@ -18,41 +18,47 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     private _onHandshake(eventOrPid: any, pidOrUndefined: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (pidOrUndefined) {
-            this.ipcBusProcess.pid = pidOrUndefined;
-            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this.ipcBusProcess}`);
+            this._ipcBusSender.peerProcess.pid = pidOrUndefined;
+            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._ipcBusSender.peerProcess}`);
             this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         } else {
-            this.ipcBusProcess.pid = eventOrPid;
-            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this.ipcBusProcess}`);
+            this._ipcBusSender.peerProcess.pid = pidOrUndefined;
+            IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._ipcBusSender.peerProcess}`);
             this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) =>  this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
         this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
     };
 
     /// IpcBusTrandport API
-    private _ipcConnect(timeoutDelay: number): Promise<string> {
+    private _ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
         let p = new Promise<string>((resolve, reject) => {
-            this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
-                resolve('connected');
+            super.ipcConnect(timeoutDelay, peerName)
+            .then((msg) => {
+                this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_CONNECT, () => {
+                    resolve('connected');
+                });
+                setTimeout(() => {
+                    reject('timeout');
+                }, timeoutDelay);
+                this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
+            })
+            .catch((err) => {
+                reject(err);
             });
-            setTimeout(() => {
-                reject('timeout');
-            }, timeoutDelay);
-            this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_CONNECT);
         });
         return p;
     }
 
-    ipcConnect(timeoutDelay: number): Promise<string> {
+    ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
         if (this._ipcObj) {
-            return this._ipcConnect(timeoutDelay);
+            return this._ipcConnect(timeoutDelay, peerName);
         }
         else {
             let p = new Promise<string>((resolve, reject) => {
                 this._ipcObj = require('electron').ipcRenderer;
                 this._ipcObj.once(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (eventOrPid: any, pidOrUndefined: any) => {
                     this._onHandshake(eventOrPid, pidOrUndefined);
-                    this._ipcConnect(timeoutDelay)
+                    this._ipcConnect(timeoutDelay, peerName)
                         .then((msg) => {
                             resolve(msg);
                         })

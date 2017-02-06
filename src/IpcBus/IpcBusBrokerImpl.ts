@@ -6,10 +6,11 @@ import * as IpcBusUtils from './IpcBusUtils';
 // import * as util from 'util';
 
 import {IpcBusCommonClient} from './IpcBusClient';
-import {CreateIpcBusTransport, IpcBusTransport, IpcBusData} from './IpcBusTransport';
+import {IpcBusTransport, IpcBusData} from './IpcBusTransport';
+import {IpcBusTransportNode} from './IpcBusTransportNode';
 
 /** @internal */
-export class IpcBusBrokerNode implements IpcBusInterfaces.IpcBusBroker {
+export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     private _baseIpc: BaseIpc;
     private _ipcServer: any = null;
     private _ipcOptions: IpcBusUtils.IpcOptions;
@@ -20,16 +21,16 @@ export class IpcBusBrokerNode implements IpcBusInterfaces.IpcBusBroker {
     private _queryStateLamdba: IpcBusInterfaces.IpcBusListener = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) => this._onQueryState(ipcBusEvent, replyChannel);
     private _serviceAvailableLambda: IpcBusInterfaces.IpcBusListener = (ipcBusEvent: IpcBusInterfaces.IpcBusEvent, serviceName: string) => this._onServiceAvailable(ipcBusEvent, serviceName);
 
-    constructor(ipcOptions: IpcBusUtils.IpcOptions) {
+    constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
-        this._subscriptions = new IpcBusUtils.ChannelConnectionMap('[IpcBusBrokerNode]');
+        this._subscriptions = new IpcBusUtils.ChannelConnectionMap('[IpcBusBrokerImpl]');
         this._requestChannels = new Map<string, any>();
         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
         this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
         this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
 
-        let ipcBusTransport: IpcBusTransport = CreateIpcBusTransport(ipcOptions);
+        let ipcBusTransport: IpcBusTransport = new IpcBusTransportNode(ipcBusProcess, ipcOptions);
         this._ipcBusBrokerClient = new IpcBusCommonClient(ipcBusTransport);
     }
 
@@ -74,7 +75,7 @@ export class IpcBusBrokerNode implements IpcBusInterfaces.IpcBusBroker {
         }
     }
 
-    private _queryState(): Object {
+    queryState(): Object {
         let queryStateResult: Object[] = [];
         this._subscriptions.forEach(function (connData, channel) {
             connData.peerNames.forEach(function (count, peerName) {
@@ -84,12 +85,12 @@ export class IpcBusBrokerNode implements IpcBusInterfaces.IpcBusBroker {
         return queryStateResult;
     }
 
-    private _isServiceAvailable(serviceName: string): boolean {
+    isServiceAvailable(serviceName: string): boolean {
         return this._subscriptions.hasChannel(IpcBusUtils.getServiceCallChannel(serviceName));
     }
 
     private _onQueryState(ipcBusEvent: IpcBusInterfaces.IpcBusEvent, replyChannel: string) {
-        const queryState = this._queryState();
+        const queryState = this.queryState();
         if (ipcBusEvent.request) {
             ipcBusEvent.request.resolve(queryState);
         }
@@ -99,7 +100,7 @@ export class IpcBusBrokerNode implements IpcBusInterfaces.IpcBusBroker {
     }
 
     private _onServiceAvailable(ipcBusEvent: IpcBusInterfaces.IpcBusEvent, serviceName: string) {
-        const availability = this._isServiceAvailable(serviceName);
+        const availability = this.isServiceAvailable(serviceName);
         IpcBusUtils.Logger.info(`[IPCBus:Broker] Service '${serviceName}' availability : ${availability}`);
         if (ipcBusEvent.request) {
             ipcBusEvent.request.resolve(availability);
