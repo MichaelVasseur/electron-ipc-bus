@@ -25,7 +25,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
-        this._subscriptions = new IpcBusUtils.ChannelConnectionMap<string>('[IpcBusBrokerImpl]');
+        this._subscriptions = new IpcBusUtils.ChannelConnectionMap<string>('IpcBusBrokerImpl');
         this._requestChannels = new Map<string, any>();
         this._ipcBusPeers = new Map<string, IpcBusInterfaces.IpcBusPeer>();
         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
@@ -111,7 +111,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
 
     private _onConnection(socket: any, server: any): void {
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Incoming connection !`);
-        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info('[IPCBus:Broker] socket.address=' + JSON.stringify(socket.address()));
+        // IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info('[IPCBus:Broker] socket.address=' + JSON.stringify(socket.address()));
         // IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info('[IPCBus:Broker] socket.localAddress=' + socket.localAddress);
         // IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remoteAddress=' + socket.remoteAddress);
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info('[IPCBus:Broker] socket.remotePort=' + socket.remotePort);

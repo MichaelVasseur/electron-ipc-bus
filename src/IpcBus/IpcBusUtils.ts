@@ -108,7 +108,7 @@ export class Logger {
 };
 
 /** @internal */
-export class ChannelConnectionMap<T> {
+export class ChannelConnectionMap<T extends string | number> {
     private _name: string;
     private _channelsMap: Map<string, Map<T, ChannelConnectionMap.ConnectionData<T>>>;
 
@@ -134,49 +134,49 @@ export class ChannelConnectionMap<T> {
     }
 
     public addRef(channel: string, connKey: T, conn: any, peerName: string, callback?: ChannelConnectionMap.MapHandler<T>) {
-        this._info(`AddRef: '${channel}', connKey = ${connKey}`);
+        Logger.enable && this._info(`AddRef: '${channel}', connKey = ${connKey}`);
 
         let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
             connsMap = new Map<T, ChannelConnectionMap.ConnectionData<T>>();
             // This channel has NOT been subscribed yet, add it to the map
             this._channelsMap.set(channel, connsMap);
-            // this._info(`AddRef: channel '${channel}' is added`);
+            // Logger.enable && this._info(`AddRef: channel '${channel}' is added`);
         }
         let connData = connsMap.get(connKey);
         if (connData == null) {
             // This channel has NOT been already subscribed by this connection
             connData = new ChannelConnectionMap.ConnectionData<T>(connKey, conn);
             connsMap.set(connKey, connData);
-            // this._info(`AddRef: connKey = ${connKey} is added`);
+            // Logger.enable && this._info(`AddRef: connKey = ${connKey} is added`);
         }
         let count = connData.peers.get(peerName);
         if (count == null) {
             // This channel has NOT been already subcribed by this peername, by default 1
             count = 1;
-            // this._info(`AddRef: peerName #${peerName} is added`);
+            // Logger.enable && this._info(`AddRef: peerName #${peerName} is added`);
         }
         else {
             ++count;
         }
         connData.peers.set(peerName, count);
-        this._info(`AddRef: '${channel}', connKey = ${connKey}, count = ${connData.peers.size}`);
+        Logger.enable && this._info(`AddRef: '${channel}', connKey = ${connKey}, count = ${connData.peers.size}`);
         if ((callback instanceof Function) === true) {
             callback(channel, peerName, connData);
         }
     }
 
     private _release(channel: string, connKey: T, peerName: string, removeAll: boolean, callback?: ChannelConnectionMap.MapHandler<T>) {
-        this._info(`Release: '${channel}', connKey = ${connKey}`);
+        Logger.enable && this._info(`Release: '${channel}', connKey = ${connKey}`);
 
         let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
-            this._warn(`Release: '${channel}' is unknown`);
+            Logger.enable && this._warn(`Release: '${channel}' is unknown`);
         }
         else {
             let connData = connsMap.get(connKey);
             if (connData == null) {
-                this._warn(`Release: connKey = ${connKey} is unknown`);
+                Logger.enable && this._warn(`Release: connKey = ${connKey} is unknown`);
             }
             else {
                 if (peerName == null) {
@@ -195,7 +195,7 @@ export class ChannelConnectionMap<T> {
                 else {
                     let count = connData.peers.get(peerName);
                     if (count == null) {
-                        this._warn(`Release: peerName #${peerName} is unknown`);
+                        Logger.enable && this._warn(`Release: peerName #${peerName} is unknown`);
                     }
                     else {
                         if (removeAll) {
@@ -216,7 +216,7 @@ export class ChannelConnectionMap<T> {
                             } else {
                                 // The connection is no more referenced
                                 connData.peers.delete(peerName);
-                                // this._info(`Release: peerName #${peerName} is released`);
+                                // Logger.enable && this._info(`Release: peerName #${peerName} is released`);
                             }
                             if ((callback instanceof Function) === true) {
                                 callback(channel, peerName, connData);
@@ -226,22 +226,22 @@ export class ChannelConnectionMap<T> {
                 }
                 if (connData.peers.size === 0) {
                     connsMap.delete(connKey);
-                    // this._info(`Release: conn = ${connKey} is released`);
+                    // Logger.enable && this._info(`Release: conn = ${connKey} is released`);
                     if (connsMap.size === 0) {
                         this._channelsMap.delete(channel);
-                        // this._info(`Release: channel '${channel}' is released`);
+                        // Logger.enable && this._info(`Release: channel '${channel}' is released`);
                     }
                 }
-                this._info(`Release: '${channel}', connKey = ${connKey}, count = ${connData.peers.size}`);
+                Logger.enable && this._info(`Release: '${channel}', connKey = ${connKey}, count = ${connData.peers.size}`);
             }
         }
     }
 
     // public releaseAll(channel: string, callback?: ChannelConnectionMap.MapHandler<T>) {
-    //     this._info(`releaseAll: channel = ${channel}`);
+    //     Logger.enable && this._info(`releaseAll: channel = ${channel}`);
     //     let connsMap = this._channelsMap.get(channel);
     //     if (connsMap == null) {
-    //         this._warn(`Release: '${channel}' is unknown`);
+    //         Logger.enable && this._warn(`Release: '${channel}' is unknown`);
     //     }
     //     // while
     //     // releaseConnection
@@ -252,12 +252,12 @@ export class ChannelConnectionMap<T> {
     }
 
     public releasePeerName(channel: string, connKey: T, peerName: string, callback?: ChannelConnectionMap.MapHandler<T>) {
-        this._info(`releasePeerName: connKey = ${connKey}, peerName = ${peerName}`);
+        Logger.enable && this._info(`releasePeerName: connKey = ${connKey}, peerName = ${peerName}`);
         this._release(channel, connKey, peerName, true, callback);
     }
 
     public releaseConnection(connKey: T, callback?: ChannelConnectionMap.MapHandler<T>) {
-        this._info(`ReleaseConn: connKey = ${connKey}`);
+        Logger.enable && this._info(`ReleaseConn: connKey = ${connKey}`);
 
         // ForEach is supposed to support deletion during the iteration !
         this._channelsMap.forEach((connsMap, channel) => {
@@ -266,36 +266,36 @@ export class ChannelConnectionMap<T> {
     }
 
     public forEachChannel(channel: string, callback: ChannelConnectionMap.ForEachHandler<T>) {
-        this._info(`forEachChannel: '${channel}'`);
+        Logger.enable && this._info(`forEachChannel: '${channel}'`);
 
         if ((callback instanceof Function) === false) {
-            this._error('forEachChannel: No callback provided !');
+            Logger.enable && this._error('forEachChannel: No callback provided !');
             return;
         }
 
         let connsMap = this._channelsMap.get(channel);
         if (connsMap == null) {
-            this._warn(`forEachChannel: Unknown channel '${channel}' !`);
+            Logger.enable && this._warn(`forEachChannel: Unknown channel '${channel}' !`);
         }
         else {
             connsMap.forEach((connData, connKey) => {
-                this._info(`forEachChannel: '${channel}', connKey = ${connKey} (${connData.peers.size})`);
+                Logger.enable && this._info(`forEachChannel: '${channel}', connKey = ${connKey} (${connData.peers.size})`);
                 callback(connData, channel);
             });
         }
     }
 
     public forEach(callback: ChannelConnectionMap.ForEachHandler<T>) {
-        this._info('forEach');
+        Logger.enable && this._info('forEach');
 
         if ((callback instanceof Function) === false) {
-            this._error('forEach: No callback provided !');
+            Logger.enable && this._error('forEach: No callback provided !');
             return;
         }
 
         this._channelsMap.forEach((connsMap, channel: string) => {
             connsMap.forEach((connData, connKey) => {
-                this._info(`forEach: '${channel}', connKey = ${connKey} (${connData.peers.size})`);
+                Logger.enable && this._info(`forEach: '${channel}', connKey = ${connKey} (${connData.peers.size})`);
                 callback(connData, channel);
             });
         });
@@ -305,7 +305,7 @@ export class ChannelConnectionMap<T> {
 /** @internal */
 export namespace ChannelConnectionMap {
     /** @internal */
-    export class ConnectionData<T> {
+    export class ConnectionData<T extends string | number> {
         readonly connKey: T;
         readonly conn: any;
         peers: Map<string, number> = new Map<string, number>();
@@ -317,12 +317,12 @@ export namespace ChannelConnectionMap {
     }
 
     /** @internal */
-    export interface MapHandler<T> {
+    export interface MapHandler<T extends string | number> {
         (channel: string, peerName: string, connData: ConnectionData<T>): void;
     };
 
     /** @internal */
-    export interface ForEachHandler<T> {
+    export interface ForEachHandler<T extends string | number> {
         (ConnectionData: ConnectionData<T>, channel: string): void;
     };
 };
