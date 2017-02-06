@@ -32,10 +32,8 @@ var PerfTests = function _PerfTests(type, busPath) {
             var msgTestStop = { 
                 uuid: uuid,
                 type: _type, 
-                stop: {
-                    timeStamp: dateNow,
-                    peerName: _ipcBus.peer.name,
-                }
+                timeStamp: dateNow,
+                peer: _ipcBus.peer
             };
             _ipcBus.send('test-performance-stop', msgTestStop);
         }
@@ -61,9 +59,7 @@ var PerfTests = function _PerfTests(type, busPath) {
             uuid: uuid,
             test: testParams,
             type: _type, 
-            start: {
-                peerName: _ipcBus.peer.name,
-            }
+            peer: _ipcBus.peer
         };
 
         var msgContent;
@@ -87,7 +83,7 @@ var PerfTests = function _PerfTests(type, busPath) {
             msgContent.push(true);
         }
 
-        msgTestStart.start.timeStamp = Date.now();
+        msgTestStart.timeStamp = Date.now();
         _ipcBus.send('test-performance-start', msgTestStart);
         if (testParams.typeArgs === 'args') {
             if (testParams.typeCommand == 'Request') {
