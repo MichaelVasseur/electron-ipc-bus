@@ -188,7 +188,7 @@ This information can be retrieved from an IpcBusClient through the channel : /el
 
 # IpcBusBridge
 Dispatching of messages to renderer process is managed by a bridge. You can have only one single bridge for the whole application.
-The bridge must be instanciated in the master process only.
+The bridge must be instanciated in the master process only. Without this bridge, renderer and Node processes are not able to dialog.
 
 ## Interface
 ```ts
