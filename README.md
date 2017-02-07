@@ -358,8 +358,24 @@ it contains the process context of the peer : type and pid.
 - ***timeoutDelayOrPeerName*** = timeoutDelay: number (milliseconds) | peerName: string
 - ***peerName*** = peerName: string
 
+Basic usage
 ```js
 ipcBus.connect().then((eventName) => console.log("Connected to Ipc bus !"))
+```
+
+Provide a timeout
+```js
+ipcBus.connect(2000).then((eventName) => console.log("Connected to Ipc bus !"))
+```
+
+Provide a peer name
+```js
+ipcBus.connect('client2').then((eventName) => console.log("Connected to Ipc bus !"))
+```
+
+Provide all options
+```js
+ipcBus.connect(2000, 'client2').then((eventName) => console.log("Connected to Ipc bus !"))
 ```
 
 For a bus in a renderer, it fails if the Bridge is not started else it fails if the Broker is not started.
@@ -564,7 +580,7 @@ The ***IpcBusServiceProxy*** creates an IPC endpoint that can be used to execute
 
 ## Interface
 ```ts
-interface IpcBusServiceProxy {
+interface IpcBusServiceProxy extends events.EventEmitter {
     isAvailable: boolean;
     checkAvailability(): Promise<boolean>;
     call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T>;
