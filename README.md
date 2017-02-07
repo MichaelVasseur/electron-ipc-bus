@@ -1,7 +1,7 @@
 # electron-ipc-bus
 A safe IPC (Inter-Process Communication) bus for applications built on Electron. 
 
-This bus offers a common API for exchanging data between any Electron process : Node instances, Master and Renderer instances.
+This bus offers a common API for exchanging data between any Electron process : Node, Master and Renderer instances.
 
 # Features
 * Publish/Subscribe oriented API
@@ -101,7 +101,7 @@ electronApp.on('ready', function () {
 ```
 
 # IpcBusBroker
-Dispatching of messages is managed by a broker. You can have only one single Broker for the whole application.
+Dispatching of Node messages is managed by a broker. You can have only one single Broker for the whole application.
 The broker can be instanciated in a node process or in the master process (not in renderer processes).
 For performance purpose, it is better to instanciate the broker in an independent node process.
 
@@ -187,8 +187,8 @@ This information can be retrieved from an IpcBusClient through the channel : /el
 
 
 # IpcBusBridge
-Dispatching of messages to renderer process is managed by a bridge. You can have only one single bridge for the whole application.
-The bridge must be instanciated in the master process only. Without this bridge, renderer and Node processes are not able to dialog.
+Dispatching of Renderer messages is managed by a bridge. You can have only one single bridge for the whole application.
+The bridge must be instanciated in the master process only. Without this bridge, Renderer and Node processes are not able to dialog.
 
 ## Interface
 ```ts
@@ -359,6 +359,9 @@ it contains the process context of the peer : type and pid.
 ```js
 ipcBus.connect().then((eventName) => console.log("Connected to Ipc bus !"))
 ```
+
+For a bus in a renderer, it fails if the Bridge is not started else it fails if the Broker is not started.
+Most of the functions below will fail if the connection is not established (you have to wait for the connect promise).
 
 ### close()
 ```js
@@ -664,8 +667,7 @@ npm run start-sandboxed
 # Possible enhancements
 * Support several brokers each with its own buspath in order to distribute the traffic load.
 * Universal logger working in any kind of context (especially from a renderer).
-* Define a friendly peerName
-
+* Add an optional spy for debugging purpose
 
 # MIT License
 

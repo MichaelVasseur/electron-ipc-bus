@@ -90,7 +90,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     private _onHandshake(event: any, peerId: string): void {
         const webContents = event.sender;
-        // Have to closure the webContentsId as webContents is undefined when destroyed !!!
+        // Have to closure the webContentsId as webContents.id is undefined when destroyed !!!
         let webContentsId = webContents.id;
         webContents.addListener('destroyed', () => {
             this._rendererCleanUp(webContents, webContentsId);
