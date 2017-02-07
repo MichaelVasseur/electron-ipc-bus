@@ -8,6 +8,7 @@ export const IPC_BUS_COMMAND_CONNECT = 'IpcBusCommand:connect';
 export const IPC_BUS_COMMAND_CLOSE = 'IpcBusCommand:close';
 export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'IpcBusCommand:subscribeChannel';
 export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'IpcBusCommand:unsubscribeChannel';
+export const IPC_BUS_COMMAND_UNSUBSCRIBE_ALL = 'IpcBusCommand:unsubscribeAll';
 export const IPC_BUS_COMMAND_SENDMESSAGE = 'IpcBusCommand:sendMessage';
 export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'IpcBusCommand:requestMessage';
 export const IPC_BUS_COMMAND_REQUESTRESPONSE = 'IpcBusCommand:requestResponse';

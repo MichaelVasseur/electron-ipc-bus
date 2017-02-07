@@ -36,6 +36,7 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     close() {
+        super.removeAllListeners();
         this._ipcBusTransport.ipcClose();
     }
 
@@ -84,8 +85,11 @@ export class IpcBusCommonClient extends EventEmitter
     removeAllListeners(channel?: string): this {
         if (channel) {
             this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {unsubscribeAll: true}, channel);
-            super.removeAllListeners(channel);
         }
+        else {
+            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_ALL, {}, '');
+        }
+        super.removeAllListeners(channel);
         return this;
     }
 

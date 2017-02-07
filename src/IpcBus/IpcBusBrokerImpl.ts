@@ -121,7 +121,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
         });
     }
 
-    private _onClose(err: any, socket: any, server: any): void {
+    private _socketCleanUp(socket: any): void {
         this._subscriptions.releaseConnection(socket.remotePort);
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((socketForRequest, channel) => {
@@ -130,6 +130,10 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
             }
         });
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Connection closed !`);
+    }
+
+    private _onClose(err: any, socket: any, server: any): void {
+        this._socketCleanUp(socket);
     }
 
     private _onData(data: any, socket: any, server: any): void {
@@ -146,6 +150,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                 {
                     const ipcBusData: IpcBusData = data.args[0];
                     this._ipcBusPeers.delete(ipcBusData.peerId);
+                    this._socketCleanUp(socket);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL: {
@@ -167,6 +172,13 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     else {
                         this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusData.peerId);
                     }
+                    break;
+                }
+                case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_ALL : {
+                    // const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
+                    this._socketCleanUp(socket);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE: {

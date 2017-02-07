@@ -34,6 +34,7 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         let p = new Promise<string>((resolve, reject) => {
             super.ipcConnect(timeoutDelay, peerName)
                 .then((msg) => {
+                    // We wait for the bridge confirmation
                     this._ipcObj.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, () => {
                         resolve('connected');
                     });
@@ -69,7 +70,7 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                 setTimeout(() => {
                     reject('timeout');
                 }, timeoutDelay);
-                this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
+                this._ipcObj.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, this._peerId);
             });
             return p;
         }
