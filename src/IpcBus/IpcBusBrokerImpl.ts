@@ -26,9 +26,11 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
+
         this._subscriptions = new IpcBusUtils.ChannelConnectionMap<string>('IpcBusBrokerImpl');
         this._requestChannels = new Map<string, any>();
         this._ipcBusPeers = new Map<string, IpcBusInterfaces.IpcBusPeer>();
+
         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
         this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
         this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
@@ -81,8 +83,8 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     queryState(): Object {
         let queryStateResult: Object[] = [];
         this._subscriptions.forEach((connData, channel) => {
-            connData.peers.forEach((count: number, peer: string) => {
-                queryStateResult.push({ channel: channel, peer: this._ipcBusPeers.get(peer), count: count });
+            connData.peers.forEach((count: number, peerId: string) => {
+                queryStateResult.push({ channel: channel, peer: this._ipcBusPeers.get(peerId), count: count });
             });
         });
         return queryStateResult;
@@ -143,12 +145,17 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                 {
                     const ipcBusData: IpcBusData = data.args[0];
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Connect peer #${ipcBusEvent.sender.name}`);
+
                     this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_CLOSE :
                 {
                     const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Close peer #${ipcBusEvent.sender.name}`);
+
                     this._ipcBusPeers.delete(ipcBusData.peerId);
                     this._socketCleanUp(socket);
                     break;
@@ -178,6 +185,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     // const ipcBusData: IpcBusData = data.args[0];
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
+
                     this._socketCleanUp(socket);
                     break;
                 }

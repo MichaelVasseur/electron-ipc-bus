@@ -51,11 +51,11 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
-       this._ipcPushCommand(command, ipcBusData, {channel: channel, sender: this.peer}, args);
+        ipcBusData.peerId = this._peerId;
+        this._ipcPushCommand(command, ipcBusData, {channel: channel, sender: this.peer}, args);
     }
 
     protected _ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
-        ipcBusData.peerId = this._peerId;
         if (args) {
             BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
         }

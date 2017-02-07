@@ -10,17 +10,20 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
     private _ipcObj: any;
     private _webContents: any;
 
-    private _channelRendererRefs: IpcBusUtils.ChannelConnectionMap<number>;
+    private _subscriptions: IpcBusUtils.ChannelConnectionMap<number>;
     private _requestChannels: Map<string, any>;
+    private _ipcBusPeers: Map<string, IpcBusInterfaces.IpcBusPeer>;
 
 //    _lambdaCleanUpHandler: Function;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
         this._ipcObj = require('electron').ipcMain;
-        this._channelRendererRefs = new IpcBusUtils.ChannelConnectionMap<number>('IpcBusBridgeImpl');
-        this._requestChannels = new Map<string, any>();
         this._webContents = require('electron').webContents;
+
+        this._subscriptions = new IpcBusUtils.ChannelConnectionMap<number>('IpcBusBridgeImpl');
+        this._requestChannels = new Map<string, any>();
+        this._ipcBusPeers = new Map<string, IpcBusInterfaces.IpcBusPeer>();
         // this._lambdaCleanUpHandler = (webContentsId: string) => {
         //     this.rendererCleanUp(webContentsId);
         // };
@@ -31,7 +34,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
             case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
-                this._channelRendererRefs.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
+                this._subscriptions.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
                     connData.conn.send(IpcBusUtils.IPC_BUS_RENDERER_EVENT, name, ipcBusData, ipcBusEvent, args);
                 });
@@ -78,8 +81,19 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
+    // Not exposed
+    queryState(): Object {
+        let queryStateResult: Object[] = [];
+        this._subscriptions.forEach((connData, channel) => {
+            connData.peers.forEach((count: number, peerId: string) => {
+                queryStateResult.push({ channel: channel, peer: this._ipcBusPeers.get(peerId), count: count });
+            });
+        });
+        return queryStateResult;
+    }
+
     private _rendererCleanUp(webContents: any, webContentsId: number): void {
-        this._channelRendererRefs.releaseConnection(webContentsId);
+        this._subscriptions.releaseConnection(webContentsId);
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((webContentsForRequest, channel) => {
             if (webContentsForRequest === webContents) {
@@ -95,9 +109,10 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         webContents.addListener('destroyed', () => {
             this._rendererCleanUp(webContents, webContentsId);
             // Simulate the close message
-            let ipcBusData: IpcBusData = {peerId: peerId, unsubscribeAll: true };
-            let peer: IpcBusInterfaces.IpcBusPeer = {name: '', process: { type: 'renderer', pid: webContentsId}};
-            this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, ipcBusData, {channel: '', sender: peer});
+            let ipcBusPeer = this._ipcBusPeers.get(peerId);
+            if (ipcBusPeer) {
+                this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {peerId: peerId}, {channel: '', sender: ipcBusPeer});
+            }
         });
         // webContents.addListener('destroyed', this._lambdaCleanUpHandler);
         // Get back to the webContents for providing the webContents id
@@ -109,26 +124,26 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.name} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
             case IpcBusUtils.IPC_BUS_COMMAND_CONNECT : {
-                // We get back to the webContentd to confirm the connection
+                // We get back to the webContents to confirm the connection
+                this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
                 webContents.send(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, webContents.id);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_CLOSE : {
-                // Do not know how to manage that !
-                // webContents.removeListener('destroyed', this._lambdaCleanUpHandler);
                 this._rendererCleanUp(webContents, webContents.id);
+                this._ipcBusPeers.delete(ipcBusData.peerId);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL : {
-                this._channelRendererRefs.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusData.peerId);
+                this._subscriptions.addRef(ipcBusEvent.channel, webContents.id, webContents, ipcBusData.peerId);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL : {
                 if (ipcBusData.unsubscribeAll) {
-                    this._channelRendererRefs.releaseAll(ipcBusEvent.channel, webContents.id);
+                    this._subscriptions.releaseAll(ipcBusEvent.channel, webContents.id);
                 }
                 else {
-                    this._channelRendererRefs.release(ipcBusEvent.channel, webContents.id, ipcBusData.peerId);
+                    this._subscriptions.release(ipcBusEvent.channel, webContents.id, ipcBusData.peerId);
                 }
                 break;
             }
