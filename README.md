@@ -455,13 +455,19 @@ interface IpcBusRequestResponse {
 ```
 
 ```js
-ipcBus.request(2000, "compute", "2*PI*9")
+ipcBus.request("compute", "2*PI*9")
     .then(ipcBusRequestResponse) {
         console.log("channel = " + ipcBusRequestResponse.event.channel + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.event.sender.peerName);
      }
      .catch(ipcBusRequestResponse) {
         console.log("err = " + ipcBusRequestResponse.err);
      }
+```
+
+With timeout
+```js
+ipcBus.request(2000, "compute", "2*PI*9")
+...
 ```
 
 ## IpcBusEvent object
