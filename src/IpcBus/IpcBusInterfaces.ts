@@ -104,7 +104,7 @@ export interface IpcBusServiceEventHandler {
     (event: IpcBusServiceEvent): void;
 }
 
-export interface IpcBusServiceProxy {
+export interface IpcBusServiceProxy extends events.EventEmitter {
     readonly isStarted: boolean;
     getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
