@@ -20,15 +20,6 @@ export const IPC_BUS_EVENT_REQUESTRESPONSE = 'IpcBusEvent:onRequestResponse';
 
 export const IPC_BUS_TIMEOUT = 2000;
 
-export function uuid(): string {
-    return Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
-}
-
-/** @internal */
-export function GenerateReplyChannel(): string {
-    return '/electron-ipc-bus/request-reply/' + uuid();
-}
-
 /** @internal */
 function GetCmdLineArgValue(argName: string): string {
     for (let i = 0; i < process.argv.length; ++i) {

@@ -1,9 +1,16 @@
 /// <reference types='node' />
+/// <reference types='uuid' />
 
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 
 import { EventEmitter } from 'events';
+import * as uuid from 'uuid';
+
+/** @internal */
+function GenerateReplyChannel(): string {
+    return '/electron-ipc-bus/request-reply/' + uuid.v1();
+}
 
 /** @internal */
 export class IpcBusData {
@@ -26,7 +33,7 @@ export abstract class IpcBusTransport {
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         this._ipcBusPeer = { name: '', process: ipcBusProcess };
         this.ipcOptions = ipcOptions;
-        this._peerId = IpcBusUtils.uuid();
+        this._peerId = uuid.v1();
         this._requestFunctions = new Map<string, Function>();
     }
 
@@ -73,7 +80,7 @@ export abstract class IpcBusTransport {
         }
 
         let p = new Promise<IpcBusInterfaces.IpcBusRequestResponse>((resolve, reject) => {
-            const ipcBusData: IpcBusData = { replyChannel: IpcBusUtils.GenerateReplyChannel() };
+            const ipcBusData: IpcBusData = { replyChannel: GenerateReplyChannel() };
 
             // Prepare reply's handler, we have to change the replyChannel to channel
             const localRequestCallback = (localIpcBusData: IpcBusData, localIpcBusEvent: IpcBusInterfaces.IpcBusEvent, responsePromise: any) => {
