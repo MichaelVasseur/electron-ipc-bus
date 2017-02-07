@@ -27,7 +27,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
         this._ipcOptions = ipcOptions;
         this._baseIpc = new BaseIpc();
 
-        this._subscriptions = new IpcBusUtils.ChannelConnectionMap<string>('IpcBusBrokerImpl');
+        this._subscriptions = new IpcBusUtils.ChannelConnectionMap<string>('IPCBus:Broker');
         this._requestChannels = new Map<string, any>();
         this._ipcBusPeers = new Map<string, IpcBusInterfaces.IpcBusPeer>();
 
