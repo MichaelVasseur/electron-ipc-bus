@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "types" : ["node", "uuid"],
+        "types" : ["node", "uuid", "electron"],
 		"module": "commonjs",
 		"moduleResolution": "node",
 //        "lib": ["dom", "es2015.promise", "es5"],
