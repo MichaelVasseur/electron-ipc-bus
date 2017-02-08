@@ -1,6 +1,8 @@
 /// <reference types='node' />
 import events = require('events');
 
+// Special call handlers
+export const IPCBUS_SERVICE_CALL_GETSTATUS: string = '__getServiceStatus';
 // Special channels
 export const IPCBUS_CHANNEL_QUERY_STATE: string = '/electron-ipc-bus/queryState';
 export const IPCBUS_CHANNEL_SERVICE_AVAILABLE = '/electron-ipc-bus/serviceAvailable';
@@ -67,7 +69,12 @@ export interface IpcBusServiceCall {
 }
 
 export interface IpcBusServiceCallHandler {
-    (call: IpcBusServiceCall, request: IpcBusRequest): void;
+    (call: IpcBusServiceCall, sender: IpcBusSender, request: IpcBusRequest): void;
+}
+
+export class ServiceStatus {
+    constructor(public started: boolean, public callHandlers: Array<string>) {
+    }
 }
 
 export interface IpcBusService {
@@ -87,10 +94,12 @@ export interface IpcBusServiceEventHandler {
 }
 
 export interface IpcBusServiceProxy {
-    isAvailable: boolean;
-    checkAvailability(): Promise<boolean>;
+    readonly isStarted: boolean;
+    getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
+    getWrapper<T>(): T;
     // EventEmitter API
+    listenerCount(event: string): number;
     addListener(event: string, listener: IpcBusServiceEventHandler): this;
     removeListener(event: string, listener: IpcBusServiceEventHandler): this;
     on(event: string, listener: IpcBusServiceEventHandler): this;
