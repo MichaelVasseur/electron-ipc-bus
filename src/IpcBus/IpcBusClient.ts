@@ -115,7 +115,7 @@ export class IpcBusCommonClient extends EventEmitter
                     super.removeListener(generatedChannel, localRequestCallback);
                     // Unregister remotely
                     this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, ipcBusEvent);
-                    IpcBusUtils.Logger.info(`[IpcBusClient] reject: timeout`);
+                    IpcBusUtils.Logger.error(`[IpcBusClient] Request on '${channel}' failed: Timeout`);
                     let response: IpcBusInterfaces.IpcBusRequestResponse = {event: {channel: channel, sender: {peerName: ''}}, err: 'timeout'};
                     reject(response);
                 }
