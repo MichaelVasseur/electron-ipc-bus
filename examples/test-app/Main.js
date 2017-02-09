@@ -447,7 +447,7 @@ function startApp() {
     console.log('<MAIN> Connected to broker !');
 
     // Create the proxy (client-side)
-    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 500);
+    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 2000);
     
     // Subscribe to remote events (client-side)
     timeServiceProxy.on('emitted_event', () => console.log(`<MAIN> Received 'emitted_event' event from Time service`));
@@ -455,7 +455,7 @@ function startApp() {
     
     // Check service's availability and make a remote call when it is available
     timeServiceProxy
-        .once('service-start-event', () => {
+        .once('service-event-start', () => {
             console.log('<MAIN> Service is STARTED !');
             timeServiceProxy
                 .getWrapper()
@@ -520,8 +520,8 @@ electronApp.on('ready', function () {
             ipcBusClient.connect()
                 .then(() => startApp());
         });
-        //ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
-        //ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+        // ipcBrokerProcess.stdout.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
+        // ipcBrokerProcess.stderr.addListener('data', data => { console.log('<BROKER> ' + data.toString()); });
     }
 });
 

@@ -10,6 +10,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
     private _prevImplEmit: Function = null;
     private static _hiddenMethods = [   'constructor',
+                                        IpcBusInterfaces.IPCBUS_SERVICE_CALL_GETSTATUS,
                                         '_beforeCallHandler',
                                         'setMaxListeners',
                                         'getMaxListeners',
@@ -86,6 +87,9 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         for (let handlerName of callHandlerNames) {
             registeredHandlerNames.push(handlerName);
         }
+
+        // Listening to call messages
+        this._ipcBusClient.addListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
 
         this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, new IpcBusInterfaces.ServiceStatus(true, this._getCallHandlerNames()));
 

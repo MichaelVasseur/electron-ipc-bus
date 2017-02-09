@@ -51,8 +51,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                     IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${this._isStarted}`);
                     if (this._isStarted === true) {
                         // Service is started
-                        super.emit(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START);
-                        this._onServiceStart(serviceStatus);
+                        const serviceEvent = { eventName: IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, args: [serviceStatus] };
+                        super.emit(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceEvent);
                     }
                     resolve(serviceStatus);
                 },
