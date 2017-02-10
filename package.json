@@ -1,32 +1,22 @@
 {
-  "name": "electron-ipc-bus",
+  "name": "tr-electron-ipc-bus",
   "version": "0.15.0",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"
+    "url": "git+https://github.com/thomsonreuters/electron-ipc-bus.git"
   },
   "keywords": [],
-  "author": "Michael Vasseur",
+  "author": "Eikon Desktop Browser Integration",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MichaelVasseur/electron-ipc-bus/issues"
+    "url": "https://github.com/thomsonreuters/electron-ipc-bus/issues"
   },
-  "homepage": "https://github.com/MichaelVasseur/electron-ipc-bus#readme",
+  "homepage": "https://github.com/thomsonreuters/electron-ipc-bus#readme",
   "maintainers": [
     {
-      "name": "Michael Vasseur",
-      "email": "michael.vasseur@thomsonreuters.com"
-    },
-    {
-      "name": "Emmanuel Kimmerlin",
-      "email": "emmanuel.kimmerlin@thomsonreuters.com"
-    }
-  ],
-  "contributors": [
-    {
-      "name": "Thomas Moutel",
-      "email": "thomas.moutel@thomsonreuters.com"
+      "name": "Eikon Desktop Browser Integration",
+      "email": "Thomson-EikonDesktopBrowserIntegration@Thomsonreuters.com"
     }
   ],
   "main": "./lib/electron-ipc-bus.js",
