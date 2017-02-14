@@ -153,9 +153,11 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             callArgs = this._exposedInstance['_beforeCallHandler'](call, sender, request);
         }
         const result = this._exposedInstance[call.handlerName](...callArgs);
-        if (result['then']) {
+        if (result && result['then']) {
+            // result is a valid promise
             result.then(request.resolve, request.reject);
         } else {
+            // result is "just" a value
             request.resolve(result);
         }
     }
