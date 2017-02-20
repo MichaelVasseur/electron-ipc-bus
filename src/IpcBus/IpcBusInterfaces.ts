@@ -80,7 +80,7 @@ export interface IpcBusServiceCall {
 }
 
 export interface IpcBusServiceCallHandler {
-    (call: IpcBusServiceCall, sender: IpcBusSender, request: IpcBusRequest): void;
+    (call: IpcBusServiceCall, sender: IpcBusPeer, request: IpcBusRequest): void;
 }
 
 export class ServiceStatus {

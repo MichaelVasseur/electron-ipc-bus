@@ -31,7 +31,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         this._callHandlers = new Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>();
 
         //  Register internal call handlers
-        this.registerCallHandler(IpcBusInterfaces.IPCBUS_SERVICE_CALL_GETSTATUS, (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusSender, request: IpcBusInterfaces.IpcBusRequest) => {
+        this.registerCallHandler(IpcBusInterfaces.IPCBUS_SERVICE_CALL_GETSTATUS, (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => {
             request.resolve(new IpcBusInterfaces.ServiceStatus(true, this._getCallHandlerNames()));
         });
 
@@ -43,7 +43,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 if (typeof this._exposedInstance[memberName] === 'function'
                     && IpcBusServiceImpl._hiddenMethods.indexOf(memberName) === -1) {
                     this.registerCallHandler(memberName,
-                    (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusSender, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
+                    (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                 }
             }
             // Looking in ES6 class
@@ -53,7 +53,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                      && IpcBusServiceImpl._hiddenMethods.indexOf(memberName) === -1
                      && !this._callHandlers.has(memberName) ) {
                     this.registerCallHandler(memberName, 
-                    (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusSender, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
+                    (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                 }
             }
         } else {
@@ -145,7 +145,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         }
     }
 
-    private _doCall(call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusSender, request: IpcBusInterfaces.IpcBusRequest) {
+    private _doCall(call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) {
         IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is calling implementation's '${call.handlerName}'`);
         let callArgs = call.args;
         if (this._exposedInstance['_beforeCallHandler']) {
