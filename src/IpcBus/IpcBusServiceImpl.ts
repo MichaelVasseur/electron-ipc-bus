@@ -52,7 +52,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 if ( method instanceof Function
                      && IpcBusServiceImpl._hiddenMethods.indexOf(memberName) === -1
                      && !this._callHandlers.has(memberName) ) {
-                    this.registerCallHandler(memberName, 
+                    this.registerCallHandler(memberName,
                     (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                 }
             }
