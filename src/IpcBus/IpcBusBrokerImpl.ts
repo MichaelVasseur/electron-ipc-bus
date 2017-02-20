@@ -83,7 +83,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     queryState(): Object {
         let queryStateResult: Object[] = [];
         this._subscriptions.forEach((connData, channel) => {
-            connData.peers.forEach((count: number, peerId: string) => {
+            connData.peerIds.forEach((count: number, peerId: string) => {
                 queryStateResult.push({ channel: channel, peer: this._ipcBusPeers.get(peerId), count: count });
             });
         });
