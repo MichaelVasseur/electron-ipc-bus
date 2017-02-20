@@ -53,7 +53,7 @@ function onIPCBus_TestPerformanceResult(uuid) {
     var msgTestStart = testStart.get(uuid);
     var msgTestStop = testStop.get(uuid);
     if (msgTestStart && msgTestStop) {
-        var delay = msgTestStop.stop.timeStamp - msgTestStart.start.timeStamp;
+        var delay = msgTestStop.timeStamp - msgTestStart.timeStamp;
         delays.push(delay);
         delays.sort();
 
@@ -64,8 +64,8 @@ function onIPCBus_TestPerformanceResult(uuid) {
         var cell2 = row.insertCell(-1);
         var cell3 = row.insertCell(-1);
         cell0.innerHTML = `${msgTestStart.test.typeCommand} ${msgTestStart.test.typeArgs} (${msgTestStart.test.bufferSize})`;
-        cell1.innerHTML = `#${msgTestStart.start.peerName} (${msgTestStart.type})`;
-        cell2.innerHTML = `#${msgTestStop.stop.peerName} (${msgTestStop.type})`;
+        cell1.innerHTML = JSON.stringify(msgTestStart.peer);
+        cell2.innerHTML = JSON.stringify(msgTestStop.peer);
         cell3.setAttribute('delay', delay);
         cell3.innerHTML = `${delay}`;
 

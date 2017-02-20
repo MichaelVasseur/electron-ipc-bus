@@ -1,7 +1,7 @@
 # electron-ipc-bus
 A safe IPC (Inter-Process Communication) bus for applications built on Electron. 
 
-This bus offers a common API for exchanging data between any Electron process : Node instances, Master and Renderer instances.
+This bus offers a common API for exchanging data between any Electron process : Node, Master and Renderer instances.
 
 # Features
 * Publish/Subscribe oriented API
@@ -17,6 +17,9 @@ npm install electron-ipc-bus
 Dependencies
 * https://github.com/oleics/node-easy-ipc
 * https://github.com/pkrumins/node-lazy
+* https://github.com/defunctzombie/node-uuid
+* http://electron.atom.io/
+* http://nodejs.org/
 
 # Usage
 
@@ -30,59 +33,69 @@ const ipcBusPath = 50494;
 // const ipcBusPath = '/myfavorite/path';
 
 // Startup
-// Load modules
-const ipcBusModule = require("electron-ipc-bus");
-const electronApp = require('electron').app;
-
-// Configuration
-const ipcBusPath = 50494;
-// const ipcBusPath = '/myfavorite/path';
-
-// Startup
 electronApp.on('ready', function () {
     // Create broker
     const ipcBusBroker = ipcBusModule.CreateIpcBusBroker(ipcBusPath);
-
     // Start broker
     ipcBusBroker.start()
-
-    // Create client
         .then((msg) => {
-            const ipcBusClient = ipcBusModule.CreateIpcBusClient(ipcBusPath);
-            ipcBusClient.connect()
+            console.log('IpcBusBroker started');
 
-    // Chatting on channel 'greeting'
+            // Create bridge
+            const ipcBusBridge = ipcBusModule.CreateIpcBusBridge(ipcBusPath);
+            // Start bridge
+            ipcBusBridge.start()
                 .then((msg) => {
-                    ipcBusClient.addListener('greeting', (ipcBusEvent, greetingMsg) => {
-                        if (ipcBusEvent.request) {
-                            ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.peerName);
-                        }
-                        else {
-                            ipcBusClient.send('greeting-reply', 'thanks to all listeners')
-                            console.log(greetingMsg);
-                        }
-                    });
+                    console.log('IpcBusBridge started');
 
-                    ipcBusClient.addListener('greeting-reply', (ipcBusEvent, greetingReplyMsg) => {
-                        console.log(greetingReplyMsg);
-                    });
+                    // Create clients
+                    const ipcBusClient1 = ipcBusModule.CreateIpcBusClient(ipcBusPath);
+                    const ipcBusClient2 = ipcBusModule.CreateIpcBusClient(ipcBusPath);
+                    Promise.all([ipcBusClient1.connect('client1'), ipcBusClient2.connect('client2')])
+                        .then((msg) => {
+                            // Chatting on channel 'greeting'
+                            ipcBusClient1.addListener('greeting', (ipcBusEvent, greetingMsg) => {
+                                if (ipcBusEvent.request) {
+                                    ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.name);
+                                }
+                                else {
+                                    ipcBusClient1.send('greeting-reply', 'thanks to all listeners')
+                                }
+                                console.log(ipcBusClient1.peer.name + ' received ' + ipcBusEvent.channel + ':' + greetingMsg);
+                            });
 
-                    ipcBusClient.send('greeting', 'hello everyone!');
+                            ipcBusClient2.addListener('greeting', (ipcBusEvent, greetingMsg) => {
+                                if (ipcBusEvent.request) {
+                                    ipcBusEvent.request.resolve('thanks to you, dear #' + ipcBusEvent.sender.name);
+                                }
+                                else {
+                                    ipcBusClient2.send('greeting-reply', 'thanks to all listeners')
+                                }
+                                console.log(ipcBusClient2.peer.name + ' received ' + ipcBusEvent.channel + ':' + greetingMsg);
+                            });
 
-                    ipcBusClient.request('greeting', 'hello partner!')
-                        .then((ipcBusRequestResponse) => {
-                            console.log(ipcBusRequestResponse.event.sender.peerName + ' replied ' + ipcBusRequestResponse.payload);
-                        })
-                        .catch((err) => {
-                            console.log('I have no friend :-(');
-                        });
+                            ipcBusClient1.addListener('greeting-reply', (ipcBusEvent, greetingReplyMsg) => {
+                                console.log(greetingReplyMsg);
+                                console.log(ipcBusClient1.peer.name + ' received ' + ipcBusEvent.channel + ':' + greetingReplyMsg);
+                            });
 
-                    ipcBusClient.request(1000, 'greeting', 'hello partner, please answer within 1sec!')
-                        .then((ipcBusRequestResponse) => {
-                            console.log(ipcBusRequestResponse.event.sender.peerName + ' replied ' + ipcBusRequestResponse.payload);
-                        })
-                        .catch((err) => {
-                            console.log('I have no friend :-(');
+                            ipcBusClient2.send('greeting', 'hello everyone!');
+
+                            ipcBusClient2.request('greeting', 'hello partner!')
+                                .then((ipcBusRequestResponse) => {
+                                    console.log(JSON.stringify(ipcBusRequestResponse.event.sender) + ' replied ' + ipcBusRequestResponse.payload);
+                                })
+                                .catch((err) => {
+                                    console.log('I have no friend :-(');
+                                });
+
+                            ipcBusClient1.request(1000, 'greeting', 'hello partner, please answer within 1sec!')
+                                .then((ipcBusRequestResponse) => {
+                                    console.log(JSON.stringify(ipcBusRequestResponse.event.sender) + ' replied ' + ipcBusRequestResponse.payload);
+                                })
+                                .catch((err) => {
+                                    console.log('I have no friend :-(');
+                                });
                         });
                 });
         });
@@ -90,7 +103,7 @@ electronApp.on('ready', function () {
 ```
 
 # IpcBusBroker
-Dispatching of messages is managed by a broker. You can have only one single Broker for the whole application.
+Dispatching of Node messages is managed by a broker. You can have only one single Broker for the whole application.
 The broker can be instanciated in a node process or in the master process (not in renderer processes).
 For performance purpose, it is better to instanciate the broker in an independent node process.
 
@@ -100,6 +113,7 @@ interface IpcBusBroker {
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
     queryState(): Object;
+    isServiceAvailable(serviceName: string): boolean;
 }
 ```
 ## Initialization of the Broker (in a node process)
@@ -136,7 +150,7 @@ const ipcBusBroker = ipcBusModule.CreateIpcBusBroker();
 ## Methods
 
 ### start([timeoutDelay]) : Promise < string >
-- timeoutDelay : number (milliseconds)
+- ***timeoutDelay*** : number (milliseconds)
 
 ```js
 ipcBusBroker.start() 
@@ -160,8 +174,82 @@ ipcBusBroker.stop()
 var queryState = ipcBusBroker.queryState() 
 ````
 
-Returns the list of pair <channel, peerName> subscriptions. Format may change from one version to another.
+Returns the list of pair <channel, peer> subscriptions. Format may change from one version to another.
 This information can be retrieved from an IpcBusClient through the channel : /electron-ipc-bus/queryState
+
+### isServiceAvailable(serviceName): boolean 
+- ***serviceName***: string
+
+```js
+ipcBusBroker.isServiceAvailable('mySettings') 
+````
+
+Test if a service is started.
+This information can be retrieved from an IpcBusClient through the channel : /electron-ipc-bus/serviceAvailable
+
+
+# IpcBusBridge
+Dispatching of Renderer messages is managed by a bridge. You can have only one single bridge for the whole application.
+The bridge must be instanciated in the master process only. Without this bridge, Renderer and Node processes are not able to dialog.
+
+## Interface
+```ts
+interface IpcBusBridge {
+    start(timeoutDelay?: number): Promise<string>;
+    stop(): void;
+}
+```
+## Initialization of the Bridge (in the master process)
+
+```js
+const ipcBusModule = require("electron-ipc-bus");
+const ipcBusBridge = ipcBusModule.CreateIpcBusBridge([busPath]);
+```
+
+The ***require()*** call loads the module and CreateIpcBusBridge setups the bridge with the ***busPath***.
+If ***busPath*** is not specified, the framework tries to get it from the command line with switch ***--bus-path***.
+ 
+Example with ***busPath*** set by code
+
+```js
+// Socket path
+const ipcBusBridge = ipcBusModule.CreateIpcBusBridge('/my-ipc-bus-path');
+```
+
+```js
+// Port number
+const ipcBusBridge = ipcBusModule.CreateIpcBusBridge(58666);
+```
+
+Example with ***busPath*** set by command line:
+```Batchfile
+electron.exe --bus-path=58666
+```
+    
+```js
+const ipcBusBridge = ipcBusModule.CreateIpcBusBridge();
+```
+
+## Methods
+
+### start([timeoutDelay]) : Promise < string >
+- ***timeoutDelay*** : number (milliseconds)
+
+```js
+ipcBusBridge.start() 
+    .then((msg) => console.log(msg))
+    .catch((err) => console.log(err))
+````
+
+Starts the bridge dispatcher.
+If succeeded the value of ***msg*** is 'started' (do not rely on it, subject to change). 
+If failed (timeout or any other internal error), ***err*** contains the error message.
+
+### stop()
+
+```js
+ipcBusBridge.stop() 
+```
 
 
 # IpcBusClient
@@ -176,7 +264,7 @@ Only one ***IpcBusClient*** per Process/Renderer is created. If you ask for more
 ```ts
 interface IpcBusClient extends events.EventEmitter {
     readonly peerName: string;
-    connect(timeoutDelay?: number): Promise<string>;
+    connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string>;
     close(): void;
     send(channel: string, ...args: any[]): void;
     request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusRequestResponse>;
@@ -245,21 +333,53 @@ window.ipcBus = require('electron-ipc-bus').CreateIpcBusClient();
 
 ## Property
 
-### peerName
-For debugging purpose, each ***IpcBusClient*** is identified by a peerName. 
-The peerName is unique and computed from the type of the process: 
-- Master
-- Renderer + WebContents Id
-- Node + Process Id
+### peer
+For debugging purpose, each ***IpcBusClient*** is identified by a peer.
+```js
+interface IpcBusProcess {
+    type: string;
+    pid: number;
+}
+
+interface IpcBusPeer {
+    name: string;
+    process: IpcBusProcess;
+}
+```
+it contains the name of the peer, this name can be changed during the connection.
+it contains the process context of the peer : type and pid.
+- type: Master, pid : Process Id
+- type: Node, pid: Process Id
+- type: Renderer, pid: WebContents Id
 
 ## Connectivity Methods
 
-### connect([timeoutDelay]) : Promise < string >
-- ***timeoutDelay***: number (milliseconds)
+### connect([timeoutDelayOrPeerName?: number | string[, peerName?: string]]) : Promise < string >
+- ***timeoutDelayOrPeerName*** = timeoutDelay: number (milliseconds) | peerName: string
+- ***peerName*** = peerName: string
 
+Basic usage
 ```js
 ipcBus.connect().then((eventName) => console.log("Connected to Ipc bus !"))
 ```
+
+Provide a timeout
+```js
+ipcBus.connect(2000).then((eventName) => console.log("Connected to Ipc bus !"))
+```
+
+Provide a peer name
+```js
+ipcBus.connect('client2').then((eventName) => console.log("Connected to Ipc bus !"))
+```
+
+Provide all options
+```js
+ipcBus.connect(2000, 'client2').then((eventName) => console.log("Connected to Ipc bus !"))
+```
+
+For a bus in a renderer, it fails if the Bridge is not started else it fails if the Broker is not started.
+Most of the functions below will fail if the connection is not established (you have to wait for the connect promise).
 
 ### close()
 ```js
@@ -335,13 +455,19 @@ interface IpcBusRequestResponse {
 ```
 
 ```js
-ipcBus.request(2000, "compute", "2*PI*9")
+ipcBus.request("compute", "2*PI*9")
     .then(ipcBusRequestResponse) {
         console.log("channel = " + ipcBusRequestResponse.event.channel + ", response = " + ipcBusRequestResponse.payload + ", from = " + ipcBusRequestResponse.event.sender.peerName);
      }
      .catch(ipcBusRequestResponse) {
         console.log("err = " + ipcBusRequestResponse.err);
      }
+```
+
+With timeout
+```js
+ipcBus.request(2000, "compute", "2*PI*9")
+...
 ```
 
 ## IpcBusEvent object
@@ -460,7 +586,7 @@ The ***IpcBusServiceProxy*** creates an IPC endpoint that can be used to execute
 
 ## Interface
 ```ts
-interface IpcBusServiceProxy {
+interface IpcBusServiceProxy extends events.EventEmitter {
     isAvailable: boolean;
     checkAvailability(): Promise<boolean>;
     call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T>;
@@ -565,8 +691,7 @@ npm run start-sandboxed
 # Possible enhancements
 * Support several brokers each with its own buspath in order to distribute the traffic load.
 * Universal logger working in any kind of context (especially from a renderer).
-* Define a friendly peerName
-
+* Add an optional spy for debugging purpose
 
 # MIT License
 

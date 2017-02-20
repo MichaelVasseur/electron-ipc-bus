@@ -26,18 +26,6 @@ function doQueryBrokerState() {
         .then((ipcBusRequestResponse) => onIPC_BrokerStatusTopic(ipcBusRequestResponse.payload));
 }
 
-
-// var rendererWindow;
-// function doNewAffinityRendererInstance(event) {
-//     var strWindowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=no';
-//     rendererWindow = window.open('CommonView.html', 'Inner Page of ' + processId, strWindowFeatures);
-//     // rendererWindow.on('dom-ready', function () {
-//     //     rendererWindow.send('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
-//     // });
-//     // rendererWindow.postMessage('initializeWindow', { title: 'Renderer', type: 'renderer', id: processId, peerName: 'Renderer_' + rendererWindow.webContents.id, webContentsId: rendererWindow.webContents.id });
-//     // window.CreateInnerPage(processId);
-// }
-
 function getProcessElt() {
     return document.getElementById('ProcessMonitor');
 }
@@ -160,7 +148,7 @@ function onIPCBus_OnRequestThen(requestPromiseResponse) {
     var topicRespElt = document.querySelector('.topicRequestResponse');
     if (topicRespElt != null) {
         topicRespElt.style.color = 'black';
-        topicRespElt.value = requestPromiseResponse.payload + ' from (' + requestPromiseResponse.event.sender.peerName + ')';
+        topicRespElt.value = requestPromiseResponse.payload + ' from (' + JSON.stringify(requestPromiseResponse.event.sender) + ')';
     }
 }
 
@@ -201,7 +189,7 @@ function doClearTopic(event) {
 }
 
 function onIPC_Received(ipcBusEvent, ipcContent) {
-    console.log('onIPCBus_received : msgTopic:' + ipcBusEvent.channel + ' from #' + ipcBusEvent.sender.peerName)
+    console.log('onIPCBus_received : msgTopic:' + ipcBusEvent.channel + ' from #' + ipcBusEvent.sender.name)
 
     var SubscriptionsListElt = document.getElementById('ProcessSubscriptions');
     var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + ipcBusEvent.channel);
@@ -211,13 +199,13 @@ function onIPC_Received(ipcBusEvent, ipcContent) {
             ipcBusEvent.request.resolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
-        ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
+        ipcContent += ' from (' + JSON.stringify(ipcBusEvent.sender) + ')';
         topicReceivedElt.value += ipcContent + '\n';
     }
 }
 
 function onIPC_EmitReceived(ipcBusEvent, ipcContent1, ipcContent2, ipcContent3) {
-    console.log('onIPC_EmitReceived : msgTopic:' + ipcBusEvent.channel + ' from #' + ipcBusEvent.sender.peerName)
+    console.log('onIPC_EmitReceived : msgTopic:' + ipcBusEvent.channel + ' from #' + ipcBusEvent.sender.name)
 
     var SubscriptionsListElt = document.getElementById('ProcessSubscriptions');
     var topicItemElt = SubscriptionsListElt.querySelector('.subscription-' + ipcBusEvent.channel);
@@ -227,7 +215,7 @@ function onIPC_EmitReceived(ipcBusEvent, ipcContent1, ipcContent2, ipcContent3) 
             ipcBusEvent.requestResolve(topicAutoReplyElt.value);
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
-        ipcContent += ' from (' + ipcBusEvent.sender.peerName + ')';
+        ipcContent += ' from (' + JSON.stringify(ipcBusEvent.sender) + ')';
         topicReceivedElt.value += ipcContent + '\n';
     }
 }
@@ -253,7 +241,7 @@ function onIPC_BrokerStatusTopic(ipcContent) {
         cell.innerHTML = ipcContent[i]['channel'];
 
         cell = row.insertCell(1);
-        cell.innerHTML = ipcContent[i]['peerName'];
+        cell.innerHTML = JSON.stringify(ipcContent[i]['peer']);
 
         cell = row.insertCell(2);
         cell.innerHTML = ipcContent[i]['count'];
@@ -261,7 +249,6 @@ function onIPC_BrokerStatusTopic(ipcContent) {
 }
 
 var processToMonitor = null;
-var perfTests = null;
 
 ipcRenderer.on('initializeWindow', function (event, data) {
     // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
@@ -318,7 +305,7 @@ ipcRenderer.on('initializeWindow', function (event, data) {
         ipcBus.connect()
             .then(() => {
                 console.log('renderer : connected to ipcBus');
-                perfTests = new PerfTests('renderer');
+                perfTests.connect();
             });
     }
     if (args['type'] === 'node') {
