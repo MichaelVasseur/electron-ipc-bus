@@ -61,10 +61,16 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         let p = new Promise<string>((resolve, reject) => {
             this.ipcConnect(timeoutDelay)
                 .then((msg) => {
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
-                        , (event: any, peerId: string) => this._onHandshake(event, peerId));
-                    this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
-                        , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
+                    // Guard against people calling start several times
+                    if (this._ipcObj.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE) == 0) {
+                        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
+                            , (event: any, peerId: string) => this._onHandshake(event, peerId));
+                    }
+                    // Guard against people calling start several times
+                    if (this._ipcObj.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_COMMAND) == 0) {
+                        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
+                            , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
+                    }
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
                     resolve(msg);
                 })
