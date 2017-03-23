@@ -21,13 +21,19 @@ export interface IpcBusRequestResponse {
     err?: string;
 }
 
-export interface IpcBusSender {
-    peerName: string;
+export interface IpcBusProcess {
+    type: 'browser' | 'renderer' | 'node';
+    pid: number;
+}
+
+export interface IpcBusPeer {
+    name: string;
+    process: IpcBusProcess;
 }
 
 export interface IpcBusEvent {
     channel: string;
-    sender: IpcBusSender;
+    sender: IpcBusPeer;
     request?: IpcBusRequest;
 }
 
@@ -36,31 +42,36 @@ export interface IpcBusListener {
 }
 
 export interface IpcBusClient extends events.EventEmitter {
-    readonly peerName: string;
-    connect(timeoutDelay?: number): Promise<string>;
+    peer: IpcBusPeer;
+
+    connect(timeoutDelayOrPeerName?: number | string, peerName?: string): Promise<string>;
     close(): void;
 
     send(channel: string, ...args: any[]): void;
     request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusRequestResponse>;
 
-    // EventEmitter overriden API
+    // EventEmitter API
     addListener(channel: string, listener: IpcBusListener): this;
     removeListener(channel: string, listener: IpcBusListener): this;
     on(channel: string, listener: IpcBusListener): this;
     once(channel: string, listener: IpcBusListener): this;
     off(channel: string, listener: IpcBusListener): this;
 
-    // Added in Node 6...
+    // EventEmitter API - Added in Node 6...
     prependListener(channel: string, listener: IpcBusListener): this;
     prependOnceListener(channel: string, listener: IpcBusListener): this;
 }
 
 export interface IpcBusBroker {
-
     start(timeoutDelay?: number): Promise<string>;
     stop(): void;
     queryState(): Object;
     isServiceAvailable(serviceName: string): boolean;
+}
+
+export interface IpcBusBridge {
+    start(timeoutDelay?: number): Promise<string>;
+    stop(): void;
 }
 
 export interface IpcBusServiceCall {
@@ -69,7 +80,7 @@ export interface IpcBusServiceCall {
 }
 
 export interface IpcBusServiceCallHandler {
-    (call: IpcBusServiceCall, sender: IpcBusSender, request: IpcBusRequest): void;
+    (call: IpcBusServiceCall, sender: IpcBusPeer, request: IpcBusRequest): void;
 }
 
 export class ServiceStatus {
@@ -93,7 +104,7 @@ export interface IpcBusServiceEventHandler {
     (event: IpcBusServiceEvent): void;
 }
 
-export interface IpcBusServiceProxy {
+export interface IpcBusServiceProxy extends events.EventEmitter {
     readonly isStarted: boolean;
     getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
@@ -109,4 +120,3 @@ export interface IpcBusServiceProxy {
     prependListener(event: string, listener: IpcBusServiceEventHandler): this;
     prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
 }
-

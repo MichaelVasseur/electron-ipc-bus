@@ -1,10 +1,19 @@
-var PerfTests = function _PerfTests(type) {
+var PerfTests = function _PerfTests(type, busPath) {
     const _ipcBusModule = require('electron-ipc-bus');
-    var _ipcBus = _ipcBusModule.CreateIpcBusClient();
+    var _ipcBus = _ipcBusModule.CreateIpcBusClient(busPath);
     var _type = type;
 
     this.doPerformanceTests = function _doPerformanceTests(testParams) {
         _ipcBus.send('test-performance-run', testParams);
+    }
+
+    this.connect = function() {
+        _ipcBus.connect('perfTestsBus')
+            .then((msg) => {
+                _ipcBus.on('test-performance-trace', (ipcBusEvent, activateTrace) => this.onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace));
+                _ipcBus.on('test-performance-run', (ipcBusEvent, testParams) => this.onIPCBus_TestPerformanceRun(ipcBusEvent, testParams));
+                _ipcBus.on('test-performance-'+ _type, (ipcBusEvent, msgContent) => this.onIPCBus_TestPerformance(ipcBusEvent, msgContent));
+            });
     }
 
     this.onIPCBus_TestPerformance = function _onIPCBus_TestPerformance(ipcBusEvent, msgContent) {
@@ -23,10 +32,8 @@ var PerfTests = function _PerfTests(type) {
             var msgTestStop = { 
                 uuid: uuid,
                 type: _type, 
-                stop: {
-                    timeStamp: dateNow,
-                    peerName: _ipcBus.peerName,
-                }
+                timeStamp: dateNow,
+                peer: _ipcBus.peer
             };
             _ipcBus.send('test-performance-stop', msgTestStop);
         }
@@ -52,9 +59,7 @@ var PerfTests = function _PerfTests(type) {
             uuid: uuid,
             test: testParams,
             type: _type, 
-            start: {
-                peerName: _ipcBus.peerName,
-            }
+            peer: _ipcBus.peer
         };
 
         var msgContent;
@@ -78,7 +83,7 @@ var PerfTests = function _PerfTests(type) {
             msgContent.push(true);
         }
 
-        msgTestStart.start.timeStamp = Date.now();
+        msgTestStart.timeStamp = Date.now();
         _ipcBus.send('test-performance-start', msgTestStart);
         if (testParams.typeArgs === 'args') {
             if (testParams.typeCommand == 'Request') {
@@ -101,10 +106,6 @@ var PerfTests = function _PerfTests(type) {
             }
         }
     }
-
-    _ipcBus.on('test-performance-trace', (ipcBusEvent, activateTrace) => this.onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace));
-    _ipcBus.on('test-performance-run', (ipcBusEvent, testParams) => this.onIPCBus_TestPerformanceRun(ipcBusEvent, testParams));
-    _ipcBus.on('test-performance-'+ _type, (ipcBusEvent, msgContent) => this.onIPCBus_TestPerformance(ipcBusEvent, msgContent));
 
     function allocateString(seed, num) {
         num = Number(num) / 100;

@@ -19,9 +19,9 @@ const PerfTests = require('./PerfTests.js');
 const peerName = 'Node_' + process.pid;
 
 function onTopicMessage(ipcBusEvent, ipcContent) {
-   console.log('Node - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.peerName);
+   console.log('Node - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.name);
     if (ipcBusEvent.request) {
-        var autoReply = ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.peerName;
+        var autoReply = ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.name;
         ipcBusEvent.request.resolve(autoReply);
         console.log(autoReply);
     }
@@ -118,6 +118,7 @@ ipcBus.connect()
         }
         msgs = [];
         perfTests = new PerfTests('node');
+        perfTests.connect();
 });
 
 process.on('message', dispatchMessage);
