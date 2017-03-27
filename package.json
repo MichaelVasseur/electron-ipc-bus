@@ -42,7 +42,7 @@
     "del-cli": "^0.2.1",
     "dts-bundle": "^0.6.1",
     "tslint": "^4.1.1",
-    "tslint-microsoft-contrib": "^2.0.10",
+    "tslint-microsoft-contrib": "^4.0.1",
     "typescript": "^2.1.4",
     "typings": "^2.0.0"
   },
