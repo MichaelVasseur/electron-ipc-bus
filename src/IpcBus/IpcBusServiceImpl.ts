@@ -146,7 +146,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     }
 
     private _doCall(call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) {
-        IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is calling implementation's '${call.handlerName}'`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is calling implementation's '${call.handlerName}'`);
         let callArgs = call.args;
         if (this._exposedInstance['_beforeCallHandler']) {
             callArgs = this._exposedInstance['_beforeCallHandler'](call, sender, request);
