@@ -48,7 +48,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                 .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => {
                     const serviceStatus = <IpcBusInterfaces.ServiceStatus>res.payload;
                     this._isStarted = serviceStatus.started;
-                    IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${this._isStarted}`);
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${this._isStarted}`);
                     if (this._isStarted === true) {
                         // Service is started
                         const serviceEvent = { eventName: IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, args: [serviceStatus] };
@@ -184,7 +184,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
     private _onServiceStart(serviceStatus: IpcBusInterfaces.ServiceStatus) {
         this._isStarted = serviceStatus.started;
-        IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' is STARTED`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' is STARTED`);
         this._updateWrapper(serviceStatus.callHandlers);
 
         this._sendDelayedCalls();
@@ -192,6 +192,6 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
     private _onServiceStop() {
         this._isStarted = false;
-        IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' is STOPPED`);
+        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' is STOPPED`);
     }
 }
