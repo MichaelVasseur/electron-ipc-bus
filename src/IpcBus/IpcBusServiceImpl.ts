@@ -9,7 +9,8 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _callHandlers: Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>;
     private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
     private _prevImplEmit: Function = null;
-    private static _hiddenMethods = [   'constructor',
+    private static _hiddenMethods = new Set([
+                                        'constructor',
                                         IpcBusInterfaces.IPCBUS_SERVICE_CALL_GETSTATUS,
                                         '_beforeCallHandler',
                                         'setMaxListeners',
@@ -17,6 +18,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                                         'emit',
                                         'addListener',
                                         'on',
+                                        'off',
                                         'prependListener',
                                         'once',
                                         'prependOnceListener',
@@ -24,7 +26,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                                         'removeAllListeners',
                                         'listeners',
                                         'listenerCount',
-                                        'eventNames'];
+                                        'eventNames']);
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient, private _serviceName: string, private _exposedInstance: any = undefined) {
 
@@ -41,7 +43,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             // Looking in legacy class
             for (let memberName in this._exposedInstance) {
                 if (typeof this._exposedInstance[memberName] === 'function'
-                    && IpcBusServiceImpl._hiddenMethods.indexOf(memberName) === -1) {
+                    && !IpcBusServiceImpl._hiddenMethods.has(memberName)) {
                     this.registerCallHandler(memberName,
                     (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                 }
@@ -50,7 +52,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             for (let memberName of Object.getOwnPropertyNames(Object.getPrototypeOf(this._exposedInstance))) {
                 const method = this._exposedInstance[memberName];
                 if ( method instanceof Function
-                     && IpcBusServiceImpl._hiddenMethods.indexOf(memberName) === -1
+                     && !IpcBusServiceImpl._hiddenMethods.has(memberName)
                      && !this._callHandlers.has(memberName) ) {
                     this.registerCallHandler(memberName,
                     (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
