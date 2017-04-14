@@ -8,6 +8,10 @@ class CallWrapper {
     [key: string]: Function;
 }
 
+// class CallWrapperEventEmitter extends EventEmitter {
+//     [key: string]: Function;
+// }
+
 // Implementation of IPC service
 /** @internal */
 export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterfaces.IpcBusServiceProxy {
@@ -61,12 +65,11 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     }
 
     call<T>(name: string, ...args: any[]): Promise<T> {
-        const self = this;
         const callMsg = { handlerName: name, args: args };
         if (this._isStarted) {
             return new Promise<T>((resolve, reject) => {
-                self._ipcBusClient
-                    .request(self._callTimeout, IpcBusUtils.getServiceCallChannel(self._serviceName), callMsg)
+                this._ipcBusClient
+                    .request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
                     .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
                             (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
             });
@@ -77,11 +80,11 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                 const delayedCall = () => {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
                     this._ipcBusClient
-                        .request(self._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
+                        .request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
                         .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
                                 (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
                 };
-                self._delayedCalls.push(delayedCall);
+                this._delayedCalls.push(delayedCall);
             });
         }
     }
@@ -145,6 +148,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
     private _updateWrapper(handlerNames: Array<string>): void {
         // Setup a new wrapper
+//        this._wrapper = new CallWrapperEventEmitter();
         this._wrapper = new CallWrapper();
         const self = this;
         handlerNames.forEach((handlerName: string) => {
@@ -180,6 +184,9 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' emitted event '${msg.eventName}'`);
         this.emit(msg.eventName, msg);
+        // if (this._wrapper) {
+        //     this._wrapper.emit(msg.eventName, msg);
+        // }
     }
 
     private _onServiceStart(serviceStatus: IpcBusInterfaces.ServiceStatus) {
