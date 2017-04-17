@@ -6,6 +6,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 
 class CallWrapperEventEmitter extends EventEmitter {
+    [key: string] : Function;
 }
 
 // class CallWrapper {
@@ -18,7 +19,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     private _eventReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onEventReceived(event, <IpcBusInterfaces.IpcBusServiceEvent>args[0]);
     private _delayedCalls = new Array<Function>();
     private _isStarted: boolean;
-    private _wrapper: any = null;
+    private _wrapper: CallWrapperEventEmitter = null;
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient,
                 private _serviceName: string,
@@ -29,7 +30,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         this._isStarted = false;
         this.getStatus();
 
-        // Register service start/stop events
+        // Register service start/stop/event events
         _ipcBusClient.addListener(IpcBusUtils.getServiceEventChannel(this._serviceName), this._eventReceivedLamdba);
     }
 
