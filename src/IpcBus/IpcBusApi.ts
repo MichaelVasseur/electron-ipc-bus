@@ -89,3 +89,8 @@ export function _CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: str
 export function _ActivateIpcBusTrace(enable: boolean): void {
     IpcBusUtils.Logger.enable = enable;
 }
+
+/** @internal */
+export function _ActivateServiceTrace(enable: boolean): void {
+    IpcBusUtils.Logger.service = enable;
+}

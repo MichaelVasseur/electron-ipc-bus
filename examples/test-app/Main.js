@@ -27,7 +27,8 @@ console.log('IPC Bus Path : ' + busPath);
 // IPC Bus
 const ipcBusModule = require('electron-ipc-bus');
 const ipcBusClient = ipcBusModule.CreateIpcBusClient(busPath);
-ipcBusModule.ActivateIpcBusTrace(true);
+//ipcBusModule.ActivateIpcBusTrace(true);
+ipcBusModule.ActivateServiceTrace(true);
 
 // Startup
 let ipcBrokerProcess = null;
@@ -448,23 +449,26 @@ function startApp() {
     console.log('<MAIN> Connected to broker !');
 
     // Create the proxy (client-side)
-    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 2000);
-    
-    // Subscribe to remote events (client-side)
-    timeServiceProxy.on('emitted_event', () => console.log(`<MAIN> Received 'emitted_event' event from Time service`));
-    timeServiceProxy.on('not_emitted_event', () => console.log(`<MAIN> Received 'not_emitted_event' event from Time service`));
+    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 20000);
     
     // Check service's availability and make a remote call when it is available
     timeServiceProxy
         .once('service-event-start', () => {
-            console.log('<MAIN> Service is STARTED !');
-            timeServiceProxy
-                .getWrapper()
-                .getCurrent('After')
-                .then(
-                    (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
-                    (err) => console.error(`<MAIN> Time service returned error : ${err}`));
+//    timeServiceProxy.connect().then(() => {
+        console.log('<MAIN> Service is STARTED !');
+        const wrapper = timeServiceProxy.getWrapper();
+        wrapper.getCurrent('After')
+            .then(
+                (currentTime) => console.log(`<Service> Current time = ${currentTime}`),
+                (err) => console.error(`<Service> Time service returned error : ${err}`));
+        // Subscribe to remote events (client-side)
+        wrapper.on('emitted_event', () => {
+            console.log(`<Service> Received 'emitted_event' event from Time service`)
         });
+        wrapper.on('not_emitted_event', () => {
+            console.log(`<Service> Received 'not_emitted_event' event from Time service`)
+        });
+    });
 
     // Make a remote call (client-side)
     // NOTE: This call might be delayed as the remote service may not be ready yet !
@@ -480,15 +484,17 @@ function startApp() {
     // Create and start the service (server-side)
     const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
     timeService.start();
+    setTimeout(() => {
+        console.log('<Service> Check that event is not published on the bus when the service is stopped');
+        timeService.stop();
+        timeServiceImpl.emit('not_emitted_event', {});
+        setTimeout(() => {
+            console.log('<Service> Check that event is published on the bus when the service is started');
+            timeService.start();
+            timeServiceImpl.emit('emitted_event', {});
+        }, 1000);
+    }, 2000);
 
-    // Check that event is not published on the bus when the service is stopped
-    timeService.stop();
-    timeServiceImpl.emit('not_emitted_event', {});
-    
-    // Check that event is published on the bus when the service is started
-    timeService.start();
-    timeServiceImpl.emit('emitted_event', {});
-    
     new MainProcess();
 }
 
