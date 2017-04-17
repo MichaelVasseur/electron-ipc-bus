@@ -81,10 +81,6 @@ export function getServiceEventChannel(serviceName: string): string {
     return getServiceNamespace(serviceName) + '/event';
 }
 
-export function getServiceControlChannel(serviceName: string): string {
-    return getServiceNamespace(serviceName) + '/service';
-}
-
 /** @internal */
 export class Logger {
     public static enable: boolean = false;

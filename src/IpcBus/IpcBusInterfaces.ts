@@ -107,9 +107,7 @@ export interface IpcBusServiceEventHandler {
 export interface IpcBusServiceProxy extends events.EventEmitter {
     readonly isStarted: boolean;
 
-    connect(timeoutDelay?: number): Promise<ServiceStatus>;
-
-    getStatus(timeoutDelay?: number): Promise<ServiceStatus>;
+    getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
     getWrapper<T>(): T;
 }

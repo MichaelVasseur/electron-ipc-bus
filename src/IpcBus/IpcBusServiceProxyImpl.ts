@@ -6,86 +6,6 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 
 class CallWrapperEventEmitter extends EventEmitter {
-    private _eventReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onEventReceived(event, <IpcBusInterfaces.IpcBusServiceEvent>args[0]);
-
-    constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient,
-                private _serviceName: string) {
-        super();
-
-        // Register service start/stop events
-        _ipcBusClient.addListener(IpcBusUtils.getServiceEventChannel(this._serviceName), this._eventReceivedLamdba);
-    }
-
-    // EventEmitter API
-    listenerCount(event: string): number {
-        return super.listenerCount(event);
-    }
-
-    addListener(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        super.addListener(event, listener);
-        this._subscribeToBusIfRequired();
-        return this;
-    }
-
-    removeListener(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        super.removeListener(event, listener);
-        this._unsubscribeFromBusIfPossible();
-        return this;
-    }
-
-    on(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        return this.addListener(event, listener);
-    }
-
-    once(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        super.once(event, listener);
-        this._subscribeToBusIfRequired();
-        return this;
-    }
-
-    off(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        return this.removeListener(event, listener);
-    }
-
-    removeAllListeners(event?: string): this {
-        if (event) {
-            super.removeAllListeners(event);
-        }
-        this._unsubscribeFromBusIfPossible();
-        return this;
-    }
-
-    // Added in Node 6...
-    prependListener(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        super.prependListener(event, listener);
-        this._subscribeToBusIfRequired();
-        return this;
-    }
-
-    prependOnceListener(event: string, listener: IpcBusInterfaces.IpcBusServiceEventHandler): this {
-        super.prependOnceListener(event, listener);
-        this._subscribeToBusIfRequired();
-        return this;
-    }
-
-    private _subscribeToBusIfRequired(): void {
-        const channelName = IpcBusUtils.getServiceEventChannel(this._serviceName);
-        if (this._ipcBusClient.listenerCount(channelName) === 0) {
-            this._ipcBusClient.addListener(channelName, this._eventReceivedLamdba);
-        }
-    }
-
-    private _unsubscribeFromBusIfPossible(): void {
-        const channelName = IpcBusUtils.getServiceEventChannel(this._serviceName);
-        if (this._ipcBusClient.listenerCount(channelName) > 0) {
-            this._ipcBusClient.removeListener(channelName, this._eventReceivedLamdba);
-        }
-    }
-
-    private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
-        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' emitted event '${msg.eventName}'`);
-        this.emit(msg.eventName, ...msg.args);
-    }
 }
 
 // class CallWrapper {
@@ -110,35 +30,18 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         this.getStatus();
 
         // Register service start/stop events
-        _ipcBusClient.addListener(IpcBusUtils.getServiceControlChannel(this._serviceName), this._eventReceivedLamdba);
+        _ipcBusClient.addListener(IpcBusUtils.getServiceEventChannel(this._serviceName), this._eventReceivedLamdba);
     }
 
     get isStarted(): boolean {
         return this._isStarted;
     }
 
-    connect(timeoutDelay?: number): Promise<IpcBusInterfaces.ServiceStatus> {
-        let p = new Promise<IpcBusInterfaces.ServiceStatus>((resolve, reject) => {
-            this.getStatus(timeoutDelay).then((serviceStatus) => {
-                if (serviceStatus.started) {
-                    resolve(serviceStatus);
-                }
-                else {
-                    reject(false)
-                }
-            })
-            .catch((err) => {
-                reject(err);
-            });
-        });
-        return p;
-    }
-
     get wrapper(): Object {
         return this._wrapper;
     }
 
-    getStatus(timeoutDelay?: number): Promise<IpcBusInterfaces.ServiceStatus> {
+    getStatus(): Promise<IpcBusInterfaces.ServiceStatus> {
         return new Promise<IpcBusInterfaces.ServiceStatus>((resolve, reject) => {
             const statusCallMsg = { handlerName: IpcBusInterfaces.IPCBUS_SERVICE_CALL_GETSTATUS };
             this._ipcBusClient.request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), statusCallMsg)
@@ -190,7 +93,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         // Setup a new wrapper
 //        if (serviceStatus.supportEventEmitter) {
             // A bit ugly the any cast !
-            this._wrapper = new CallWrapperEventEmitter(this._ipcBusClient, this._serviceName);
+            this._wrapper = new CallWrapperEventEmitter();
         // }
         // else {
         //     this._wrapper = new CallWrapper();
@@ -216,12 +119,18 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         switch (msg.eventName) {
             case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START : 
                 this._onServiceStart(msg.args[0] as IpcBusInterfaces.ServiceStatus);
+                this.emit(msg.eventName, ...msg.args);
                 break;
             case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP :
                 this._onServiceStop();
+                this.emit(msg.eventName);
+                break;
+            case IpcBusInterfaces.IPCBUS_SERVICE_EVENT :
+                if (this._wrapper) {
+                    this._wrapper.emit(msg.eventName, ...msg.args);
+                }
                 break;
         }
-        this.emit(msg.eventName, ...msg.args);
     }
 
     private _onServiceStart(serviceStatus: IpcBusInterfaces.ServiceStatus) {

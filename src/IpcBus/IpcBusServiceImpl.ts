@@ -77,7 +77,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is emitting event '${eventName}'`);
 
                 // Emit the event on IPC
-                this.sendEvent(eventName, args);
+                this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT, eventName, args);
                 // Emit the event as usual
                 this._prevImplEmit.call(this._exposedInstance, eventName, args);
             };
@@ -95,7 +95,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         // Listening to call messages
         this._ipcBusClient.addListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
 
-        this.sendControl(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, new IpcBusInterfaces.ServiceStatus(true, this._getCallHandlerNames(), (this._prevImplEmit != null)));
+        this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, new IpcBusInterfaces.ServiceStatus(true, this._getCallHandlerNames(), (this._prevImplEmit != null)));
 
         IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STARTED`);
     }
@@ -109,7 +109,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         }
 
         // The service is stopped
-        this.sendControl(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP, {});
+        this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP, {});
 
         // No more listening to call messages
         this._ipcBusClient.removeListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
@@ -130,11 +130,6 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     sendEvent(name: string, ...args: any[]): void {
         const eventMsg = { eventName: name, args: args };
         this._ipcBusClient.send(IpcBusUtils.getServiceEventChannel(this._serviceName), eventMsg);
-    }
-
-    sendControl(name: string, ...args: any[]): void {
-        const eventMsg = { eventName: name, args: args };
-        this._ipcBusClient.send(IpcBusUtils.getServiceControlChannel(this._serviceName), eventMsg);
     }
 
     private _onCallReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceCall) {
