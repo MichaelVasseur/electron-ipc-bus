@@ -39,20 +39,22 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             // Register handlers for functions of service's Implementation (except the ones inherited from EventEmitter)
             // Looking in legacy class
             for (let memberName in this._exposedInstance) {
-                if (typeof this._exposedInstance[memberName] === 'function'
-                    && this.isVisibleFunction(memberName)) {
+                const method = this._exposedInstance[memberName];
+                if ((typeof method === 'function')
+                    && this._isVisibleFunction(memberName)) {
                     this.registerCallHandler(memberName,
                     (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                 }
             }
             // Looking in ES6 class
             for (let memberName of Object.getOwnPropertyNames(Object.getPrototypeOf(this._exposedInstance))) {
-                const method = this._exposedInstance[memberName];
-                if ( method instanceof Function
-                     && this.isVisibleFunction(memberName)
-                     && !this._callHandlers.has(memberName) ) {
-                    this.registerCallHandler(memberName,
-                    (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
+                if (!this._callHandlers.has(memberName)) {
+                    const method = this._exposedInstance[memberName];
+                    if ((method instanceof Function)
+                        && this._isVisibleFunction(memberName)) {
+                        this.registerCallHandler(memberName,
+                        (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
+                    }
                 }
             }
         } else {
@@ -60,10 +62,11 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         }
     }
 
-    private isVisibleFunction(memberName: string): boolean {
+    private _isVisibleFunction(memberName: string): boolean {
         if (IpcBusServiceImpl._hiddenMethods.has(memberName)) {
             return false;
         }
+        // Hide private methods, supposed to be pre-fixed by one or several underscores
         return (memberName[0] !== '_');
     }
 
@@ -165,11 +168,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     }
 
     private _getCallHandlerNames(): Array<string> {
-        let keys = this._callHandlers.keys();
-        const callHandlerNames = new Array<string>();
-        for (let key of keys) {
-            callHandlerNames.push(key);
-        }
+        const callHandlerNames = [...this._callHandlers.keys()];
         return callHandlerNames;
     }
 }

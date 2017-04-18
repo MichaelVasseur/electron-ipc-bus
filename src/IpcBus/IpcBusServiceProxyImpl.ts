@@ -9,10 +9,6 @@ class CallWrapperEventEmitter extends EventEmitter {
     [key: string]: Function;
 }
 
-// class CallWrapper {
-//     [key: string] : Function;
-// }
-
 // Implementation of IPC service
 /** @internal */
 export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterfaces.IpcBusServiceProxy {
@@ -26,9 +22,11 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         private _callTimeout: number = 1000) {
         super();
 
+        this._wrapper = new CallWrapperEventEmitter();
+
         // Check service availability
         this._isStarted = false;
-        this.getStatus();
+        this.getStatus().then().catch();
 
         // Register service start/stop/event events
         _ipcBusClient.addListener(IpcBusUtils.getServiceEventChannel(this._serviceName), this._eventReceivedLamdba);
@@ -49,8 +47,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                 .then((res: IpcBusInterfaces.IpcBusRequestResponse) => {
                     const serviceStatus = <IpcBusInterfaces.ServiceStatus>res.payload;
                     IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${serviceStatus.started}`);
-                    if ((this._isStarted !== serviceStatus.started) && serviceStatus.started) {
-                        this._isStarted = serviceStatus.started;
+                    if (!this._isStarted && serviceStatus.started) {
                         // Service is started
                         this._onServiceStart(serviceStatus);
                     }
@@ -66,8 +63,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
             return new Promise<T>((resolve, reject) => {
                 this._ipcBusClient
                     .request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
-                    .then((res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
-                    (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
+                    .then((res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload))
+                    .catch((res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
             });
         } else {
             return new Promise<T>((resolve, reject) => {
@@ -77,8 +74,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                     IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
                     this._ipcBusClient
                         .request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
-                        .then((res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
-                        (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
+                        .then((res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload))
+                        .catch((res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
                 };
                 this._delayedCalls.push(delayedCall);
             });
@@ -91,14 +88,6 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     }
 
     private _updateWrapper(serviceStatus: IpcBusInterfaces.ServiceStatus): void {
-        // Setup a new wrapper
-        //        if (serviceStatus.supportEventEmitter) {
-        // A bit ugly the any cast !
-        this._wrapper = new CallWrapperEventEmitter();
-        // }
-        // else {
-        //     this._wrapper = new CallWrapper();
-        // }
         serviceStatus.callHandlers.forEach((handlerName: string) => {
             const proc = (...args: any[]) => {
                 return this.call<Object>(handlerName, ...args);
@@ -118,9 +107,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
         IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' receive control '${msg.eventName}'`);
         if (msg.eventName === IpcBusInterfaces.IPCBUS_SERVICE_WRAPPER_EVENT) {
-            if (this._wrapper) {
-                this._wrapper.emit(msg.eventName, ...msg.args);
-            }
+            this._wrapper.emit(msg.eventName, ...msg.args);
         }
         else {
             switch (msg.eventName) {
