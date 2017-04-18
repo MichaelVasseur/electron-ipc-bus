@@ -429,7 +429,7 @@ function TimeServiceImpl() {
 class TimeServiceImpl2 extends EventEmitter {
 
     getCurrent(source) {
-        console.log(`<MAIN> Service time is serving '${source}' with the current time !`);
+        console.log(`<MAIN Service> Service time is serving '${source}' with the current time !`);
         const currentTime = new Date().getTime();
         this.emit('currentTime', currentTime);
         return currentTime;
@@ -437,7 +437,7 @@ class TimeServiceImpl2 extends EventEmitter {
 
     _beforeCallHandler(call, sender, request) {
 
-        console.log(`<MAIN> About to call TimeServiceImpl2::${call.handlerName}`);
+        console.log(`<MAIN Service> About to call TimeServiceImpl2::${call.handlerName}`);
 
         return call.args;
     }
@@ -455,18 +455,17 @@ function startApp() {
     timeServiceProxy
         .once('service-event-start', () => {
 //    timeServiceProxy.connect().then(() => {
-        console.log('<MAIN> Service is STARTED !');
+        console.log('<MAIN Service> Service is STARTED !');
         const wrapper = timeServiceProxy.getWrapper();
         wrapper.getCurrent('After')
-            .then(
-                (currentTime) => console.log(`<Service> Current time = ${currentTime}`),
-                (err) => console.error(`<Service> Time service returned error : ${err}`));
+            .then((currentTime) => console.log(`<Remote Service> Current time = ${currentTime}`))
+            .catch((err) => console.error(`<Remote Service> Time service returned error : ${err}`));
         // Subscribe to remote events (client-side)
         wrapper.on('emitted_event', () => {
-            console.log(`<Service> Received 'emitted_event' event from Time service`)
+            console.log(`<Remote Service> Received 'emitted_event' event from Time service`)
         });
         wrapper.on('not_emitted_event', () => {
-            console.log(`<Service> Received 'not_emitted_event' event from Time service`)
+            console.log(`<Remote Service> Received 'not_emitted_event' event from Time service`)
         });
     });
 
@@ -485,11 +484,11 @@ function startApp() {
     const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
     timeService.start();
     setTimeout(() => {
-        console.log('<Service> Check that event is not published on the bus when the service is stopped');
+        console.log('<MAIN Service> Check that event is not published on the bus when the service is stopped');
         timeService.stop();
         timeServiceImpl.emit('not_emitted_event', {});
         setTimeout(() => {
-            console.log('<Service> Check that event is published on the bus when the service is started');
+            console.log('<MAIN Service> Check that event is published on the bus when the service is started');
             timeService.start();
             timeServiceImpl.emit('emitted_event', {});
         }, 1000);

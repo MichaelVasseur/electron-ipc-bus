@@ -168,7 +168,8 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     }
 
     private _getCallHandlerNames(): Array<string> {
-        const callHandlerNames = [...this._callHandlers.keys()];
+        // Remove __getServiceStatus or other internal hidden functions
+        const callHandlerNames = Array.from(this._callHandlers.keys()).filter((name) => name[0] !== '_');
         return callHandlerNames;
     }
 }

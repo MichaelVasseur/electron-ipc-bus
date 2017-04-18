@@ -26,6 +26,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
         // Check service availability
         this._isStarted = false;
+        // DeprecationWarning: Unhandled promise rejections are deprecated
         this.getStatus().then().catch();
 
         // Register service start/stop/event events
@@ -105,11 +106,12 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     }
 
     private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
-        IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' receive control '${msg.eventName}'`);
         if (msg.eventName === IpcBusInterfaces.IPCBUS_SERVICE_WRAPPER_EVENT) {
-            this._wrapper.emit(msg.eventName, ...msg.args);
+            IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Wrapper '${this._serviceName}' receive event '${msg.args[0]}'`);
+            this._wrapper.emit(msg.args[0], ...msg.args[1]);
         }
         else {
+            IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' receive event '${msg.eventName}'`);
             switch (msg.eventName) {
                 case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START:
                     this._onServiceStart(msg.args[0] as IpcBusInterfaces.ServiceStatus);
