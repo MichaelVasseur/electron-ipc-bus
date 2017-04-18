@@ -587,17 +587,11 @@ The ***IpcBusServiceProxy*** creates an IPC endpoint that can be used to execute
 ## Interface
 ```ts
 interface IpcBusServiceProxy extends events.EventEmitter {
-    isAvailable: boolean;
-    checkAvailability(): Promise<boolean>;
-    call<T>(handlerName: string, timeout: number, ...args: any[]): Promise<T>;
-    addListener(event: string, listener: IpcBusServiceEventHandler): this;
-    removeListener(event: string, listener: IpcBusServiceEventHandler): this;
-    on(event: string, listener: IpcBusServiceEventHandler): this;
-    once(event: string, listener: IpcBusServiceEventHandler): this;
-    off(event: string, listener: IpcBusServiceEventHandler): this;
-    removeAllListeners(event?: string): this;
-    prependListener(event: string, listener: IpcBusServiceEventHandler): this;
-    prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
+    readonly isStarted: boolean;
+
+    getStatus(): Promise<ServiceStatus>;
+    call<T>(handlerName: string, ...args: any[]): Promise<T>;
+    getWrapper<T>(): T;
 ```
 
 ## IpcBusServiceEvent
@@ -664,6 +658,8 @@ This allow to handle events emitted by remote RPC service. Please refers to the 
 - prependListener(event: string, listener: IpcBusServiceEventHandler): this;
 - prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
 
+The wrapper implements EventEmitter as well. If the interface of the service emits an event it will be receiced by the wrapper of the proxy.
+
 # Test application
 The test-app folder contains all sources of the testing application.
 
@@ -690,7 +686,6 @@ npm run start-sandboxed
 
 # Possible enhancements
 * Support several brokers each with its own buspath in order to distribute the traffic load.
-* Universal logger working in any kind of context (especially from a renderer).
 * Add an optional spy for debugging purpose
 
 # MIT License

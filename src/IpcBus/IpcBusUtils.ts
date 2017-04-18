@@ -84,6 +84,7 @@ export function getServiceEventChannel(serviceName: string): string {
 /** @internal */
 export class Logger {
     public static enable: boolean = false;
+    public static service: boolean = false;
 
     static info(msg: string) {
         console.log(msg);

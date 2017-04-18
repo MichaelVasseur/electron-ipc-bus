@@ -24,6 +24,7 @@ import {_CreateIpcBusClient} from './IpcBus/IpcBusApi';
 import {_CreateIpcBusService} from './IpcBus/IpcBusApi';
 import {_CreateIpcBusServiceProxy} from './IpcBus/IpcBusApi';
 import {_ActivateIpcBusTrace} from './IpcBus/IpcBusApi';
+import {_ActivateServiceTrace} from './IpcBus/IpcBusApi';
 
 export function CreateIpcBusBroker(busPath?: string): IpcBusBroker {
     return _CreateIpcBusBroker(busPath);
@@ -47,4 +48,8 @@ export function CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: stri
 
 export function ActivateIpcBusTrace(enable: boolean): void {
     return _ActivateIpcBusTrace(enable);
+}
+
+export function ActivateServiceTrace(enable: boolean): void {
+    return _ActivateServiceTrace(enable);
 }

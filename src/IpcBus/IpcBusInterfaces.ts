@@ -9,6 +9,7 @@ export const IPCBUS_CHANNEL_SERVICE_AVAILABLE = '/electron-ipc-bus/serviceAvaila
 // Special events
 export const IPCBUS_SERVICE_EVENT_START = 'service-event-start';
 export const IPCBUS_SERVICE_EVENT_STOP = 'service-event-stop';
+export const IPCBUS_SERVICE_WRAPPER_EVENT = 'service-wrapper-event';
 
 export interface IpcBusRequest {
     resolve(payload: Object | string): void;
@@ -82,9 +83,8 @@ export interface IpcBusServiceCall {
 export interface IpcBusServiceCallHandler {
     (call: IpcBusServiceCall, sender: IpcBusPeer, request: IpcBusRequest): void;
 }
-
 export class ServiceStatus {
-    constructor(public started: boolean, public callHandlers: Array<string>) {
+    constructor(public started: boolean, public callHandlers: Array<string>, public supportEventEmitter: boolean) {
     }
 }
 
@@ -106,17 +106,8 @@ export interface IpcBusServiceEventHandler {
 
 export interface IpcBusServiceProxy extends events.EventEmitter {
     readonly isStarted: boolean;
+
     getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
     getWrapper<T>(): T;
-    // EventEmitter API
-    listenerCount(event: string): number;
-    addListener(event: string, listener: IpcBusServiceEventHandler): this;
-    removeListener(event: string, listener: IpcBusServiceEventHandler): this;
-    on(event: string, listener: IpcBusServiceEventHandler): this;
-    once(event: string, listener: IpcBusServiceEventHandler): this;
-    off(event: string, listener: IpcBusServiceEventHandler): this;
-    removeAllListeners(event?: string): this;
-    prependListener(event: string, listener: IpcBusServiceEventHandler): this;
-    prependOnceListener(event: string, listener: IpcBusServiceEventHandler): this;
 }

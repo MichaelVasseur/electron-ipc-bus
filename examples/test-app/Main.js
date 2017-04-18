@@ -27,7 +27,8 @@ console.log('IPC Bus Path : ' + busPath);
 // IPC Bus
 const ipcBusModule = require('electron-ipc-bus');
 const ipcBusClient = ipcBusModule.CreateIpcBusClient(busPath);
-ipcBusModule.ActivateIpcBusTrace(true);
+//ipcBusModule.ActivateIpcBusTrace(true);
+ipcBusModule.ActivateServiceTrace(true);
 
 // Startup
 let ipcBrokerProcess = null;
@@ -428,7 +429,7 @@ function TimeServiceImpl() {
 class TimeServiceImpl2 extends EventEmitter {
 
     getCurrent(source) {
-        console.log(`<MAIN> Service time is serving '${source}' with the current time !`);
+        console.log(`<MAIN Service> Service time is serving '${source}' with the current time !`);
         const currentTime = new Date().getTime();
         this.emit('currentTime', currentTime);
         return currentTime;
@@ -436,7 +437,7 @@ class TimeServiceImpl2 extends EventEmitter {
 
     _beforeCallHandler(call, sender, request) {
 
-        console.log(`<MAIN> About to call TimeServiceImpl2::${call.handlerName}`);
+        console.log(`<MAIN Service> About to call TimeServiceImpl2::${call.handlerName}`);
 
         return call.args;
     }
@@ -448,23 +449,25 @@ function startApp() {
     console.log('<MAIN> Connected to broker !');
 
     // Create the proxy (client-side)
-    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 2000);
-    
-    // Subscribe to remote events (client-side)
-    timeServiceProxy.on('emitted_event', () => console.log(`<MAIN> Received 'emitted_event' event from Time service`));
-    timeServiceProxy.on('not_emitted_event', () => console.log(`<MAIN> Received 'not_emitted_event' event from Time service`));
+    const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 20000);
     
     // Check service's availability and make a remote call when it is available
     timeServiceProxy
         .once('service-event-start', () => {
-            console.log('<MAIN> Service is STARTED !');
-            timeServiceProxy
-                .getWrapper()
-                .getCurrent('After')
-                .then(
-                    (currentTime) => console.log(`<MAIN> Current time = ${currentTime}`),
-                    (err) => console.error(`<MAIN> Time service returned error : ${err}`));
+//    timeServiceProxy.connect().then(() => {
+        console.log('<MAIN Service> Service is STARTED !');
+        const wrapper = timeServiceProxy.getWrapper();
+        wrapper.getCurrent('After')
+            .then((currentTime) => console.log(`<Remote Service> Current time = ${currentTime}`))
+            .catch((err) => console.error(`<Remote Service> Time service returned error : ${err}`));
+        // Subscribe to remote events (client-side)
+        wrapper.on('emitted_event', () => {
+            console.log(`<Remote Service> Received 'emitted_event' event from Time service`)
         });
+        wrapper.on('not_emitted_event', () => {
+            console.log(`<Remote Service> Received 'not_emitted_event' event from Time service`)
+        });
+    });
 
     // Make a remote call (client-side)
     // NOTE: This call might be delayed as the remote service may not be ready yet !
@@ -480,15 +483,17 @@ function startApp() {
     // Create and start the service (server-side)
     const timeService = ipcBusModule.CreateIpcBusService(ipcBusClient, 'time', timeServiceImpl);
     timeService.start();
+    setTimeout(() => {
+        console.log('<MAIN Service> Check that event is not published on the bus when the service is stopped');
+        timeService.stop();
+        timeServiceImpl.emit('not_emitted_event', {});
+        setTimeout(() => {
+            console.log('<MAIN Service> Check that event is published on the bus when the service is started');
+            timeService.start();
+            timeServiceImpl.emit('emitted_event', {});
+        }, 1000);
+    }, 2000);
 
-    // Check that event is not published on the bus when the service is stopped
-    timeService.stop();
-    timeServiceImpl.emit('not_emitted_event', {});
-    
-    // Check that event is published on the bus when the service is started
-    timeService.start();
-    timeServiceImpl.emit('emitted_event', {});
-    
     new MainProcess();
 }
 
