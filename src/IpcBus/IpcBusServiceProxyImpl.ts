@@ -26,8 +26,17 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
         // Check service availability
         this._isStarted = false;
-        // DeprecationWarning: Unhandled promise rejections are deprecated
-        this.getStatus().then().catch();
+
+        this.getStatus()
+          .then((serviceStatus: IpcBusInterfaces.ServiceStatus) => {
+                if (!this._isStarted && serviceStatus.started) {
+                    // Service is started
+                    this._onServiceStart(serviceStatus);
+                }
+            })
+            // DeprecationWarning: Unhandled promise rejections are deprecated
+            .catch((err) => {
+            });
 
         // Register service start/stop/event events
         _ipcBusClient.addListener(IpcBusUtils.getServiceEventChannel(this._serviceName), this._eventReceivedLamdba);
@@ -46,15 +55,13 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
             const statusCallMsg = { handlerName: IpcBusInterfaces.IPCBUS_SERVICE_CALL_GETSTATUS };
             this._ipcBusClient.request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), statusCallMsg)
                 .then((res: IpcBusInterfaces.IpcBusRequestResponse) => {
-                    const serviceStatus = <IpcBusInterfaces.ServiceStatus>res.payload;
+                    const serviceStatus = <IpcBusInterfaces.ServiceStatus> res.payload;
                     IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' availability = ${serviceStatus.started}`);
-                    if (!this._isStarted && serviceStatus.started) {
-                        // Service is started
-                        this._onServiceStart(serviceStatus);
-                    }
                     resolve(serviceStatus);
                 })
-                .catch((res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
+                .catch((res: IpcBusInterfaces.IpcBusRequestResponse) => {
+                    IpcBusUtils.Logger.service && IpcBusUtils.Logger.warn(`[IpcBusServiceProxy] Service '${this._serviceName}' error ${res.err}`);
+                });
         });
     }
 
@@ -119,8 +126,10 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                 case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP:
                     this._onServiceStop();
                     break;
+                default :
+                    this.emit(msg.eventName, ...msg.args);
+                    break;
             }
-            this.emit(msg.eventName, ...msg.args);
         }
     }
 
@@ -128,6 +137,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         this._isStarted = serviceStatus.started;
         IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' is STARTED`);
         this._updateWrapper(serviceStatus);
+        this.emit(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStatus);
 
         this._sendDelayedCalls();
     }
@@ -135,5 +145,6 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     private _onServiceStop() {
         this._isStarted = false;
         IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' is STOPPED`);
+        this.emit(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP);
     }
 }

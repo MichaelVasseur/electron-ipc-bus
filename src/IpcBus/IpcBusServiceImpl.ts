@@ -41,7 +41,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
             for (let memberName in this._exposedInstance) {
                 const method = this._exposedInstance[memberName];
                 if ((typeof method === 'function')
-                    && this._isVisibleFunction(memberName)) {
+                    && this._isFunctionVisible(memberName)) {
                     this.registerCallHandler(memberName,
                     (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                 }
@@ -51,7 +51,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 if (!this._callHandlers.has(memberName)) {
                     const method = this._exposedInstance[memberName];
                     if ((method instanceof Function)
-                        && this._isVisibleFunction(memberName)) {
+                        && this._isFunctionVisible(memberName)) {
                         this.registerCallHandler(memberName,
                         (call: IpcBusInterfaces.IpcBusServiceCall, sender: IpcBusInterfaces.IpcBusPeer, request: IpcBusInterfaces.IpcBusRequest) => this._doCall(call, sender, request));
                     }
@@ -62,7 +62,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         }
     }
 
-    private _isVisibleFunction(memberName: string): boolean {
+    private _isFunctionVisible(memberName: string): boolean {
         if (IpcBusServiceImpl._hiddenMethods.has(memberName)) {
             return false;
         }
@@ -79,23 +79,17 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
 
                 // Emit the event on IPC
                 this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_WRAPPER_EVENT, eventName, args);
-                // Emit the event as usual
+                // Emit the event as usual in the context of the _exposedInstance
                 this._prevImplEmit.call(this._exposedInstance, eventName, args);
             };
 
             IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' will send events emitted by its implementation`);
         }
 
-        // The service is started, send available call handlers to clients
-        let callHandlerNames = this._callHandlers.keys();
-        const registeredHandlerNames = new Array<string>();
-        for (let handlerName of callHandlerNames) {
-            registeredHandlerNames.push(handlerName);
-        }
-
         // Listening to call messages
         this._ipcBusClient.addListener(IpcBusUtils.getServiceCallChannel(this._serviceName), this._callReceivedLamdba);
 
+        // The service is started, send available call handlers to clients
         this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, new IpcBusInterfaces.ServiceStatus(true, this._getCallHandlerNames(), (this._prevImplEmit != null)));
 
         IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' is STARTED`);
@@ -168,7 +162,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     }
 
     private _getCallHandlerNames(): Array<string> {
-        // Remove __getServiceStatus or other internal hidden functions
+        // Remove __getServiceStatus and any internal hidden functions
         const callHandlerNames = Array.from(this._callHandlers.keys()).filter((name) => name[0] !== '_');
         return callHandlerNames;
     }
