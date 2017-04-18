@@ -1,12 +1,12 @@
 /// <reference types='node' />
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 
 
 class CallWrapperEventEmitter extends EventEmitter {
-    [key: string] : Function;
+    [key: string]: Function;
 }
 
 // class CallWrapper {
@@ -22,8 +22,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
     private _wrapper: CallWrapperEventEmitter = null;
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient,
-                private _serviceName: string,
-                private _callTimeout: number = 1000) {
+        private _serviceName: string,
+        private _callTimeout: number = 1000) {
         super();
 
         // Check service availability
@@ -57,7 +57,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                     resolve(serviceStatus);
                 })
                 .catch((res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
-            });
+        });
     }
 
     call<T>(name: string, ...args: any[]): Promise<T> {
@@ -66,8 +66,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
             return new Promise<T>((resolve, reject) => {
                 this._ipcBusClient
                     .request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
-                    .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
-                            (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
+                    .then((res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
+                    (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
             });
         } else {
             return new Promise<T>((resolve, reject) => {
@@ -77,8 +77,8 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
                     IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Executing delayed call to '${name}' from service '${this._serviceName}' ...`);
                     this._ipcBusClient
                         .request(this._callTimeout, IpcBusUtils.getServiceCallChannel(this._serviceName), callMsg)
-                        .then(  (res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
-                                (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
+                        .then((res: IpcBusInterfaces.IpcBusRequestResponse) => resolve(<T>res.payload),
+                        (res: IpcBusInterfaces.IpcBusRequestResponse) => reject(res.err));
                 };
                 this._delayedCalls.push(delayedCall);
             });
@@ -87,14 +87,14 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
     getWrapper<T>(): T {
         const typed_wrapper: any = this._wrapper;
-        return <T> typed_wrapper;
+        return <T>typed_wrapper;
     }
 
     private _updateWrapper(serviceStatus: IpcBusInterfaces.ServiceStatus): void {
         // Setup a new wrapper
-//        if (serviceStatus.supportEventEmitter) {
-            // A bit ugly the any cast !
-            this._wrapper = new CallWrapperEventEmitter();
+        //        if (serviceStatus.supportEventEmitter) {
+        // A bit ugly the any cast !
+        this._wrapper = new CallWrapperEventEmitter();
         // }
         // else {
         //     this._wrapper = new CallWrapper();
@@ -117,20 +117,21 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
 
     private _onEventReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceEvent) {
         IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcBusServiceProxy] Service '${this._serviceName}' receive control '${msg.eventName}'`);
-        switch (msg.eventName) {
-            case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START : 
-                this._onServiceStart(msg.args[0] as IpcBusInterfaces.ServiceStatus);
-                this.emit(msg.eventName, ...msg.args);
-                break;
-            case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP :
-                this._onServiceStop();
-                this.emit(msg.eventName);
-                break;
-            case IpcBusInterfaces.IPCBUS_SERVICE_EVENT :
-                if (this._wrapper) {
-                    this._wrapper.emit(msg.eventName, ...msg.args);
-                }
-                break;
+        if (msg.eventName === IpcBusInterfaces.IPCBUS_SERVICE_WRAPPER_EVENT) {
+            if (this._wrapper) {
+                this._wrapper.emit(msg.eventName, ...msg.args);
+            }
+        }
+        else {
+            switch (msg.eventName) {
+                case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START:
+                    this._onServiceStart(msg.args[0] as IpcBusInterfaces.ServiceStatus);
+                    break;
+                case IpcBusInterfaces.IPCBUS_SERVICE_EVENT_STOP:
+                    this._onServiceStop();
+                    break;
+            }
+            this.emit(msg.eventName, ...msg.args);
         }
     }
 

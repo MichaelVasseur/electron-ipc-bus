@@ -9,7 +9,7 @@ export const IPCBUS_CHANNEL_SERVICE_AVAILABLE = '/electron-ipc-bus/serviceAvaila
 // Special events
 export const IPCBUS_SERVICE_EVENT_START = 'service-event-start';
 export const IPCBUS_SERVICE_EVENT_STOP = 'service-event-stop';
-export const IPCBUS_SERVICE_EVENT = 'service-event';
+export const IPCBUS_SERVICE_WRAPPER_EVENT = 'service-wrapper-event';
 
 export interface IpcBusRequest {
     resolve(payload: Object | string): void;
