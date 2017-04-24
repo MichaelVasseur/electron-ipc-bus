@@ -3,6 +3,7 @@ A safe IPC (Inter-Process Communication) bus for applications built on Electron.
 
 This bus offers a common API for exchanging data between any Electron process : Node, Master and Renderer instances.
 
+
 # Features
 * Publish/Subscribe oriented API
 * Works with sandboxed renderer process
@@ -20,6 +21,13 @@ Dependencies
 * https://github.com/defunctzombie/node-uuid
 * http://electron.atom.io/
 * http://nodejs.org/
+
+
+# Technical Overview
+
+## Objective
+![Electron's processes](https://raw.githubusercontent.com/MichaelVasseur/electron-ipc-bus/Doc_Update/doc/electron_processes.svg)
+
 
 # Usage
 
