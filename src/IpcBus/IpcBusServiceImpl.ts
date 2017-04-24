@@ -80,7 +80,7 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
                 // Emit the event on IPC
                 this.sendEvent(IpcBusInterfaces.IPCBUS_SERVICE_WRAPPER_EVENT, eventName, args);
                 // Emit the event as usual in the context of the _exposedInstance
-                this._prevImplEmit.call(this._exposedInstance, eventName, args);
+                this._prevImplEmit.call(this._exposedInstance, eventName, ...args);
             };
 
             IpcBusUtils.Logger.service && IpcBusUtils.Logger.info(`[IpcService] Service '${this._serviceName}' will send events emitted by its implementation`);

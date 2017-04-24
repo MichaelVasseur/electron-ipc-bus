@@ -1,6 +1,6 @@
 {
   "name": "tr-electron-ipc-bus",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
