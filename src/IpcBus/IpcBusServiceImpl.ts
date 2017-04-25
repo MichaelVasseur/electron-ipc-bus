@@ -128,17 +128,16 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     }
 
     private _onCallReceived(event: IpcBusInterfaces.IpcBusEvent, msg: IpcBusInterfaces.IpcBusServiceCall) {
-        if (!this._callHandlers.has(msg.handlerName)) {
+        let callHandler: IpcBusInterfaces.IpcBusServiceCallHandler = this._callHandlers.get(msg.handlerName);
+        if (!callHandler) {
             event.request.reject(`Service '${this._serviceName}' does NOT handle calls to '${msg.handlerName}' !`);
             IpcBusUtils.Logger.service && IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' does NOT handle calls to '${msg.handlerName}' !`);
-        } else {
-
+        }
+        else {
             try {
-
-                this._callHandlers.get(msg.handlerName)(msg, event.sender, event.request);
-
-            } catch (e) {
-
+                callHandler(msg, event.sender, event.request);
+            }
+            catch (e) {
                 event.request.reject(e);
                 IpcBusUtils.Logger.service && IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' encountered an exception while processing call to '${msg.handlerName}' : ${e}`);
             }
@@ -151,13 +150,19 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
         if (this._exposedInstance['_beforeCallHandler']) {
             callArgs = this._exposedInstance['_beforeCallHandler'](call, sender, request);
         }
-        const result = this._exposedInstance[call.handlerName](...callArgs);
-        if (result && result['then']) {
-            // result is a valid promise
-            result.then(request.resolve, request.reject);
-        } else {
-            // result is "just" a value
-            request.resolve(result);
+        try {
+            const result = this._exposedInstance[call.handlerName](...callArgs);
+            if (result && result['then']) {
+                // result is a valid promise
+                result.then(request.resolve, request.reject);
+            } else {
+                // result is "just" a value
+                request.resolve(result);
+            }
+        }
+        catch (e) {
+            request.reject(e);
+            IpcBusUtils.Logger.service && IpcBusUtils.Logger.error(`[IpcService] Service '${this._serviceName}' encountered an exception while processing call to '${call.handlerName}' : ${e}`);
         }
     }
 
