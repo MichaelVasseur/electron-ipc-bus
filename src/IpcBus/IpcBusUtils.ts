@@ -5,6 +5,7 @@ export const IPC_BUS_RENDERER_COMMAND = 'IpcBusRenderer:Command';
 export const IPC_BUS_RENDERER_EVENT = 'IpcBusRenderer:Event';
 
 export const IPC_BUS_COMMAND_CONNECT = 'IpcBusCommand:connect';
+export const IPC_BUS_COMMAND_DISCONNECT = 'IpcBusCommand:disconnect';
 export const IPC_BUS_COMMAND_CLOSE = 'IpcBusCommand:close';
 export const IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL = 'IpcBusCommand:subscribeChannel';
 export const IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL = 'IpcBusCommand:unsubscribeChannel';
@@ -158,7 +159,7 @@ export class ChannelConnectionMap<T extends string | number> {
         }
     }
 
-    private _release(channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
+    private _release(all: boolean, channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
         Logger.enable && this._info(`Release: '${channel}', connKey = ${connKey}`);
 
         let connsMap = this._channelsMap.get(channel);
@@ -190,17 +191,32 @@ export class ChannelConnectionMap<T extends string | number> {
                         Logger.enable && this._warn(`Release: peerId #${peerId} is unknown`);
                     }
                     else {
-                        // This connection has subscribed to this channel
-                        --count;
-                        if (count > 0) {
-                            connData.peerIds.set(peerId, count);
-                        } else {
-                            // The connection is no more referenced
+                        if (all) {
+                            // Test callback first to manage performance
+                            if ((callback instanceof Function) === true) {
+                                while (count > 0) {
+                                    --count;
+                                    connData.peerIds.set(peerId, count);
+                                    if ((callback instanceof Function) === true) {
+                                        callback(channel, peerId, connData);
+                                    }
+                                }
+                            }
                             connData.peerIds.delete(peerId);
-                            // Logger.enable && this._info(`Release: peerId #${peerId} is released`);
                         }
-                        if ((callback instanceof Function) === true) {
-                            callback(channel, peerId, connData);
+                        else {
+                            // This connection has subscribed to this channel
+                            --count;
+                            if (count > 0) {
+                                connData.peerIds.set(peerId, count);
+                            } else {
+                                // The connection is no more referenced
+                                connData.peerIds.delete(peerId);
+                                // Logger.enable && this._info(`Release: peerId #${peerId} is released`);
+                            }
+                            if ((callback instanceof Function) === true) {
+                                callback(channel, peerId, connData);
+                            }
                         }
                     }
                 }
@@ -218,12 +234,21 @@ export class ChannelConnectionMap<T extends string | number> {
     }
 
     public release(channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
-        this._release(channel, connKey, peerId, callback);
+        this._release(false, channel, connKey, peerId, callback);
     }
 
-    public releaseAll(channel: string, connKey: T, callback?: ChannelConnectionMap.MapHandler<T>) {
+    public releaseAll(channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
         Logger.enable && this._info(`releaseAll: connKey = ${connKey}`);
-        this._release(channel, connKey, null, callback);
+        this._release(true, channel, connKey, peerId, callback);
+    }
+
+    public releasePeerId(connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
+        Logger.enable && this._info(`releasePeerId: peerId = ${peerId}`);
+
+        // ForEach is supposed to support deletion during the iteration !
+        this._channelsMap.forEach((connsMap, channel) => {
+            this._release(true, channel, connKey, peerId, callback);
+        });
     }
 
     public releaseConnection(connKey: T, callback?: ChannelConnectionMap.MapHandler<T>) {
@@ -231,7 +256,7 @@ export class ChannelConnectionMap<T extends string | number> {
 
         // ForEach is supposed to support deletion during the iteration !
         this._channelsMap.forEach((connsMap, channel) => {
-            this._release(channel, connKey, null, callback);
+            this._release(false, channel, connKey, null, callback);
         });
     }
 

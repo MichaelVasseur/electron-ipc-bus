@@ -45,7 +45,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     ipcClose() {
-        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
         this._busConn.end();
         this._busConn = null;
     }

@@ -98,7 +98,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         return queryStateResult;
     }
 
-    private _rendererCleanUp(webContents: any, webContentsId: number): void {
+    private _rendererCleanUp(webContents: any, webContentsId: number, peerId: string): void {
         this._subscriptions.releaseConnection(webContentsId);
         // ForEach is supposed to support deletion during the iteration !
         this._requestChannels.forEach((webContentsForRequest, channel) => {
@@ -113,11 +113,12 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         // Have to closure the webContentsId as webContents.id is undefined when destroyed !!!
         let webContentsId = webContents.id;
         webContents.addListener('destroyed', () => {
-            this._rendererCleanUp(webContents, webContentsId);
+            this._rendererCleanUp(webContents, webContentsId, peerId);
             // Simulate the close message
             let ipcBusPeer = this._ipcBusPeers.get(peerId);
             if (ipcBusPeer) {
-                this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {peerId: peerId}, {channel: '', sender: ipcBusPeer});
+                this._ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_DISCONNECT, {peerId: peerId}, {channel: '', sender: ipcBusPeer});
+                this._ipcBusPeers.delete(peerId);
             }
         });
         // webContents.addListener('destroyed', this._lambdaCleanUpHandler);
@@ -135,8 +136,11 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 webContents.send(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, webContents.id);
                 break;
             }
+            case IpcBusUtils.IPC_BUS_COMMAND_DISCONNECT :
             case IpcBusUtils.IPC_BUS_COMMAND_CLOSE : {
-                this._rendererCleanUp(webContents, webContents.id);
+                // We do not close the socket, we just disconnect a peer
+                command = IpcBusUtils.IPC_BUS_COMMAND_DISCONNECT;
+                this._rendererCleanUp(webContents, webContents.id, ipcBusData.peerId);
                 this._ipcBusPeers.delete(ipcBusData.peerId);
                 break;
             }
@@ -146,7 +150,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             }
             case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL : {
                 if (ipcBusData.unsubscribeAll) {
-                    this._subscriptions.releaseAll(ipcBusEvent.channel, webContents.id);
+                    this._subscriptions.releaseAll(ipcBusEvent.channel, webContents.id, ipcBusData.peerId);
                 }
                 else {
                     this._subscriptions.release(ipcBusEvent.channel, webContents.id, ipcBusData.peerId);
@@ -154,7 +158,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_ALL : {
-                this._rendererCleanUp(webContents, webContents.id);
+                this._rendererCleanUp(webContents, webContents.id, ipcBusData.peerId);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE : {
