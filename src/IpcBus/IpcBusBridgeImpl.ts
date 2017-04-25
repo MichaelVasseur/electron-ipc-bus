@@ -7,7 +7,7 @@ import {IpcBusTransportNode} from './IpcBusTransportNode';
 // This class ensures the transfer of data between Broker and Renderer/s using ipcMain
 /** @internal */
 export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInterfaces.IpcBusBridge  {
-    private _ipcObj: any;
+    private _ipcMain: any;
     private _webContents: any;
 
     private _subscriptions: IpcBusUtils.ChannelConnectionMap<number>;
@@ -18,7 +18,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
-        this._ipcObj = require('electron').ipcMain;
+        this._ipcMain = require('electron').ipcMain;
         this._webContents = require('electron').webContents;
 
         this._subscriptions = new IpcBusUtils.ChannelConnectionMap<number>('IPCBus:Bridge');
@@ -62,13 +62,13 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             this.ipcConnect(timeoutDelay)
                 .then((msg) => {
                     // Guard against people calling start several times
-                    if (this._ipcObj.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE) == 0) {
-                        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
+                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE) == 0) {
+                        this._ipcMain.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
                             , (event: any, peerId: string) => this._onHandshake(event, peerId));
                     }
                     // Guard against people calling start several times
-                    if (this._ipcObj.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_COMMAND) == 0) {
-                        this._ipcObj.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
+                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_COMMAND) == 0) {
+                        this._ipcMain.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
                             , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
                     }
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Installed`);
@@ -83,8 +83,8 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     stop() {
         this.ipcClose();
-        this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
-        this._ipcObj.removeListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
+        this._ipcMain.removeListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
+        this._ipcMain.removeListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
     // Not exposed
