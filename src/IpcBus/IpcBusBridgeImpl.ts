@@ -62,12 +62,12 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             this.ipcConnect(timeoutDelay)
                 .then((msg) => {
                     // Guard against people calling start several times
-                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE) == 0) {
+                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE) === 0) {
                         this._ipcMain.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
                             , (event: any, peerId: string) => this._onHandshake(event, peerId));
                     }
                     // Guard against people calling start several times
-                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_COMMAND) == 0) {
+                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_COMMAND) === 0) {
                         this._ipcMain.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
                             , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
                     }
@@ -83,8 +83,8 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     stop() {
         this.ipcClose();
-        this._ipcMain.removeListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
-        this._ipcMain.removeListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
+        this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
+        this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
     // Not exposed
