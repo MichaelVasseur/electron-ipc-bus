@@ -138,6 +138,7 @@ export abstract class IpcBusTransport {
         return p;
     }
 
+    protected abstract _onClose(): void;
     abstract ipcClose(): void;
     abstract ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void;
 }

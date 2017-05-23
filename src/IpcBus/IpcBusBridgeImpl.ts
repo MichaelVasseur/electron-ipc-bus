@@ -29,6 +29,12 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         // };
     }
 
+    protected _onClose() {
+        this._ipcBusPeers.clear();
+        this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
+        this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
+    }
+
     protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
             case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
