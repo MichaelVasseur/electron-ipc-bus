@@ -44,11 +44,12 @@
     "clean": "del-cli ./lib ./build ./dist",
     "build": "npm run build-js && npm run build-declaration",
     "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
-    "build-declaration": "npm run build-declaration-ts && npm run build-declaration-dts-bundle && npm run build-declaration-dts-bundle-renderer",
+    "build-declaration": "npm run build-declaration-ts && npm run build-declaration-dts-bundle && npm run build-declaration-dts-bundle-renderer && npm run clean-declaration-dts",
     "build-declaration-ts": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
     "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/electron-ipc-bus.d.ts",
     "build-declaration-dts-bundle-renderer": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus-renderer --main ./lib/electron-ipc-bus-renderer.d.ts",
+    "clean-declaration-dts": "del-cli ./lib/IpcBus/*.d.ts",
     "tsc": "tsc",
     "tslint": "tslint"
   }
