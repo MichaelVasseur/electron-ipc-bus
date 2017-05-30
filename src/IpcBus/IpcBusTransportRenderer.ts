@@ -10,14 +10,17 @@ import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
 export class IpcBusTransportRenderer extends IpcBusTransport {
     private _ipcRenderer: any;
     private _onIpcEventReceived: Function;
+    private _promiseConnected: Promise<string>;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
     };
 
     protected _reset() {
+        this._promiseConnected = null;
         if (this._ipcRenderer) {
-            this._ipcRenderer.removeListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
+            this._ipcRenderer.removeAllListeners(IpcBusUtils.IPC_BUS_COMMAND_CONNECT);
+            this._ipcRenderer.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_EVENT);
             this._ipcRenderer = null;
         }
     }
@@ -26,7 +29,7 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         this._reset();
     }
 
-    private _onHandshake(eventOrPid: any, pidOrUndefined: any): void {
+    private _onConnect(eventOrPid: any, pidOrUndefined: any): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
         if (pidOrUndefined) {
             this._ipcBusPeer.process.pid = pidOrUndefined;
@@ -41,50 +44,34 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     };
 
     /// IpcBusTrandport API
-    private _ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
-        let p = new Promise<string>((resolve, reject) => {
-            super.ipcConnect(timeoutDelay, peerName)
-                .then((msg) => {
-                    // We wait for the bridge confirmation
-                    this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, () => {
-                        resolve('connected');
-                    });
-                    setTimeout(() => {
-                        reject('timeout');
-                    }, timeoutDelay);
-                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
-                })
-                .catch((err) => {
-                    reject(err);
-                });
-        });
-        return p;
-    }
-
     ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
-        if (this._ipcRenderer) {
-            return this._ipcConnect(timeoutDelay, peerName);
-        }
-        else {
-            let p = new Promise<string>((resolve, reject) => {
+        // Store in a local variable, in case it is set to null (paranoid code as it is asynchronous!)
+        let p = this._promiseConnected;
+        if (!p) {
+            p = this._promiseConnected = new Promise<string>((resolve, reject) => {
                 this._ipcRenderer = require('electron').ipcRenderer;
-                this._ipcRenderer.once(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, (eventOrPid: any, pidOrUndefined: any) => {
-                    this._onHandshake(eventOrPid, pidOrUndefined);
-                    this._ipcConnect(timeoutDelay, peerName)
-                        .then((msg) => {
-                            resolve(msg);
-                        })
-                        .catch((err) => {
-                            reject(err);
+                super.ipcConnect(timeoutDelay, peerName)
+                    .then((msg) => {
+                        // Do not type timer as it may differ between node and browser api, let compiler and browserify deal with.
+                        let timer = setTimeout(() => {
+                            timer = null;
+                            this._reset();
+                            reject('timeout');
+                        }, timeoutDelay);
+                        // We wait for the bridge confirmation
+                        this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPid: any, pidOrUndefined: any) => {
+                            clearTimeout(timer);
+                            this._onConnect(eventOrPid, pidOrUndefined);
+                            resolve('connected');
                         });
-                });
-                setTimeout(() => {
-                    reject('timeout');
-                }, timeoutDelay);
-                this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, this._peerId);
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
             });
-            return p;
         }
+        return p;
     }
 
     ipcClose(): void {

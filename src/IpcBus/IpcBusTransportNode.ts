@@ -11,7 +11,7 @@ import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
 export class IpcBusTransportNode extends IpcBusTransport {
     protected _baseIpc: BaseIpc;
     protected _busConn: any;
-    protected _promiseConnected: Promise<string>;
+    private _promiseConnected: Promise<string>;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
