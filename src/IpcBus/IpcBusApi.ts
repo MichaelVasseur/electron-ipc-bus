@@ -7,13 +7,15 @@ import * as IpcBusUtils from './IpcBusUtils';
 
 import { IpcBusBroker } from './IpcBusInterfaces';
 import { IpcBusBridge } from './IpcBusInterfaces';
-import { IpcBusServiceImpl } from './IpcBusServiceImpl';
-import { IpcBusService } from './IpcBusInterfaces';
-import { IpcBusServiceProxyImpl } from './IpcBusServiceProxyImpl';
-import { IpcBusServiceProxy } from './IpcBusInterfaces';
 
 import { IpcBusBrokerImpl } from './IpcBusBrokerImpl';
 import { IpcBusBridgeImpl } from './IpcBusBridgeImpl';
+
+import { IpcBusTransportNode } from './IpcBusTransportNode';
+import { IpcBusTransportRenderer } from './IpcBusTransportRenderer';
+
+import { IpcBusCommonClient } from './IpcBusClient';
+import { IpcBusTransport} from './IpcBusTransport';
 
 import * as ElectronUtils from './ElectronUtils';
 
@@ -61,8 +63,24 @@ export function _CreateIpcBusBridge(busPath?: string): IpcBusBridge {
     return ipcBusBridge;
 }
 
-import { IpcBusCommonClient } from './IpcBusClient';
-import {CreateIpcBusTransport, IpcBusTransport} from './IpcBusTransport';
+function CreateIpcBusTransport(ipcOptions: IpcBusUtils.IpcOptions): IpcBusTransport {
+    let processType = ElectronUtils.GuessElectronProcessType();
+    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
+
+    let ipcBusTransport: IpcBusTransport = null;
+    switch (processType) {
+        case 'renderer':
+            ipcBusTransport = new IpcBusTransportRenderer({ type: processType, pid: -1 }, ipcOptions);
+            break;
+        case 'browser':
+        case 'node':
+            if (ipcOptions.isValid()) {
+                ipcBusTransport = new IpcBusTransportNode({ type: processType, pid: process.pid }, ipcOptions);
+            }
+            break;
+    }
+    return ipcBusTransport;
+}
 
 /** @internal */
 export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
@@ -73,24 +91,4 @@ export function _CreateIpcBusClient(busPath?: string): IpcBusClient {
         ipcBusClient = new IpcBusCommonClient(ipcBusTransport) as IpcBusClient;
     }
     return ipcBusClient;
-}
-
-/** @internal */
-export function _CreateIpcBusService(client: IpcBusClient, serviceName: string, serviceImpl: any = undefined): IpcBusService {
-    return new IpcBusServiceImpl(client, serviceName, serviceImpl);
-}
-
-/** @internal */
-export function _CreateIpcBusServiceProxy(client: IpcBusClient, serviceName: string, callTimeout: number = 1000): IpcBusServiceProxy {
-    return new IpcBusServiceProxyImpl(client, serviceName, callTimeout);
-}
-
-/** @internal */
-export function _ActivateIpcBusTrace(enable: boolean): void {
-    IpcBusUtils.Logger.enable = enable;
-}
-
-/** @internal */
-export function _ActivateServiceTrace(enable: boolean): void {
-    IpcBusUtils.Logger.service = enable;
 }

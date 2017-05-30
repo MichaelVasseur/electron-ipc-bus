@@ -4,6 +4,7 @@
         "declaration": false
     },
 	"files": [
-		"../src/electron-ipc-bus.ts"
+		"../src/electron-ipc-bus.ts",
+		"../src/electron-ipc-bus-renderer.ts"
 	]
 }

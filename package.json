@@ -1,6 +1,6 @@
 {
   "name": "electron-ipc-bus",
-  "version": "0.17.5",
+  "version": "0.18.0",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
@@ -44,10 +44,11 @@
     "clean": "del-cli ./lib ./build ./dist",
     "build": "npm run build-js && npm run build-declaration",
     "build-js": "tsc -p ./tsconfig/tsconfig-js.json",
-    "build-declaration": "npm run build-declaration-ts && npm run build-declaration-dts-bundle",
+    "build-declaration": "npm run build-declaration-ts && npm run build-declaration-dts-bundle && npm run build-declaration-dts-bundle-renderer",
     "build-declaration-ts": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
-    "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/electron-ipc-bus.d.ts --removeSource",
+    "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/electron-ipc-bus.d.ts",
+    "build-declaration-dts-bundle-renderer": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus-renderer --main ./lib/electron-ipc-bus-renderer.d.ts",
     "tsc": "tsc",
     "tslint": "tslint"
   }

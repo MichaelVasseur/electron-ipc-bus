@@ -1,3 +1,9 @@
+// Purpose of this is to limit dependencies when ipc-bus is bundled in a renderer.
+// If you use browserify, you have to add such field in the package.json of your bundled lib
+//     "browser": {
+//     "electron-ipc-bus": "electron-ipc-bus/lib/electron-ipc-bus-renderer.js"
+// }
+
 export {IpcBusRequest} from './IpcBus/IpcBusInterfaces';
 export {IpcBusRequestResponse} from './IpcBus/IpcBusInterfaces';
 export {IpcBusPeer} from './IpcBus/IpcBusInterfaces';
@@ -13,30 +19,17 @@ export {IPCBUS_SERVICE_EVENT_STOP} from './IpcBus/IpcBusInterfaces';
 export {ServiceStatus} from './IpcBus/IpcBusInterfaces';
 
 import {IpcBusClient} from './IpcBus/IpcBusInterfaces';
-import {IpcBusBroker} from './IpcBus/IpcBusInterfaces';
-import {IpcBusBridge} from './IpcBus/IpcBusInterfaces';
 import {IpcBusService} from './IpcBus/IpcBusInterfaces';
 import {IpcBusServiceProxy} from './IpcBus/IpcBusInterfaces';
 
-import {_CreateIpcBusBroker} from './IpcBus/IpcBusApi';
-import {_CreateIpcBusBridge} from './IpcBus/IpcBusApi';
-import {_CreateIpcBusClient} from './IpcBus/IpcBusApi';
-
+import {_CreateIpcBusClientRenderer} from './IpcBus/IpcBusApi-renderer';
 import {_CreateIpcBusService} from './IpcBus/IpcBusApi-renderer';
 import {_CreateIpcBusServiceProxy} from './IpcBus/IpcBusApi-renderer';
 import {_ActivateIpcBusTrace} from './IpcBus/IpcBusApi-renderer';
 import {_ActivateServiceTrace} from './IpcBus/IpcBusApi-renderer';
 
-export function CreateIpcBusBroker(busPath?: string): IpcBusBroker {
-    return _CreateIpcBusBroker(busPath);
-}
-
-export function CreateIpcBusBridge(busPath?: string): IpcBusBridge {
-    return _CreateIpcBusBridge(busPath);
-}
-
 export function CreateIpcBusClient(busPath?: string): IpcBusClient {
-    return _CreateIpcBusClient(busPath);
+    return _CreateIpcBusClientRenderer(busPath);
 }
 
 export function CreateIpcBusService(client: IpcBusClient, serviceName: string, serviceImpl: any = undefined): IpcBusService {

@@ -142,27 +142,3 @@ export abstract class IpcBusTransport {
     abstract ipcClose(): void;
     abstract ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void;
 }
-
-import { IpcBusTransportNode } from './IpcBusTransportNode';
-import { IpcBusTransportRenderer } from './IpcBusTransportRenderer';
-import * as ElectronUtils from './ElectronUtils';
-
-/** @internal */
-export function CreateIpcBusTransport(ipcOptions: IpcBusUtils.IpcOptions): IpcBusTransport {
-    let processType = ElectronUtils.GuessElectronProcessType();
-    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`CreateIpcBusForProcess process type = ${processType}, ipc options = ${ipcOptions}`);
-
-    let ipcBusTransport: IpcBusTransport = null;
-    switch (processType) {
-        case 'renderer':
-            ipcBusTransport = new IpcBusTransportRenderer({ type: processType, pid: -1 }, ipcOptions);
-            break;
-        case 'browser':
-        case 'node':
-            if (ipcOptions.isValid()) {
-                ipcBusTransport = new IpcBusTransportNode({ type: processType, pid: process.pid }, ipcOptions);
-            }
-            break;
-    }
-    return ipcBusTransport;
-}
