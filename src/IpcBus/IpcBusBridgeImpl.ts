@@ -31,7 +31,6 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     protected _onClose() {
         this._ipcBusPeers.clear();
-        this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
         this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
@@ -68,11 +67,6 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             this.ipcConnect(timeoutDelay)
                 .then((msg) => {
                     // Guard against people calling start several times
-                    if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE) === 0) {
-                        this._ipcMain.addListener(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE
-                            , (event: any, peerId: string) => this._onHandshake(event, peerId));
-                    }
-                    // Guard against people calling start several times
                     if (this._ipcMain.listenerCount(IpcBusUtils.IPC_BUS_RENDERER_COMMAND) === 0) {
                         this._ipcMain.addListener(IpcBusUtils.IPC_BUS_RENDERER_COMMAND
                             , (event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onRendererMessage(event, command, ipcBusData, ipcBusEvent, args));
@@ -89,7 +83,6 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     stop() {
         this.ipcClose();
-        this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE);
         this._ipcMain.removeAllListeners(IpcBusUtils.IPC_BUS_RENDERER_COMMAND);
     }
 
@@ -114,7 +107,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         });
     }
 
-    private _onHandshake(event: any, peerId: string): void {
+    private _onConnect(event: any, peerId: string): void {
         const webContents = event.sender;
         // Have to closure the webContentsId as webContents.id is undefined when destroyed !!!
         let webContentsId = webContents.id;
@@ -128,8 +121,6 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             }
         });
         // webContents.addListener('destroyed', this._lambdaCleanUpHandler);
-        // Get back to the webContents for providing the webContents id
-        webContents.send(IpcBusUtils.IPC_BUS_RENDERER_HANDSHAKE, webContents.id);
     }
 
     private _onRendererMessage(event: any, command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
@@ -137,8 +128,11 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Peer #${ipcBusEvent.sender.name} post ${command} on '${ipcBusEvent.channel}'`);
         switch (command) {
             case IpcBusUtils.IPC_BUS_COMMAND_CONNECT : {
-                // We get back to the webContents to confirm the connection
+                this._onConnect(event, ipcBusData.peerId);
                 this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
+                // We get back to the webContents
+                // - to confirm the connection
+                // - to provide the webContents id
                 webContents.send(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, webContents.id);
                 break;
             }
