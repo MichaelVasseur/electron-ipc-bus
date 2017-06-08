@@ -41,12 +41,12 @@ export class IpcBusTransportNode extends IpcBusTransport {
             p = this._promiseConnected = new Promise<string>((resolve, reject) => {
                 super.ipcConnect(timeoutDelay, peerName)
                     .then((msg) => {
-                        this._baseIpc = new BaseIpc();
                         let timer: NodeJS.Timer = setTimeout(() => {
                             timer = null;
                             this._reset();
                             reject('timeout');
                         }, timeoutDelay);
+                        this._baseIpc = new BaseIpc();
                         this._baseIpc.on('connect', (conn: any) => {
                             clearTimeout(timer);
                             this._busConn = conn;

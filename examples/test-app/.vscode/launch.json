@@ -11,7 +11,7 @@
             "args": [],
             "cwd": "${workspaceRoot}",
 //            "runtimeExecutable": "${workspaceRoot}\\node_modules\\tr-electron\\dist\\electron.exe",
-            "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\electron\\dist\\electron.exe",
+            "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\tr-electron\\dist\\electron.exe",
             "runtimeArgs": [
                 "--enable-sandbox",
                 "--process-per-site",
