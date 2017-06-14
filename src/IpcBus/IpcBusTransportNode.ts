@@ -39,34 +39,32 @@ export class IpcBusTransportNode extends IpcBusTransport {
         let p = this._promiseConnected;
         if (!p) {
             p = this._promiseConnected = new Promise<string>((resolve, reject) => {
-                super.ipcConnect(timeoutDelay, peerName)
-                    .then((msg) => {
-                        let timer: NodeJS.Timer = setTimeout(() => {
-                            timer = null;
-                            this._reset();
-                            reject('timeout');
-                        }, timeoutDelay);
-                        this._baseIpc = new BaseIpc();
-                        this._baseIpc.on('connect', (conn: any) => {
-                            clearTimeout(timer);
-                            this._busConn = conn;
-                            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
-                            resolve(msg);
-                        });
-                        this._baseIpc.on('data', (data: any) => {
-                            if (BaseIpc.Cmd.isCmd(data)) {
-                                this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
-                            }
-                        });
-                        this._baseIpc.on('close', (conn: any) => {
-                            this._onClose();
-                            reject('server close');
-                        });
-                        this._baseIpc.connect(this.ipcOptions.port, this.ipcOptions.host);
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    });
+                if (peerName == null) {
+                    peerName = `${this._ipcBusPeer.process.type}_${this._ipcBusPeer.process.pid}`;
+                }
+                this._ipcBusPeer.name = peerName;
+                let timer: NodeJS.Timer = setTimeout(() => {
+                    timer = null;
+                    this._reset();
+                    reject('timeout');
+                }, timeoutDelay);
+                this._baseIpc = new BaseIpc();
+                this._baseIpc.on('connect', (conn: any) => {
+                    clearTimeout(timer);
+                    this._busConn = conn;
+                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+                    resolve('connected');
+                });
+                this._baseIpc.on('data', (data: any) => {
+                    if (BaseIpc.Cmd.isCmd(data)) {
+                        this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
+                    }
+                });
+                this._baseIpc.on('close', (conn: any) => {
+                    this._onClose();
+                    reject('server close');
+                });
+                this._baseIpc.connect(this.ipcOptions.port, this.ipcOptions.host);
             });
         }
         return p;

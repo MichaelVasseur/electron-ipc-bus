@@ -127,18 +127,9 @@ export abstract class IpcBusTransport {
         return p;
     }
 
-    ipcConnect(timeoutDelay: number, peerName?: string): Promise<string> {
-        let p = new Promise<string>((resolve, reject) => {
-            if (peerName == null) {
-                peerName = `${this._ipcBusPeer.process.type}_${this._ipcBusPeer.process.pid}`;
-            }
-            this._ipcBusPeer.name = peerName;
-            resolve('connected');
-        });
-        return p;
-    }
-
     protected abstract _onClose(): void;
+
+    abstract ipcConnect(timeoutDelay: number, peerName?: string): Promise<string>;
     abstract ipcClose(): void;
     abstract ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void;
 }

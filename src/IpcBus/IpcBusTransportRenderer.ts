@@ -29,14 +29,14 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         this._reset();
     }
 
-    private _onConnect(eventOrPid: any, pidOrUndefined: any): void {
+    private _onConnect(eventOrPeer: any, peerOrUndefined: IpcBusInterfaces.IpcBusPeer): void {
         // In sandbox mode, 1st parameter is no more the event, but the 2nd argument !!!
-        if (pidOrUndefined) {
-            this._ipcBusPeer.process.pid = pidOrUndefined;
+        if (peerOrUndefined) {
+            this._ipcBusPeer = peerOrUndefined;
             IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._ipcBusPeer.name}`);
             this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         } else {
-            this._ipcBusPeer.process.pid = eventOrPid;
+            this._ipcBusPeer = eventOrPeer;
             IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._ipcBusPeer.name}`);
             this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
@@ -50,25 +50,19 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         if (!p) {
             p = this._promiseConnected = new Promise<string>((resolve, reject) => {
                 this._ipcRenderer = require('electron').ipcRenderer;
-                super.ipcConnect(timeoutDelay, peerName)
-                    .then((msg) => {
-                        // Do not type timer as it may differ between node and browser api, let compiler and browserify deal with.
-                        let timer = setTimeout(() => {
-                            timer = null;
-                            this._reset();
-                            reject('timeout');
-                        }, timeoutDelay);
-                        // We wait for the bridge confirmation
-                        this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPid: any, pidOrUndefined: any) => {
-                            clearTimeout(timer);
-                            this._onConnect(eventOrPid, pidOrUndefined);
-                            resolve('connected');
-                        });
-                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    });
+                // Do not type timer as it may differ between node and browser api, let compiler and browserify deal with.
+                let timer = setTimeout(() => {
+                    timer = null;
+                    this._reset();
+                    reject('timeout');
+                }, timeoutDelay);
+                // We wait for the bridge confirmation
+                this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPeer: any, peerOrUndefined: IpcBusInterfaces.IpcBusPeer) => {
+                    clearTimeout(timer);
+                    this._onConnect(eventOrPeer, peerOrUndefined);
+                    resolve('connected');
+                });
+                this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '', [peerName]);
             });
         }
         return p;

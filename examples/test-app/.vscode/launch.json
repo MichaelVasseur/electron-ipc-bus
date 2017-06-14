@@ -1,7 +1,6 @@
 {
-"version": "0.2.0",
+    "version": "0.2.0",
     "configurations": [
-
         {
             "name": "Launch Sandbox Test tr-apps",
             "type": "node",
@@ -10,8 +9,8 @@
             "stopOnEntry": false,
             "args": [],
             "cwd": "${workspaceRoot}",
-//            "runtimeExecutable": "${workspaceRoot}\\node_modules\\tr-electron\\dist\\electron.exe",
-            "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\tr-electron\\dist\\electron.exe",
+            "runtimeExecutable": "${workspaceRoot}\\node_modules\\electron\\dist\\electron.exe",
+            // "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\tr-electron\\dist\\electron.exe",
             "runtimeArgs": [
                 "--enable-sandbox",
                 "--process-per-site",
@@ -30,8 +29,7 @@
             "stopOnEntry": false,
             "args": [],
             "cwd": "${workspaceRoot}",
-//            "runtimeExecutable": "${workspaceRoot}\\node_modules\\tr-electron\\dist\\electron.exe",
-            "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\.bin\\electron",
+            "runtimeExecutable": "${workspaceRoot}\\node_modules\\electron\\dist\\electron.exe",
             "runtimeArgs": [
                 "--process-per-site",
                 "--remote-debugging-port=8315"
