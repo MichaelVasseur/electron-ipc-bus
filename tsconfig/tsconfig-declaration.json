@@ -7,6 +7,6 @@
     },
 	"files": [
 		"../src/electron-ipc-bus.ts",
-		"../src/electron-ipc-bus-renderer.ts"
+		"../src/electron-ipc-bus-browserify.ts"
 	]
 }

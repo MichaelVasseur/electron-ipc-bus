@@ -1,6 +1,6 @@
 {
   "name": "electron-ipc-bus",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
   ],
   "main": "./lib/electron-ipc-bus.js",
   "types": "./lib/electron-ipc-bus.d.ts",
+  "browserify" : "./lib/electron-ipc-bus-browserify.js",
   "dependencies": {
     "@types/electron": "1.4.31",
     "@types/node": "^0.0.3",
@@ -48,7 +49,7 @@
     "build-declaration-ts": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
     "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/electron-ipc-bus.d.ts",
-    "build-declaration-dts-bundle-renderer": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus-renderer --main ./lib/electron-ipc-bus-renderer.d.ts",
+    "build-declaration-dts-bundle-renderer": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus-browserify --main ./lib/electron-ipc-bus-browserify.d.ts",
     "clean-declaration-dts": "del-cli ./lib/IpcBus/*.d.ts",
     "tsc": "tsc",
     "tslint": "tslint"
