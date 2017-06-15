@@ -25,7 +25,7 @@
   ],
   "main": "./lib/electron-ipc-bus.js",
   "types": "./lib/electron-ipc-bus.d.ts",
-  "browserify" : "./lib/electron-ipc-bus-browserify.js",
+  "browser" : "./lib/electron-ipc-bus-browser.js",
   "dependencies": {
     "@types/electron": "1.4.31",
     "@types/node": "^0.0.3",
@@ -49,7 +49,7 @@
     "build-declaration-ts": "tsc -p ./tsconfig/tsconfig-declaration.json",
     "build-declaration-dts-generator": "dts-generator --name electron-ipc-bus --project . --out ./lib/index.d.ts",
     "build-declaration-dts-bundle": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus --main ./lib/electron-ipc-bus.d.ts",
-    "build-declaration-dts-bundle-renderer": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus-browserify --main ./lib/electron-ipc-bus-browserify.d.ts",
+    "build-declaration-dts-bundle-renderer": "dts-bundle --outputAsModuleFolder --name electron-ipc-bus-browser --main ./lib/electron-ipc-bus-browser.d.ts",
     "clean-declaration-dts": "del-cli ./lib/IpcBus/*.d.ts",
     "tsc": "tsc",
     "tslint": "tslint"
