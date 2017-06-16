@@ -27,13 +27,13 @@
   "types": "./lib/electron-ipc-bus.d.ts",
   "browser": "./lib/electron-ipc-bus-browser.js",
   "dependencies": {
-    "easy-ipc": "^0.2.2",
-    "uuid": "^3.0.1"
+    "easy-ipc": "0.2.2",
+    "uuid": "3.0.1"
   },
   "devDependencies": {
     "@types/electron": "1.4.31",
+    "@types/uuid": "3.0.0",
     "@types/node": "^0.0.3",
-    "@types/uuid": "^2.0.29",
     "del": "^2.2.2",
     "del-cli": "^0.2.1",
     "dts-bundle": "^0.6.1",
