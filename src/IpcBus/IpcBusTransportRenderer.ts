@@ -12,8 +12,19 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     private _onIpcEventReceived: Function;
     private _promiseConnected: Promise<string>;
 
+    private _ipcRendererReady: Promise<void>;
+
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
         super(ipcBusProcess, ipcOptions);
+
+// ipcRenderer is not ready until the DOM Content is loaded (https://github.com/electron/electron/issues/7455)
+        this._ipcRendererReady = new Promise<void>((resolve, reject) => {
+            let onWaitingIpcRenderer = () => {
+                document.removeEventListener('DOMContentLoaded', onWaitingIpcRenderer);
+                resolve();
+            };
+            document.addEventListener('DOMContentLoaded', onWaitingIpcRenderer);
+        });
     };
 
     protected _reset() {
@@ -49,20 +60,22 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         let p = this._promiseConnected;
         if (!p) {
             p = this._promiseConnected = new Promise<string>((resolve, reject) => {
-                this._ipcRenderer = require('electron').ipcRenderer;
-                // Do not type timer as it may differ between node and browser api, let compiler and browserify deal with.
-                let timer = setTimeout(() => {
-                    timer = null;
-                    this._reset();
-                    reject('timeout');
-                }, timeoutDelay);
-                // We wait for the bridge confirmation
-                this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPeer: any, peerOrUndefined: IpcBusInterfaces.IpcBusPeer) => {
-                    clearTimeout(timer);
-                    this._onConnect(eventOrPeer, peerOrUndefined);
-                    resolve('connected');
+                this._ipcRendererReady.then(() => {
+                    this._ipcRenderer = require('electron').ipcRenderer;
+                    // Do not type timer as it may differ between node and browser api, let compiler and browserify deal with.
+                    let timer = setTimeout(() => {
+                        timer = null;
+                        this._reset();
+                        reject('timeout');
+                    }, timeoutDelay);
+                    // We wait for the bridge confirmation
+                    this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPeer: any, peerOrUndefined: IpcBusInterfaces.IpcBusPeer) => {
+                        clearTimeout(timer);
+                        this._onConnect(eventOrPeer, peerOrUndefined);
+                        resolve('connected');
+                    });
+                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '', [peerName]);
                 });
-                this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '', [peerName]);
             });
         }
         return p;
