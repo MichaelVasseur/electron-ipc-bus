@@ -28,15 +28,15 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] wait for readiness`);
                 let onWaitingForIpcRendererReadiness = () => {
                     if (document.readyState !== 'loading') {
-                        document.removeEventListener('onreadystatechange', onWaitingForIpcRendererReadiness);
+                        document.removeEventListener('readystatechange', onWaitingForIpcRendererReadiness);
                         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] is ready`);
                         resolve();
                     }
                 };
-                document.addEventListener('onreadystatechange', onWaitingForIpcRendererReadiness);
+                document.addEventListener('readystatechange', onWaitingForIpcRendererReadiness);
             }
         });
-    };
+    }
 
     protected _reset() {
         this._promiseConnected = null;
