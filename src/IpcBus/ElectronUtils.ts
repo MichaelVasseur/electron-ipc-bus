@@ -1,4 +1,4 @@
-/// <reference types='electron' />
+/// <reference path='../typings/electron.d.ts' />
 // Take care to not reference Node but Electron only
 
 export function GuessElectronProcessType(): string {

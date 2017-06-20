@@ -1,4 +1,4 @@
-/// <reference path='typings/easy-ipc.d.ts'/>
+/// <reference path='../typings/easy-ipc.d.ts'/>
 
 import * as IpcBusUtils from './IpcBusUtils';
 import * as BaseIpc from 'easy-ipc';

@@ -22,11 +22,11 @@ import {IpcBusClient} from './IpcBus/IpcBusInterfaces';
 import {IpcBusService} from './IpcBus/IpcBusInterfaces';
 import {IpcBusServiceProxy} from './IpcBus/IpcBusInterfaces';
 
-import {_CreateIpcBusClientRenderer} from './IpcBus/IpcBusApi-renderer';
-import {_CreateIpcBusService} from './IpcBus/IpcBusApi-renderer';
-import {_CreateIpcBusServiceProxy} from './IpcBus/IpcBusApi-renderer';
-import {_ActivateIpcBusTrace} from './IpcBus/IpcBusApi-renderer';
-import {_ActivateServiceTrace} from './IpcBus/IpcBusApi-renderer';
+import {_CreateIpcBusClientRenderer} from './IpcBus/IpcBusApiRenderer';
+import {_CreateIpcBusService} from './IpcBus/IpcBusApiRenderer';
+import {_CreateIpcBusServiceProxy} from './IpcBus/IpcBusApiRenderer';
+import {_ActivateIpcBusTrace} from './IpcBus/IpcBusApiRenderer';
+import {_ActivateServiceTrace} from './IpcBus/IpcBusApiRenderer';
 
 export function CreateIpcBusClient(busPath?: string): IpcBusClient {
     return _CreateIpcBusClientRenderer(busPath);
