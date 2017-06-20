@@ -19,11 +19,22 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
 
 // ipcRenderer is not ready until the DOM Content is loaded (https://github.com/electron/electron/issues/7455)
         this._ipcRendererReady = new Promise<void>((resolve, reject) => {
-            let onWaitingForIpcRendererReadiness = () => {
-                document.removeEventListener('DOMContentLoaded', onWaitingForIpcRendererReadiness);
+            IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] document readystate=${document.readyState}`);
+            if (document.readyState !== 'loading') {
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] is ready`);
                 resolve();
-            };
-            document.addEventListener('DOMContentLoaded', onWaitingForIpcRendererReadiness);
+            }
+            else {
+                IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] wait for readiness`);
+                let onWaitingForIpcRendererReadiness = () => {
+                    if (document.readyState !== 'loading') {
+                        document.removeEventListener('onreadystatechange', onWaitingForIpcRendererReadiness);
+                        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] is ready`);
+                        resolve();
+                    }
+                };
+                document.addEventListener('onreadystatechange', onWaitingForIpcRendererReadiness);
+            }
         });
     };
 
