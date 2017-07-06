@@ -17,7 +17,7 @@ import { IpcBusTransportRenderer } from './IpcBusTransportRenderer';
 /** @internal */
 export function _CreateIpcBusClientRenderer(busPath?: string): IpcBusClient {
     let ipcOptions = IpcBusUtils.ExtractIpcOptions(busPath);
-    let ipcBusTransport: IpcBusTransport = new IpcBusTransportRenderer({ type: 'renderer', pid: -1 }, ipcOptions);
+    let ipcBusTransport: IpcBusTransport = new IpcBusTransportRenderer({ type: 'renderer', pid: -1, rid: -1 }, ipcOptions);
 
     let ipcBusClient: IpcBusClient = null;
     if (ipcBusTransport != null) {

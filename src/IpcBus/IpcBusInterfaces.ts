@@ -25,6 +25,7 @@ export interface IpcBusRequestResponse {
 export interface IpcBusProcess {
     type: 'browser' | 'renderer' | 'node';
     pid: number;
+    rid: number;
 }
 
 export interface IpcBusPeer {

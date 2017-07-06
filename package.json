@@ -6,7 +6,16 @@
     "type": "git",
     "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"
   },
-  "keywords": ["electron", "ipc", "renderer", "sandbox", "node", "communication", "process", "rpc"],
+  "keywords": [
+    "electron",
+    "ipc",
+    "renderer",
+    "sandbox",
+    "node",
+    "communication",
+    "process",
+    "rpc"
+  ],
   "author": "Michael Vasseur",
   "license": "MIT",
   "bugs": {

@@ -133,6 +133,9 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 if (peerName == null) {
                     peerName = `${ipcBusEvent.sender.process.type}_${webContents.id}`;
                 }
+                ipcBusEvent.sender.process.rid = webContents.id;
+                // Electron 1.7.1
+                // ipcBusEvent.sender.process.pid = webContents.getOSProcessId();
                 ipcBusEvent.sender.process.pid = webContents.id;
                 ipcBusEvent.sender.name = peerName;
                 this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
