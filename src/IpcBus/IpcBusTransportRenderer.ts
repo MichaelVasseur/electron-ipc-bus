@@ -81,9 +81,14 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                     }, timeoutDelay);
                     // We wait for the bridge confirmation
                     this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPeer: any, peerOrUndefined: IpcBusInterfaces.IpcBusPeer) => {
-                        clearTimeout(timer);
-                        this._onConnect(eventOrPeer, peerOrUndefined);
-                        resolve('connected');
+                        if (timer) {
+                            clearTimeout(timer);
+                            this._onConnect(eventOrPeer, peerOrUndefined);
+                            resolve('connected');
+                        }
+                        else {
+                            this._reset();
+                        }
                     });
                     this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '', [peerName]);
                 });

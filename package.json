@@ -1,12 +1,12 @@
 {
   "name": "electron-ipc-bus",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "description": "A safe IPC bus for applications built on Electron.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MichaelVasseur/electron-ipc-bus.git"
   },
-  "keywords": [],
+  "keywords": ["electron", "ipc", "renderer", "sandbox", "node", "communication", "process", "rpc"],
   "author": "Michael Vasseur",
   "license": "MIT",
   "bugs": {

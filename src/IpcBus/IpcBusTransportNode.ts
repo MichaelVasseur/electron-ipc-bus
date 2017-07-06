@@ -50,10 +50,15 @@ export class IpcBusTransportNode extends IpcBusTransport {
                 }, timeoutDelay);
                 this._baseIpc = new BaseIpc();
                 this._baseIpc.on('connect', (conn: any) => {
-                    clearTimeout(timer);
                     this._busConn = conn;
-                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
-                    resolve('connected');
+                    if (timer) {
+                        clearTimeout(timer);
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+                        resolve('connected');
+                    }
+                    else {
+                        this._reset();
+                    }
                 });
                 this._baseIpc.on('data', (data: any) => {
                     if (BaseIpc.Cmd.isCmd(data)) {

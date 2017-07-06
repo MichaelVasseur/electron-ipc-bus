@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "start-sandboxed": "electron . --enable-sandbox",
-    "build" : "npm run build-ipc && npm run build-bundle-preload",
+    "build": "npm run build-ipc && npm run build-bundle-preload",
     "build-ipc": "npm uninstall electron-ipc-bus && npm install electron-ipc-bus",
     "link": "npm run link-electron-ipc",
     "link-electron-ipc": "npm link ../../",
@@ -18,10 +18,10 @@
     "browserify": "13.1.1"
   },
   "dependencies": {
-    "electron-ipc-bus" : "file:../../",
     "bootstrap": "^3.3.7",
+    "electron": "1.6.7",
+    "electron-ipc-bus": "^0.17.4",
     "node-import": "^0.9.2",
-    "uuid": "2.0.3",
-    "electron": "1.6.7"
+    "uuid": "2.0.3"
   }
 }

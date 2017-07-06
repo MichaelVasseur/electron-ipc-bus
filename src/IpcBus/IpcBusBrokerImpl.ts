@@ -66,23 +66,28 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                 }, timeoutDelay);
                 this._baseIpc = new BaseIpc();
                 this._baseIpc.once('listening', (server: any) => {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
-                    clearTimeout(timer);
                     this._ipcServer = server;
-                    this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
-                    this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
-                    this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
+                    if (timer) {
+                        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Listening for incoming connections on ${this._ipcOptions}`);
+                        clearTimeout(timer);
+                        this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
+                        this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
+                        this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
 
-                    this._ipcBusBrokerClient.connect(`Broker_${process.pid}`)
-                        .then(() => {
-                            this._ipcBusBrokerClient.on(IpcBusInterfaces.IPCBUS_CHANNEL_QUERY_STATE, this._queryStateLamdba);
-                            this._ipcBusBrokerClient.on(IpcBusInterfaces.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceAvailableLambda);
-                            resolve('started');
-                        })
-                        .catch((err) => {
-                            this._reset();
-                            reject(`Broker client error = ${err}`);
-                        });
+                        this._ipcBusBrokerClient.connect(`Broker_${process.pid}`)
+                            .then(() => {
+                                this._ipcBusBrokerClient.on(IpcBusInterfaces.IPCBUS_CHANNEL_QUERY_STATE, this._queryStateLamdba);
+                                this._ipcBusBrokerClient.on(IpcBusInterfaces.IPCBUS_CHANNEL_SERVICE_AVAILABLE, this._serviceAvailableLambda);
+                                resolve('started');
+                            })
+                            .catch((err) => {
+                                this._reset();
+                                reject(`Broker client error = ${err}`);
+                            });
+                    }
+                    else {
+                        this._reset();
+                    }
                 });
 
                 this._baseIpc.listen(this._ipcOptions.port, this._ipcOptions.host);
