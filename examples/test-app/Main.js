@@ -452,11 +452,10 @@ function startApp() {
     const timeServiceProxy = ipcBusModule.CreateIpcBusServiceProxy(ipcBusClient, 'time', 20000);
     
     // Check service's availability and make a remote call when it is available
-    timeServiceProxy
-        .once('service-event-start', () => {
+    timeServiceProxy.queryWrapper(20000)
+     .then((wrapper) => {
 //    timeServiceProxy.connect().then(() => {
         console.log('<MAIN Service> Service is STARTED !');
-        const wrapper = timeServiceProxy.getWrapper();
         wrapper.getCurrent('After')
             .then((currentTime) => console.log(`<Remote Service> Current time = ${currentTime}`))
             .catch((err) => console.error(`<Remote Service> Time service returned error : ${err}`));
