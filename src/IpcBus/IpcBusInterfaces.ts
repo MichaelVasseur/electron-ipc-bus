@@ -111,4 +111,5 @@ export interface IpcBusServiceProxy extends events.EventEmitter {
     getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
     getWrapper<T>(): T;
+    queryWrapper<T>(timeoutDelay?: number): Promise<T>;
 }

@@ -5,39 +5,46 @@
             "name": "Launch Sandbox Test tr-apps",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}\\Main.js",
+            "protocol": "legacy",
+            "program": "${workspaceRoot}/Main.js",
             "stopOnEntry": false,
             "args": [],
             "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "${workspaceRoot}\\node_modules\\electron\\dist\\electron.exe",
-            // "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\tr-electron\\dist\\electron.exe",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/electron/dist/electron.exe",
             "runtimeArgs": [
                 "--enable-sandbox",
                 "--process-per-site",
                 "--remote-debugging-port=8315"
             ],
             "env": {},
-            "externalConsole": false,
+            "console": "internalConsole",
             "sourceMaps": false,
-            "outDir": null
+            "outFiles": [
+                "${workspaceRoot}/**/*.js",
+                "!${workspaceRoot}/**/node_modules/**/*.js"
+            ]
         },
         {
             "name": "Launch Standard Test tr-apps",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}\\Main.js",
+            "protocol": "legacy",
+            "program": "${workspaceRoot}/Main.js",
             "stopOnEntry": false,
             "args": [],
             "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "${workspaceRoot}\\node_modules\\electron\\dist\\electron.exe",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/electron/dist/electron.exe",
             "runtimeArgs": [
                 "--process-per-site",
                 "--remote-debugging-port=8315"
             ],
             "env": {},
-            "externalConsole": false,
+            "console": "internalConsole",
             "sourceMaps": false,
-            "outDir": null
+            "outFiles": [
+                "${workspaceRoot}/**/*.js",
+                "!${workspaceRoot}/**/node_modules/**/*.js"
+            ]
         },
         {
             "name": "Attach",

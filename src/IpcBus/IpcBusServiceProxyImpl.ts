@@ -95,6 +95,27 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         return <T>typed_wrapper;
     }
 
+    queryWrapper<T>(timeoutDelay?: number): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            if (this._isStarted) {
+                return resolve(this.getWrapper<T>());
+            }
+            if (timeoutDelay == null) {
+               timeoutDelay = IpcBusUtils.IPC_BUS_TIMEOUT;
+            }
+            let timer: NodeJS.Timer = setTimeout(() => {
+                this.removeListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStart);
+                reject('timeout');
+            }, timeoutDelay);
+            let serviceStart = () => {
+                clearTimeout(timer);
+                this.removeListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStart);
+                resolve(this.getWrapper<T>());
+            };
+            this.on(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStart);
+        });
+    }
+
     private _updateWrapper(serviceStatus: IpcBusInterfaces.ServiceStatus): void {
         serviceStatus.callHandlers.forEach((handlerName: string) => {
             const proc = (...args: any[]) => {
