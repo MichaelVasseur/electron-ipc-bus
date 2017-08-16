@@ -43,15 +43,18 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     peerName = `${this._ipcBusPeer.process.type}_${this._ipcBusPeer.process.pid}`;
                 }
                 this._ipcBusPeer.name = peerName;
-                let timer: NodeJS.Timer = setTimeout(() => {
-                    timer = null;
-                    this._reset();
-                    reject('timeout');
-                }, timeoutDelay);
+                let timer: NodeJS.Timer;
+                // Below zero = infinite
+                if (timeoutDelay >= 0) {
+                    timer = setTimeout(() => {
+                        this._reset();
+                        reject('timeout');
+                    }, timeoutDelay);
+                }
                 this._baseIpc = new BaseIpc();
                 this._baseIpc.on('connect', (conn: any) => {
                     this._busConn = conn;
-                    if (timer) {
+                    if (this._baseIpc) {
                         clearTimeout(timer);
                         this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
                         resolve('connected');

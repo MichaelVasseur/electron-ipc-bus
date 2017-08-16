@@ -103,10 +103,14 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
             if (timeoutDelay == null) {
                timeoutDelay = IpcBusUtils.IPC_BUS_TIMEOUT;
             }
-            let timer: NodeJS.Timer = setTimeout(() => {
-                this.removeListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStart);
-                reject('timeout');
-            }, timeoutDelay);
+            let timer: NodeJS.Timer;
+            // Below zero = infinite
+            if (timeoutDelay >= 0) {
+                timer = setTimeout(() => {
+                    this.removeListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStart);
+                    reject('timeout');
+                }, timeoutDelay);
+            }
             let serviceStart = () => {
                 clearTimeout(timer);
                 this.removeListener(IpcBusInterfaces.IPCBUS_SERVICE_EVENT_START, serviceStart);

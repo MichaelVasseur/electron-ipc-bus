@@ -74,14 +74,18 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                 this._ipcRendererReady.then(() => {
                     this._ipcRenderer = require('electron').ipcRenderer;
                     // Do not type timer as it may differ between node and browser api, let compiler and browserify deal with.
-                    let timer = setTimeout(() => {
-                        timer = null;
-                        this._reset();
-                        reject('timeout');
-                    }, timeoutDelay);
+                    let timer: NodeJS.Timer;
+                    // Below zero = infinite
+                    if (timeoutDelay >= 0) {
+                        timer = setTimeout(() => {
+                            timer = null;
+                            this._reset();
+                            reject('timeout');
+                        }, timeoutDelay);
+                    }
                     // We wait for the bridge confirmation
                     this._ipcRenderer.once(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, (eventOrPeer: any, peerOrUndefined: IpcBusInterfaces.IpcBusPeer) => {
-                        if (timer) {
+                        if (this._ipcRenderer) {
                             clearTimeout(timer);
                             this._onConnect(eventOrPeer, peerOrUndefined);
                             resolve('connected');

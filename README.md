@@ -388,6 +388,7 @@ ipcBus.connect(2000, 'client2').then((eventName) => console.log("Connected to Ip
 
 For a bus in a renderer, it fails if the Bridge is not started else it fails if the Broker is not started.
 Most of the functions below will fail if the connection is not established (you have to wait for the connect promise).
+A timeoutdelay below zero leads to an infinite waiting.
 
 ### close()
 ```js
@@ -600,6 +601,7 @@ interface IpcBusServiceProxy extends events.EventEmitter {
     getStatus(): Promise<ServiceStatus>;
     call<T>(handlerName: string, ...args: any[]): Promise<T>;
     getWrapper<T>(): T;
+    connect<T>(timeoutDelay?: number): Promise<T>
 ```
 
 ## IpcBusServiceEvent

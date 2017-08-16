@@ -114,15 +114,18 @@ export abstract class IpcBusTransport {
             this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, channel, args);
 
             // Clean-up
-            setTimeout(() => {
-                if (this._requestFunctions.delete(ipcBusData.replyChannel)) {
-                    // Unregister remotely
-                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, channel);
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] reject: timeout`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = { event: { channel: channel, sender: this._ipcBusPeer }, err: 'timeout' };
-                    reject(response);
-                }
-            }, timeoutDelay);
+            // Below zero = infinite
+            if (timeoutDelay >= 0) {
+                setTimeout(() => {
+                    if (this._requestFunctions.delete(ipcBusData.replyChannel)) {
+                        // Unregister remotely
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, ipcBusData, channel);
+                        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] reject: timeout`);
+                        let response: IpcBusInterfaces.IpcBusRequestResponse = { event: { channel: channel, sender: this._ipcBusPeer }, err: 'timeout' };
+                        reject(response);
+                    }
+                }, timeoutDelay);
+            }
         });
         return p;
     }
