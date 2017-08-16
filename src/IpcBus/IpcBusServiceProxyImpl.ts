@@ -95,7 +95,7 @@ export class IpcBusServiceProxyImpl extends EventEmitter implements IpcBusInterf
         return <T>typed_wrapper;
     }
 
-    requestWrapper<T>(timeoutDelay?: number): Promise<T> {
+    connect<T>(timeoutDelay?: number): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             if (this._isStarted) {
                 return resolve(this.getWrapper<T>());
