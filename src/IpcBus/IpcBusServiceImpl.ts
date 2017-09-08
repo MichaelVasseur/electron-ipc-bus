@@ -1,5 +1,6 @@
 /// <reference types='node' />
 
+import {EventEmitter} from 'events';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 
@@ -9,24 +10,22 @@ export class IpcBusServiceImpl implements IpcBusInterfaces.IpcBusService {
     private _callHandlers: Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>;
     private _callReceivedLamdba: IpcBusInterfaces.IpcBusListener = (event: IpcBusInterfaces.IpcBusEvent, ...args: any[]) => this._onCallReceived(event, <IpcBusInterfaces.IpcBusServiceCall>args[0]);
     private _prevImplEmit: Function = null;
-    private static _hiddenMethods = new Set([
-                                        'constructor',
-                                        'setMaxListeners',
-                                        'getMaxListeners',
-                                        'emit',
-                                        'addListener',
-                                        'on',
-                                        'off',
-                                        'prependListener',
-                                        'once',
-                                        'prependOnceListener',
-                                        'removeListener',
-                                        'removeAllListeners',
-                                        'listeners',
-                                        'listenerCount',
-                                        'eventNames']);
+
+    private static _hiddenMethods: Set<string> = null;
 
     constructor(private _ipcBusClient: IpcBusInterfaces.IpcBusClient, private _serviceName: string, private _exposedInstance: any = undefined) {
+        if (IpcBusServiceImpl._hiddenMethods == null) {
+            IpcBusServiceImpl._hiddenMethods = new Set<string>();
+            for (let prop of Object.keys(EventEmitter.prototype)) {
+                // Do not care of private methods, supposed to be pre-fixed by one or several underscores
+                if (prop[0] !== '_') {
+                    IpcBusServiceImpl._hiddenMethods.add(prop);
+                }
+            }
+            IpcBusServiceImpl._hiddenMethods.add('constructor');
+            IpcBusServiceImpl._hiddenMethods.add('off');
+        }
+
         this._callHandlers = new Map<string, IpcBusInterfaces.IpcBusServiceCallHandler>();
 
         //  Register internal call handlers

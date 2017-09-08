@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "start-sandboxed": "electron . --enable-sandbox",
-    "build": "npm run build-ipc && npm run build-bundle-preload",
+    "build": "npm run link-electron-ipc && npm run build-bundle-preload",
     "build-ipc": "npm uninstall electron-ipc-bus && npm install electron-ipc-bus",
     "link": "npm run link-electron-ipc",
     "link-electron-ipc": "npm link ../../",
