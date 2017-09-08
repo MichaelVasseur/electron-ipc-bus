@@ -129,21 +129,24 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
         switch (command) {
             case IpcBusUtils.IPC_BUS_COMMAND_CONNECT : {
                 this._onConnect(event, ipcBusData.peerId);
-                ipcBusEvent.sender.process.rid = webContents.id;
+                let peerName = `${ipcBusEvent.sender.process.type}-${webContents.id}`;
                 // Hidden function, may disappear
                 try {
-                // Electron 1.7.1
-                // ipcBusEvent.sender.process.pid = webContents.getOSProcessId();
-                    ipcBusEvent.sender.process.pid = webContents.getProcessId();
+                    ipcBusEvent.sender.process.rid = webContents.getProcessId();
+                    peerName += `-r${ipcBusEvent.sender.process.rid}`;
+                }
+                catch (err) {
+                    ipcBusEvent.sender.process.rid = webContents.id;
+                }
+                // >= Electron 1.7.1
+                try {
+                    ipcBusEvent.sender.process.pid = webContents.getOSProcessId();
+                    peerName += `_${ipcBusEvent.sender.process.pid}`;
                 }
                 catch (err) {
                     ipcBusEvent.sender.process.pid = webContents.id;
                 }
-                let peerName = args[0];
-                if (peerName == null) {
-                    peerName = `${ipcBusEvent.sender.process.type}-${ipcBusEvent.sender.process.rid}_${ipcBusEvent.sender.process.pid}`;
-                }
-                ipcBusEvent.sender.name = peerName;
+                ipcBusEvent.sender.name = args[0] || peerName;
                 this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
                 // We get back to the webContents
                 // - to confirm the connection
