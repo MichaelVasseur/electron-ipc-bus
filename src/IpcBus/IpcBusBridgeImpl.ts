@@ -150,7 +150,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 this._ipcBusPeers.set(ipcBusData.peerId, ipcBusEvent.sender);
                 // We get back to the webContents
                 // - to confirm the connection
-                // - to provide the webContents id
+                // - to provide peerName and id/s
                 webContents.send(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, ipcBusEvent.sender);
                 break;
             }

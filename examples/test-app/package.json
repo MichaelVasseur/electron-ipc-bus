@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "bootstrap": "^3.3.7",
-    "electron": "1.6.7",
+    "electron": "1.7.5",
     "electron-ipc-bus": "^0.17.4",
     "node-import": "^0.9.2",
     "uuid": "2.0.3"

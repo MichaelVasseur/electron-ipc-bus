@@ -20,15 +20,14 @@
             "console": "internalConsole",
             "sourceMaps": false,
             "outFiles": [
-                "${workspaceRoot}/**/*.js",
-                "!${workspaceRoot}/**/node_modules/**/*.js"
+                "${workspaceRoot}/**/*.js"
             ]
         },
         {
             "name": "Launch Standard Test tr-apps",
             "type": "node",
             "request": "launch",
-            "protocol": "legacy",
+            "protocol": "inspector",
             "program": "${workspaceRoot}/Main.js",
             "stopOnEntry": false,
             "args": [],
@@ -42,8 +41,7 @@
             "console": "internalConsole",
             "sourceMaps": false,
             "outFiles": [
-                "${workspaceRoot}/**/*.js",
-                "!${workspaceRoot}/**/node_modules/**/*.js"
+                "${workspaceRoot}/**/*.js"
             ]
         },
         {
