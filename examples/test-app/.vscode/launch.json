@@ -27,6 +27,7 @@
             "name": "Launch Standard Test tr-apps",
             "type": "node",
             "request": "launch",
+            // "protocol": "legacy",
             "protocol": "inspector",
             "program": "${workspaceRoot}/Main.js",
             "stopOnEntry": false,

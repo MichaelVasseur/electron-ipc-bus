@@ -3,13 +3,19 @@
 var processToMaster;
 var transaction = 1;
 function doPerformance(type) {
+    var bufferSize = 1024 * 1024;
+    var memVal = document.querySelector(".memory-value");
+    if (memVal) {
+        bufferSize = memVal.value;
+    }
+        
     var typeCommandElt = document.querySelector('.typeCommand');
     var testParams =
     {
         transaction: transaction,
         typeCommand: typeCommandElt.options[typeCommandElt.selectedIndex].text,
         typeArgs: type,
-        bufferSize: 1024 * 1024
+        bufferSize: bufferSize
     };
     ++transaction;
     processToMaster.send('start-performance-tests', testParams);
@@ -100,6 +106,16 @@ function onIPCBus_TestPerformanceResult(uuid) {
 }
 
 var processToMaster = new ProcessConnector('browser', ipcRenderer);
+
+document.addEventListener('DOMContentLoaded', () => {
+    var memSlide = document.querySelector(".memory-slide");
+    var memVal = document.querySelector(".memory-value");
+    if (memSlide && memVal) {
+        memSlide.addEventListener("change", () => {
+            memVal.value = memSlide.value;
+        });
+    }
+});
 
 ipcBus.connect()
     .then(() => {
