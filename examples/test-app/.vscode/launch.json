@@ -38,20 +38,15 @@
                 "--process-per-site",
                 "--remote-debugging-port=8315"
             ],
-            "env": {},
+            "env": {
+                "NODE_PRESERVE_SYMLINKS": "1",
+                "NODE_ENV": "development"
+            },
             "console": "internalConsole",
             "sourceMaps": false,
             "outFiles": [
                 "${workspaceRoot}/**/*.js"
             ]
-        },
-        {
-            "name": "Attach",
-            "type": "node",
-            "request": "attach",
-            "port": 5858,
-            "sourceMaps": false,
-            "outDir": null
         }
     ]
 }
