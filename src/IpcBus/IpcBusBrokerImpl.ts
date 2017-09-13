@@ -222,16 +222,15 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE: {
-                    const ipcBusData: IpcBusData = data.args[0];
+                    // const ipcBusData: IpcBusData = data.args[0];
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
 
                     // Send data to subscribed connections
-                    // let buffer = {type: 'cmd', name: IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, args: data.args};
-                    // console.log(buffer);
+                    data.name = IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE;
                     this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                       BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
-                    //    connData.conn.write(buffer);
+                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
+                       connData.conn.write(data);
                     });
                     break;
                 }
@@ -244,10 +243,10 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     this._requestChannels.set(ipcBusData.replyChannel, socket);
 
                     // Request data to subscribed connections
-                    // let buffer = {type: 'cmd', name: IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, args: data.args};
+                    data.name = IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE;
                     this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                       BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
-                        // connData.conn.write(buffer);
+                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
+                        connData.conn.write(data);
                     });
                     break;
                 }
@@ -260,7 +259,9 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     if (socket) {
                         this._requestChannels.delete(ipcBusData.replyChannel);
                         // Send data to subscribed connections
-                        BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], socket);
+                        // BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], socket);
+                        data.name = IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE;
+                        socket.write(data);
                     }
                     break;
                 }
