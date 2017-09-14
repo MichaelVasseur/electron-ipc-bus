@@ -229,9 +229,8 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
 
                     // Send data to subscribed connections
-                    data.name = IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE;
                     this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
+                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
                        connData.conn.write(data);
                     });
                     break;
@@ -245,9 +244,8 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     this._requestChannels.set(ipcBusData.replyChannel, socket);
 
                     // Request data to subscribed connections
-                    data.name = IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE;
                     this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
-                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
+                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
                         connData.conn.write(data);
                     });
                     break;
@@ -261,8 +259,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     if (socket) {
                         this._requestChannels.delete(ipcBusData.replyChannel);
                         // Send data to subscribed connections
-                        // BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], socket);
-                        data.name = IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE;
+                        // BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], socket);
                         socket.write(data);
                     }
                     break;

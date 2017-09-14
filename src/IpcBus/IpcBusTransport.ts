@@ -43,12 +43,12 @@ export abstract class IpcBusTransport {
 
     protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
-            case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE: {
+            case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] Emit message received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
                 this.eventEmitter.emit(ipcBusEvent.channel, ipcBusEvent, ...args);
                 break;
             }
-            case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
+            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] Emit request received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name} (replyChannel '${ipcBusData.replyChannel}')`);
                 ipcBusEvent.request = {
                     resolve: (payload: Object | string) => {
@@ -63,7 +63,7 @@ export abstract class IpcBusTransport {
                 this.eventEmitter.emit(ipcBusEvent.channel, ipcBusEvent, ...args);
                 break;
             }
-            case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
+            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] Emit request response received on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name} (replyChannel '${ipcBusData.replyChannel}')`);
                 let localRequestCallback = this._requestFunctions.get(ipcBusData.replyChannel);
                 if (localRequestCallback) {

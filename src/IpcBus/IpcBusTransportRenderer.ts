@@ -102,10 +102,8 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     }
 
     ipcClose(): void {
-        if (this._ipcRenderer) {
-            this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
-            this._reset();
-        }
+        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
+        this._reset();
     }
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
