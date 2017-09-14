@@ -179,6 +179,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     const ipcBusData: IpcBusData = data.args[0];
                     const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
+
                     if (this._ipcBusPeers.delete(ipcBusData.peerId)) {
                         this._subscriptions.releasePeerId(socket.remotePort, ipcBusData.peerId);
                     }
@@ -189,6 +190,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                         // const ipcBusData: IpcBusData = data.args[0];
                         const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
                         IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Close peer #${ipcBusEvent.sender.name}`);
+
                         this._socketCleanUp(socket);
                         break;
                     }
