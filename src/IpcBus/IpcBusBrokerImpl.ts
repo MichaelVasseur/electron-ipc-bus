@@ -1,6 +1,4 @@
-/// <reference path='../typings/easy-ipc.d.ts'/>
-
-import * as BaseIpc from 'easy-ipc';
+import { Ipc as BaseIpc } from './Net/ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 // import * as util from 'util';
@@ -164,7 +162,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     }
 
     private _onData(data: any, socket: any, server: any): void {
-        if (BaseIpc.Cmd.isCmd(data)) {
+        if (data && (data.type === 'cmd')) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_CONNECT:
                     {

@@ -1,7 +1,6 @@
-/// <reference path='../typings/easy-ipc.d.ts'/>
+import { Ipc as BaseIpc } from './Net/ipc';
 
 import * as IpcBusUtils from './IpcBusUtils';
-import * as BaseIpc from 'easy-ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
@@ -64,7 +63,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     }
                 });
                 this._baseIpc.on('data', (data: any) => {
-                    if (BaseIpc.Cmd.isCmd(data)) {
+                    if (data && (data.type === 'cmd')) {
                         this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
                     }
                 });
