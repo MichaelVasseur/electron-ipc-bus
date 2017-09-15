@@ -18,7 +18,7 @@ export class IpcPacket extends EventEmitter {
         return super.on(event, handler);
     }
 
-    private static _setLength(len: number, buffer: Buffer) {
+    private static _setLength(buffer: Buffer, len: number) {
         buffer[0] = separator;
         for (let i = 1; (i < 5) && len; ++i) {
             buffer[i] = len & 0xFF;
@@ -42,7 +42,7 @@ export class IpcPacket extends EventEmitter {
     static fromString(data: string): Buffer {
         let len = data.length + headLength;
         let buffer = new Buffer(len);
-        IpcPacket._setLength(len, buffer);
+        IpcPacket._setLength(buffer, len);
         buffer.write(data, headLength);
         return buffer;
     }
@@ -50,7 +50,7 @@ export class IpcPacket extends EventEmitter {
     static fromBuffer(data: Buffer): Buffer {
         let len = data.length + headLength;
         let buffer = new Buffer(len);
-        IpcPacket._setLength(len, buffer);
+        IpcPacket._setLength(buffer, len);
         data.copy(buffer, headLength, 0);
         return buffer;
     }
