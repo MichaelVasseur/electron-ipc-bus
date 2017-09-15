@@ -1,10 +1,11 @@
 /// <reference path="../../typings/lazy.d.ts" />
 
 import * as net from 'net';
-import * as stream from 'stream';
+// import * as stream from 'stream';
 import * as Lazy from 'lazy';
+import { EventEmitter } from 'events';
 
-export class Ipc extends stream.Stream {
+export class Ipc extends EventEmitter {
   private socketPath: string;
   private port: number;
   private host: string;
@@ -51,23 +52,23 @@ export class Ipc extends stream.Stream {
     let conn: any;
 
     let onError = (err: any): void => {
-      conn.removeListener('connect', onConnect);
-
+      conn.removeAllListeners('connect');
       if (err.code === 'ENOENT' && isNaN(port) && this.port) {
         this.emit('warn', new Error(err.code + ' on ' + port + ', ' + host));
         this.connect(this.port, cb);
         return;
-      } else if (err.code === 'ECONNREFUSED' && this.numReconnects) {
+      }
+      if (err.code === 'ECONNREFUSED' && this.numReconnects) {
         this.emit('warn', new Error(err.code + ' on ' + port + ', ' + host));
         return this._reconnect(port, host);
       }
 
       cb(err);
       this.emit('error', err);
-    }
+    };
 
     let onConnect = (): void => {
-      conn.removeListener('error', onError);
+      conn.removeAllListeners('error');
 
       this._parseStream(conn);
 
@@ -78,26 +79,28 @@ export class Ipc extends stream.Stream {
         if (this.reconnect) {
           this._reconnect(port, host);
         }
-      })
+      });
 
       cb(null, conn);
 
       if (this.numReconnects > 0) {
         this.emit('reconnect', conn);
         this.numReconnects = 0;
-      } else {
+      }
+      else {
         this.emit('connect', conn);
       }
-    }
+    };
 
     if (port && host) {
       conn = net.connect(port, host);
-    } else {
+    }
+    else {
       conn = net.connect(port);
     }
 
-    conn.once('error', onError);
-    conn.once('connect', onConnect);
+    conn.once('error', (err: any) => onError(err));
+    conn.once('connect', () => onConnect());
   }
 
   private _reconnect(port: any, host: any) {
@@ -106,7 +109,8 @@ export class Ipc extends stream.Stream {
       setTimeout(() => {
         this.connect(port, host);
       }, this.delayReconnect);
-    } else {
+    }
+    else {
       this.connect(port, host);
     }
   }
@@ -125,6 +129,8 @@ export class Ipc extends stream.Stream {
     host = host || (!isNaN(port) ? this.host : null);
     cb = cb || function () { };
 
+    let server = net.createServer();
+
     let onError = (err: any): void => {
       if (err.code === 'EACCES' && isNaN(port) && this.port) {
         this.emit('warn', new Error(err.code + ' on ' + port + ', ' + host));
@@ -133,33 +139,32 @@ export class Ipc extends stream.Stream {
       }
       cb(err);
       this.emit('error', err);
-    }
+    };
 
     let onConnection = (conn: any): void => {
       this._parseStream(conn, server);
 
       conn.on('close', (had_error: any) => {
         this.emit('close', had_error, conn, server);
-      })
+      });
 
-      cb(null, conn, server)
+      cb(null, conn, server);
       this.emit('connection', conn, server);
-    }
+    };
 
-    let server = net.createServer();
-
-    server.once('error', onError);
-
-    server.once('listening', () => {
-      server.removeListener('error', onError);
+    let onListening = () => {
+      server.removeAllListeners('error');
       this.emit('listening', server);
-    });
+    };
 
-    server.on('connection', onConnection);
+    server.once('error', (err) => onError(err));
+    server.once('listening', () => onListening());
+    server.on('connection', (conn) => onConnection(conn));
 
     if (port && host) {
       server.listen(port, host);
-    } else {
+    }
+    else {
       server.listen(port);
     }
   }
@@ -182,40 +187,41 @@ export class Ipc extends stream.Stream {
       if (err.code === 'ECONNREFUSED') {
         this.emit('warn', new Error(err.code + ' on ' + port + ', ' + host));
         this.listen(port, host);
-      } else {
-        this.removeListener('listening', onListening);
-        this.removeListener('connection', onConnection);
-        this.removeListener('connect', onConnect);
+      }
+      else {
+        this.removeAllListeners('listening');
+        this.removeAllListeners('connection');
+        this.removeAllListeners('connect');
         cb(err);
         this.emit('error', err);
       }
-    }
+    };
 
     let onListening = (server: any): void => {
-      this.removeListener('error', onError);
-      this.removeListener('connection', onConnection);
-      this.removeListener('connect', onConnect);
+      this.removeAllListeners('error');
+      this.removeAllListeners('connection');
+      this.removeAllListeners('connect');
       cb(null, true, server);
-    }
+    };
 
     let onConnection = (conn: any, server: any): void => {
-      this.removeListener('error', onError);
+      this.removeAllListeners('error');
       this.removeListener('listening', onListening);
       this.removeListener('connect', onConnect);
       cb(null, true, conn, server);
-    }
+    };
 
     let onConnect = (conn: any): void => {
       this.removeListener('error', onError);
-      this.removeListener('listening', onListening);
-      this.removeListener('connection', onConnection);
+      this.removeAllListeners('listening');
+      this.removeAllListeners('connect');
       cb(null, false, conn);
-    }
+    };
 
-    this.once('error', onError);
-    this.once('listening', onListening);
-    this.once('connection', onConnection);
-    this.once('connect', onConnect);
+    this.once('error', (err: any) => onError(err));
+    this.once('listening', (server: any) => onListening(server));
+    this.once('connection', (conn: any, server: any) => onConnection(conn, server));
+    this.once('connect', (conn: any) => onConnect(conn));
 
     this.connect(port, host);
   }
@@ -226,27 +232,29 @@ export class Ipc extends stream.Stream {
 
     // overwrite .write() of the connection
     let old_write = conn.write;
-    conn.write = function () {
+    conn.write = (...args: any[]) => {
       if (conn.writable) {
         if (this.dataType === 'json') {
-          arguments[0] = JSON.stringify(arguments[0]) + '\n';
+          args[0] = JSON.stringify(args[0]) + '\n';
         }
-        return old_write.apply(conn, arguments);
-      } else {
+        return old_write.apply(conn, args);
+      }
+      else {
         this.emit('warn', new Error('Connection is not writable.'));
       }
-    }
+    };
   }
 
   private _onData(conn: any, server: any, data: any) {
     if (this.dataType === 'json') {
-      data = JSON.parse(data)
+      data = JSON.parse(data);
     }
 
     if (server) {
-      this.emit('data', data, conn, server)
-    } else {
-      this.emit('data', data, conn)
+      this.emit('data', data, conn, server);
+    }
+    else {
+      this.emit('data', data, conn);
     }
   }
 }
