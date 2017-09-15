@@ -1,39 +1,37 @@
 /// <reference path="../../typings/lazy.d.ts" />
 
 import * as net from 'net';
-// import * as stream from 'stream';
-import * as Lazy from 'lazy';
 import { EventEmitter } from 'events';
+import { IpcPacket } from './ipcPacket';
 
 export class Ipc extends EventEmitter {
   private socketPath: string;
-  private port: number;
-  private host: string;
+  private defaultPort: number;
+  private defaultHost: string;
 
   private reconnect: boolean;
   private delayReconnect: number;
 
-  private dataType: string;
-
   private numReconnects: number;
+
+  private _ipcPacket: IpcPacket;
+  private _socket: net.Socket;
 
   constructor(options?: any) {
     super();
 
+    this._ipcPacket = new IpcPacket();
+
     options = options || {};
 
     this.socketPath = options.socketPath != null ? options.socketPath : false;
-    this.port = options.port != null ? options.port : 7100;
-    this.host = options.host != null ? options.host : 'localhost';
-
-    this.reconnect = options.reconnect != null ? options.reconnect : true;
-    this.delayReconnect = options.delayReconnect != null ? options.delayReconnect : 3000;
-
-    this.dataType = options.dataType != null ? options.dataType : 'json';
+    this.defaultPort = options.port != null ? options.port : 7100;
+    this.defaultHost = options.host != null ? options.host : 'localhost';
 
     this.numReconnects = 0;
+    this.reconnect = options.reconnect != null ? options.reconnect : true;
+    this.delayReconnect = options.delayReconnect != null ? options.delayReconnect : 3000;
   }
-
 
   connect(port: any, host?: any, cb?: any) {
     if (port instanceof Function) {
@@ -45,17 +43,15 @@ export class Ipc extends EventEmitter {
       host = null;
     }
 
-    port = port || this.socketPath || this.port;
-    host = host || (!isNaN(port) ? this.host : null);
+    port = port || this.socketPath || this.defaultPort;
+    host = host || (!isNaN(port) ? this.defaultHost : null);
     cb = cb || function () { };
 
-    let conn: any;
-
     let onError = (err: any): void => {
-      conn.removeAllListeners('connect');
-      if (err.code === 'ENOENT' && isNaN(port) && this.port) {
+      this._socket.removeAllListeners('connect');
+      if (err.code === 'ENOENT' && isNaN(port) && this.defaultPort) {
         this.emit('warn', new Error(err.code + ' on ' + port + ', ' + host));
-        this.connect(this.port, cb);
+        this.connect(this.defaultPort, cb);
         return;
       }
       if (err.code === 'ECONNREFUSED' && this.numReconnects) {
@@ -68,12 +64,12 @@ export class Ipc extends EventEmitter {
     };
 
     let onConnect = (): void => {
-      conn.removeAllListeners('error');
+      this._socket.removeAllListeners('error');
 
-      this._parseStream(conn);
+      this._parseStream(this._socket);
 
-      conn.on('close', (had_error: any) => {
-        this.emit('close', had_error, conn);
+      this._socket.on('close', (had_error: any) => {
+        this.emit('close', had_error, this._socket);
 
         // reconnect
         if (this.reconnect) {
@@ -81,26 +77,26 @@ export class Ipc extends EventEmitter {
         }
       });
 
-      cb(null, conn);
+      cb(null, this._socket);
 
       if (this.numReconnects > 0) {
-        this.emit('reconnect', conn);
+        this.emit('reconnect', this._socket);
         this.numReconnects = 0;
       }
       else {
-        this.emit('connect', conn);
+        this.emit('connect', this._socket);
       }
     };
 
     if (port && host) {
-      conn = net.connect(port, host);
+      this._socket = net.connect(port, host);
     }
     else {
-      conn = net.connect(port);
+      this._socket = net.connect(port);
     }
 
-    conn.once('error', (err: any) => onError(err));
-    conn.once('connect', () => onConnect());
+    this._socket.once('error', (err: any) => onError(err));
+    this._socket.once('connect', () => onConnect());
   }
 
   private _reconnect(port: any, host: any) {
@@ -125,23 +121,24 @@ export class Ipc extends EventEmitter {
       host = null;
     }
 
-    port = port || this.socketPath || this.port;
-    host = host || (!isNaN(port) ? this.host : null);
+    port = port || this.socketPath || this.defaultPort;
+    host = host || (!isNaN(port) ? this.defaultHost : null);
     cb = cb || function () { };
 
     let server = net.createServer();
 
     let onError = (err: any): void => {
-      if (err.code === 'EACCES' && isNaN(port) && this.port) {
+      if (err.code === 'EACCES' && isNaN(port) && this.defaultPort) {
         this.emit('warn', new Error(err.code + ' on ' + port + ', ' + host));
-        this.listen(this.port, cb);
+        this.listen(this.defaultPort, cb);
         return;
       }
       cb(err);
       this.emit('error', err);
     };
 
-    let onConnection = (conn: any): void => {
+    let onConnection = (conn: net.Socket): void => {
+      this._socket = conn;
       this._parseStream(conn, server);
 
       conn.on('close', (had_error: any) => {
@@ -179,8 +176,8 @@ export class Ipc extends EventEmitter {
       host = null;
     }
 
-    port = port || this.socketPath || this.port;
-    host = host || (!isNaN(port) ? this.host : null);
+    port = port || this.socketPath || this.defaultPort;
+    host = host || (!isNaN(port) ? this.defaultHost : null);
     cb = cb || function () { };
 
     let onError = (err: any): void => {
@@ -197,21 +194,21 @@ export class Ipc extends EventEmitter {
       }
     };
 
-    let onListening = (server: any): void => {
+    let onListening = (server: net.Server): void => {
       this.removeAllListeners('error');
       this.removeAllListeners('connection');
       this.removeAllListeners('connect');
       cb(null, true, server);
     };
 
-    let onConnection = (conn: any, server: any): void => {
+    let onConnection = (conn: net.Socket, server: net.Server): void => {
       this.removeAllListeners('error');
       this.removeListener('listening', onListening);
       this.removeListener('connect', onConnect);
       cb(null, true, conn, server);
     };
 
-    let onConnect = (conn: any): void => {
+    let onConnect = (conn: net.Socket): void => {
       this.removeListener('error', onError);
       this.removeAllListeners('listening');
       this.removeAllListeners('connect');
@@ -219,42 +216,22 @@ export class Ipc extends EventEmitter {
     };
 
     this.once('error', (err: any) => onError(err));
-    this.once('listening', (server: any) => onListening(server));
-    this.once('connection', (conn: any, server: any) => onConnection(conn, server));
-    this.once('connect', (conn: any) => onConnect(conn));
+    this.once('listening', (server: net.Server) => onListening(server));
+    this.once('connection', (conn: net.Socket, server: net.Server) => onConnection(conn, server));
+    this.once('connect', (conn: net.Socket) => onConnect(conn));
 
     this.connect(port, host);
   }
 
-  private _parseStream(conn: any, server?: any) {
-    // each line of the stream is one unit of data
-    Lazy(conn, null).lines.map(String).forEach(this._onData.bind(this, conn, server));
-
-    // overwrite .write() of the connection
-    let old_write = conn.write;
-    conn.write = (...args: any[]) => {
-      if (conn.writable) {
-        if (this.dataType === 'json') {
-          args[0] = JSON.stringify(args[0]) + '\n';
-        }
-        return old_write.apply(conn, args);
+  private _parseStream(conn: net.Socket, server?: net.Server) {
+    this._ipcPacket.on('packet', (buffer: Buffer) => {
+      if (server) {
+        this.emit('data', buffer, conn, server);
       }
       else {
-        this.emit('warn', new Error('Connection is not writable.'));
+        this.emit('data', buffer, conn);
       }
-    };
-  }
-
-  private _onData(conn: any, server: any, data: any) {
-    if (this.dataType === 'json') {
-      data = JSON.parse(data);
-    }
-
-    if (server) {
-      this.emit('data', data, conn, server);
-    }
-    else {
-      this.emit('data', data, conn);
-    }
+    });
+    conn.on('data', (buffer: Buffer) => this._ipcPacket.handleData(buffer));
   }
 }

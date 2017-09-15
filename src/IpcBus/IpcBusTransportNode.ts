@@ -1,10 +1,10 @@
-/// <reference path='../typings/easy-ipc.d.ts'/>
+import { Ipc as BaseIpc } from './Net/ipc';
 
 import * as IpcBusUtils from './IpcBusUtils';
-import * as BaseIpc from 'easy-ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
+import { IpcPacket } from './Net/ipcPacket';
 
 // Implementation for Node process
 /** @internal */
@@ -63,8 +63,9 @@ export class IpcBusTransportNode extends IpcBusTransport {
                         this._reset();
                     }
                 });
-                this._baseIpc.on('data', (data: any) => {
-                    if (BaseIpc.Cmd.isCmd(data)) {
+                this._baseIpc.on('data', (buffer: Buffer) => {
+                    let data = JSON.parse(buffer.toString());
+                    if (data && (data.type === 'cmd')) {
                         this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
                     }
                 });
@@ -91,12 +92,14 @@ export class IpcBusTransportNode extends IpcBusTransport {
     protected _ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
         if (this._busConn) {
             if (args) {
-                const buffer = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent, args]};
-                this._busConn.write(buffer);
+                const cmd = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent, args]};
+                let buf = IpcPacket.fromObject(cmd);
+                this._busConn.write(buf);
             }
             else {
-                const buffer = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent]};
-                this._busConn.write(buffer);
+                const cmd = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent]};
+                let buf = IpcPacket.fromObject(cmd);
+                this._busConn.write(buf);
             }
             // if (args) {
             //     BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
