@@ -134,3 +134,5 @@ ProcessConnector = (function () {
 
     return ProcessConnector;
 })();
+
+module.exports = ProcessConnector;

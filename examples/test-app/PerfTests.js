@@ -8,39 +8,12 @@ var PerfTests = function _PerfTests(type, busPath) {
     }
 
     this.connect = function() {
-        _ipcBus.connect('perfTestsBus')
+        _ipcBus.connect(`perfTestsBus ${_type}`)
             .then((msg) => {
                 _ipcBus.on('test-performance-trace', (ipcBusEvent, activateTrace) => this.onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace));
                 _ipcBus.on('test-performance-run', (ipcBusEvent, testParams) => this.onIPCBus_TestPerformanceRun(ipcBusEvent, testParams));
                 _ipcBus.on('test-performance-'+ _type, (ipcBusEvent, msgContent) => this.onIPCBus_TestPerformance(ipcBusEvent, msgContent));
             });
-    }
-
-    this.onIPCBus_TestPerformance = function _onIPCBus_TestPerformance(ipcBusEvent, msgContent) {
-        var dateNow = Date.now();
-        var uuid;
-        try {
-            uuid = msgContent.substring(0, 30);
-        }
-        catch(e) {
-            uuid = msgContent.uuid;
-        }
-        if (ipcBusEvent.request) {
-            ipcBusEvent.request.resolve([msgContent]);
-        }
-        else {
-            var msgTestStop = { 
-                uuid: uuid,
-                type: _type, 
-                timeStamp: dateNow,
-                peer: _ipcBus.peer
-            };
-            _ipcBus.send('test-performance-stop', msgTestStop);
-        }
-    }
-
-    this.onIPCBus_TestPerformanceTrace = function _onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace) {
-        _ipcBusModule.ActivateIpcBusTrace(activateTrace);
     }
 
     this.onIPCBus_TestPerformanceRun = function _onIPCBus_TestPerformanceRun(ipcBusEvent, testParams) {
@@ -92,7 +65,7 @@ var PerfTests = function _PerfTests(type, busPath) {
                 .catch();
             }
             else {
-                _ipcBus.send.apply(_ipcBus, [type].concat(msgContent));
+                _ipcBus.send(type, ...msgContent);
             }
         }
         else {
@@ -105,6 +78,33 @@ var PerfTests = function _PerfTests(type, busPath) {
                 _ipcBus.send(type, msgContent);
             }
         }
+    }
+
+    this.onIPCBus_TestPerformance = function _onIPCBus_TestPerformance(ipcBusEvent, msgContent) {
+        var dateNow = Date.now();
+        var uuid;
+        try {
+            uuid = msgContent.substring(0, 30);
+        }
+        catch(e) {
+            uuid = msgContent.uuid;
+        }
+        if (ipcBusEvent.request) {
+            ipcBusEvent.request.resolve([msgContent]);
+        }
+        else {
+            var msgTestStop = { 
+                uuid: uuid,
+                type: _type, 
+                timeStamp: dateNow,
+                peer: _ipcBus.peer
+            };
+            _ipcBus.send('test-performance-stop', msgTestStop);
+        }
+    }
+
+    this.onIPCBus_TestPerformanceTrace = function _onIPCBus_TestPerformanceTrace(ipcBusEvent, activateTrace) {
+        _ipcBusModule.ActivateIpcBusTrace(activateTrace);
     }
 
     function allocateString(seed, num) {

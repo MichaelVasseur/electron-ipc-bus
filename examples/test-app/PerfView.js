@@ -21,8 +21,7 @@ function doPerformance(type) {
     processToMaster.send('start-performance-tests', testParams);
 }
 
-var testStart = new Map;
-var testStop = new Map;
+var results = new Map;
 var delays = [];
 
 function doClear(event) {
@@ -30,8 +29,7 @@ function doClear(event) {
      while(table.rows.length > 1) {
           table.deleteRow(1);
      }
-     testStart.clear();
-     testStop.clear();
+     results.clear();
      delays = [];   
 }
 
@@ -39,30 +37,57 @@ function doTraceEnable(event) {
     ipcBus.send('test-performance-trace', event.currentTarget.checked);
 }
 
+function doSort(event) {
+    var table = document.getElementById('perfResults');
+    while(table.rows.length > 1) {
+         table.deleteRow(1);
+    }
+    delays.forEach((delay) => {
+        onIPCBus_TestPerformanceResult(delay);
+    })
+}
+
 function onIPCBus_TestPerformanceStart(ipcBusEvent, msgTestStart) {
     var uuid = msgTestStart.uuid;
-    testStart.set(uuid, msgTestStart);
-    if (testStop.get(uuid)) {
-        onIPCBus_TestPerformanceResult(uuid);
+    let result = results.get(uuid);
+    if (!result) {
+        result = {};
+        results.set(uuid,result);
+    }
+    result.start = msgTestStart;
+    if (result.stop) {
+        onIPCBus_AddTestPerformanceResult(result);
     }
 }
 
 function onIPCBus_TestPerformanceStop(ipcBusEvent, msgTestStop) {
     var uuid = msgTestStop.uuid;
-    testStop.set(uuid, msgTestStop);
-    if (testStart.get(uuid)) {
-        onIPCBus_TestPerformanceResult(uuid);
+    let result = results.get(uuid);
+    if (!result) {
+        result = {};
+        results.set(uuid,result);
+    }
+    result.stop = msgTestStop;
+    if (result.start) {
+        onIPCBus_AddTestPerformanceResult(result);
     }
 }
 
-function onIPCBus_TestPerformanceResult(uuid) {
-    var msgTestStart = testStart.get(uuid);
-    var msgTestStop = testStop.get(uuid);
+function onIPCBus_AddTestPerformanceResult(result) {
+    var msgTestStart = result.start;
+    var msgTestStop = result.stop;
     if (msgTestStart && msgTestStop) {
-        var delay = msgTestStop.timeStamp - msgTestStart.timeStamp;
-        delays.push(delay);
-        delays.sort();
+        result.delay = msgTestStop.timeStamp - msgTestStart.timeStamp;
+        delays.push(result);
+        delays.sort((l, r) => l.delay - r.delay);
+    }
+    onIPCBus_TestPerformanceResult(result);
+}    
 
+function onIPCBus_TestPerformanceResult(result) {
+    var msgTestStart = result.start;
+    var msgTestStop = result.stop;
+    if (msgTestStart && msgTestStop) {
         var table = document.getElementById('perfResults');
         var row = table.insertRow(-1);
         var cell0 = row.insertCell(-1);
@@ -72,31 +97,31 @@ function onIPCBus_TestPerformanceResult(uuid) {
         cell0.innerHTML = `${msgTestStart.test.typeCommand} ${msgTestStart.test.typeArgs} (${msgTestStart.test.bufferSize})`;
         cell1.innerHTML = JSON.stringify(msgTestStart.peer);
         cell2.innerHTML = JSON.stringify(msgTestStop.peer);
-        cell3.setAttribute('delay', delay);
-        cell3.innerHTML = `${delay}`;
+        cell3.setAttribute('delay', result.delay);
+        cell3.innerHTML = `${result.delay}`;
 
         var q = (delays.length / 5);
         var q1 = Math.floor(q);
-        var q2 = Math.floor(q * 2);                
-        var q3 = Math.floor(q * 3);                
-        var q4 = Math.floor(q * 4);                
+        var q2 = Math.floor(q * 2);
+        var q3 = Math.floor(q * 3); 
+        var q4 = Math.floor(q * 4);
 
         for (var i = 1; i < table.rows.length; ++i) {
             var curRow = table.rows[i];
             var delay = curRow.cells[3].getAttribute('delay');
-            if (delay <= delays[q1]) {
+            if (delay <= delays[q1].delay) {
                 curRow.className = 'success';
                 continue;
             } 
-            if (delay <= delays[q2]) {
+            if (delay <= delays[q2].delay) {
                 curRow.className = 'info';
                 continue;
             } 
-            if (delay >= delays[q4]) {
+            if (delay >= delays[q4].delay) {
                 curRow.className = 'danger';
                 continue;
             } 
-            if (delay >= delays[q3]) {
+            if (delay >= delays[q3].delay) {
                 curRow.className = 'warning';
                 continue;
             } 

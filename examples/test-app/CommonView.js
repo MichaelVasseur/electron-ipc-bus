@@ -200,7 +200,7 @@ function onIPC_Received(ipcBusEvent, ipcContent) {
         }
         var topicReceivedElt = topicItemElt.querySelector('.topicReceived');
         ipcContent += ' from (' + JSON.stringify(ipcBusEvent.sender) + ')';
-        topicReceivedElt.value += ipcContent + '\n';
+        topicReceivedElt.value = ipcContent + '\n';
     }
 }
 
