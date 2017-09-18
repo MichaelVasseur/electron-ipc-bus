@@ -33,6 +33,20 @@ export class Ipc extends EventEmitter {
     this.delayReconnect = options.delayReconnect != null ? options.delayReconnect : 3000;
   }
 
+  on(event: 'connect', handler: (socket: net.Socket) => void): this;
+  on(event: 'reconnect', handler: (socket: net.Socket) => void): this;
+  on(event: 'connection', handler: (socket: net.Socket, server: net.Server) => void): this;
+  on(event: 'listening', handler: (server: net.Server) => void): this;
+  on(event: 'close', handler: (err: Error, socket: net.Socket, server?: net.Server) => void): this;
+  on(event: 'error', handler: (err: Error) => void): this;
+  on(event: 'warn', handler: (err: Error) => void): this;
+  on(event: 'data', handler: (buffer: Buffer, socket: net.Socket, server?: net.Server) => void): this;
+  // on(event: 'packet', handler: (buffer: Buffer) => void): this;
+  on(event: string, handler: Function): this {
+      return super.on(event, handler);
+  }
+
+
   connect(port: any, host?: any, cb?: any) {
     if (port instanceof Function) {
       cb = port;
@@ -137,16 +151,16 @@ export class Ipc extends EventEmitter {
       this.emit('error', err);
     };
 
-    let onConnection = (conn: net.Socket): void => {
-      this._socket = conn;
-      this._parseStream(conn, server);
+    let onConnection = (socket: net.Socket): void => {
+      this._socket = socket;
+      this._parseStream(socket, server);
 
-      conn.on('close', (had_error: any) => {
-        this.emit('close', had_error, conn, server);
+      socket.on('close', (had_error: any) => {
+        this.emit('close', had_error, socket, server);
       });
 
-      cb(null, conn, server);
-      this.emit('connection', conn, server);
+      cb(null, socket, server);
+      this.emit('connection', socket, server);
     };
 
     let onListening = () => {
@@ -156,7 +170,7 @@ export class Ipc extends EventEmitter {
 
     server.once('error', (err) => onError(err));
     server.once('listening', () => onListening());
-    server.on('connection', (conn) => onConnection(conn));
+    server.on('connection', (socket) => onConnection(socket));
 
     if (port && host) {
       server.listen(port, host);
@@ -201,38 +215,38 @@ export class Ipc extends EventEmitter {
       cb(null, true, server);
     };
 
-    let onConnection = (conn: net.Socket, server: net.Server): void => {
+    let onConnection = (socket: net.Socket, server: net.Server): void => {
       this.removeAllListeners('error');
       this.removeListener('listening', onListening);
       this.removeListener('connect', onConnect);
-      cb(null, true, conn, server);
+      cb(null, true, socket, server);
     };
 
-    let onConnect = (conn: net.Socket): void => {
+    let onConnect = (socket: net.Socket): void => {
       this.removeListener('error', onError);
       this.removeAllListeners('listening');
       this.removeAllListeners('connect');
-      cb(null, false, conn);
+      cb(null, false, socket);
     };
 
     this.once('error', (err: any) => onError(err));
     this.once('listening', (server: net.Server) => onListening(server));
-    this.once('connection', (conn: net.Socket, server: net.Server) => onConnection(conn, server));
-    this.once('connect', (conn: net.Socket) => onConnect(conn));
+    this.once('connection', (socket: net.Socket, server: net.Server) => onConnection(socket, server));
+    this.once('connect', (socket: net.Socket) => onConnect(socket));
 
     this.connect(port, host);
   }
 
-  private _parseStream(conn: net.Socket, server?: net.Server) {
-    conn.removeAllListeners('data');
+  private _parseStream(socket: net.Socket, server?: net.Server) {
+    socket.removeAllListeners('data');
     this._ipcPacket.on('packet', (buffer: Buffer) => {
       if (server) {
-        this.emit('data', buffer, conn, server);
+        this.emit('data', buffer, socket, server);
       }
       else {
-        this.emit('data', buffer, conn);
+        this.emit('data', buffer, socket);
       }
     });
-    conn.on('data', (buffer: Buffer) => this._ipcPacket.handleData(buffer));
+    socket.on('data', (buffer: Buffer) => this._ipcPacket.handleData(buffer));
   }
 }
