@@ -6,7 +6,7 @@ import {IpcBusTransportNode} from './IpcBusTransportNode';
 
 // This class ensures the transfer of data between Broker and Renderer/s using ipcMain
 /** @internal */
-export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInterfaces.IpcBusBridge  {
+export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInterfaces.IpcBusBridge {
     private _ipcMain: any;
     private _webContents: any;
 
@@ -36,8 +36,8 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
 
     protected _onEventReceived(name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) {
         switch (name) {
-            case IpcBusUtils.IPC_BUS_EVENT_SENDMESSAGE:
-            case IpcBusUtils.IPC_BUS_EVENT_REQUESTMESSAGE: {
+            case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE:
+            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.name}`);
                 this._subscriptions.forEachChannel(ipcBusEvent.channel, (connData, channel) => {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Forward send message received on '${channel}' to peer #Renderer_${connData.connKey}`);
@@ -45,7 +45,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
                 });
                 break;
             }
-            case IpcBusUtils.IPC_BUS_EVENT_REQUESTRESPONSE: {
+            case IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Bridge] Received ${name} on channel '${ipcBusData.replyChannel}' from peer #${ipcBusEvent.sender.name}`);
                 let webContents = this._requestChannels.get(ipcBusData.replyChannel);
                 if (webContents) {

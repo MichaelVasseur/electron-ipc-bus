@@ -64,7 +64,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     }
                 });
                 this._baseIpc.on('data', (buffer: Buffer) => {
-                    let data = JSON.parse(buffer.toString());
+                    let data = IpcPacket.toObject(buffer);
                     if (data && (data.type === 'cmd')) {
                         this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
                     }

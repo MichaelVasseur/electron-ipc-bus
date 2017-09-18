@@ -1,5 +1,3 @@
-/// <reference path="../../typings/lazy.d.ts" />
-
 import * as net from 'net';
 // import * as util from 'util';
 import { EventEmitter } from 'events';
@@ -254,10 +252,11 @@ export class Ipc extends EventEmitter {
     ipcPacket.on('packet', (buffer: Buffer) => {
       if (server) {
         this.emit('data', buffer, socket, server);
-//        console.log('data', util.inspect(JSON.parse(buffer.toString())));
+        // console.log('data-server', util.inspect(JSON.parse(buffer.toString())));
       }
       else {
         this.emit('data', buffer, socket);
+        // console.log('data', util.inspect(JSON.parse(buffer.toString())));
       }
     });
     socket.on('close', (had_error: any) => {

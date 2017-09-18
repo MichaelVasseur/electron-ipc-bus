@@ -39,11 +39,11 @@ export class IpcPacket extends EventEmitter {
         return len;
     }
 
-    static fromString(data: string): Buffer {
+    static fromString(data: string, encoding?: string): Buffer {
         let len = data.length + headLength;
         let buffer = new Buffer(len);
         IpcPacket._setLength(buffer, len);
-        buffer.write(data, headLength);
+        buffer.write(data, headLength, data.length, encoding);
         return buffer;
     }
 
@@ -57,7 +57,12 @@ export class IpcPacket extends EventEmitter {
 
     static fromObject(dataObject: Object): Buffer {
         let data = JSON.stringify(dataObject);
-        return IpcPacket.fromString(data);
+        return IpcPacket.fromString(data, 'utf8');
+    }
+
+    static toObject(buffer: Buffer): any {
+        let packetSize = IpcPacket._getLength(buffer, 0);
+        return JSON.parse(buffer.toString('utf8', headLength, packetSize));
     }
 
     handleData(data: Buffer) {
@@ -83,8 +88,6 @@ export class IpcPacket extends EventEmitter {
             }
             // if already get packet
             if ((this._buf.length - offset) >= packetSize) {
-                packetSize -= headLength;
-                offset += headLength;
                 // if already get packet
                 let packet = this._buf.slice(offset, offset + packetSize);
                 // move the offset
