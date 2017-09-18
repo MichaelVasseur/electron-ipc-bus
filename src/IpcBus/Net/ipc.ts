@@ -224,6 +224,7 @@ export class Ipc extends EventEmitter {
   }
 
   private _parseStream(conn: net.Socket, server?: net.Server) {
+    conn.removeAllListeners('data');
     this._ipcPacket.on('packet', (buffer: Buffer) => {
       if (server) {
         this.emit('data', buffer, conn, server);

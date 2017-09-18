@@ -51,7 +51,7 @@ export class IpcPacket extends EventEmitter {
         let len = data.length + headLength;
         let buffer = new Buffer(len);
         IpcPacket._setLength(buffer, len);
-        data.copy(buffer, headLength, 0);
+        data.copy(buffer, headLength);
         return buffer;
     }
 
@@ -70,6 +70,8 @@ export class IpcPacket extends EventEmitter {
             this._buf = Buffer.concat([this._buf, data], length);
         }
 
+        let packets: Buffer[] = [];
+
         let offset = 0;
         while ((this._buf.length - offset) >= headLength) {
             let packetSize = IpcPacket._getLength(this._buf, offset);
@@ -87,7 +89,7 @@ export class IpcPacket extends EventEmitter {
                 let packet = this._buf.slice(offset, offset + packetSize);
                 // move the offset
                 offset += packetSize;
-                this.emit('packet', packet);
+                packets.push(packet);
             }
             else {
                 break;
@@ -103,5 +105,8 @@ export class IpcPacket extends EventEmitter {
         else {
             this._buf = null;
         }
+        packets.forEach((packet) => {
+            this.emit('packet', packet);
+        });
     }
 }

@@ -110,15 +110,15 @@ export class ChannelConnectionMap<T extends string | number> {
     }
 
     private _info(str: string) {
-        Logger.info(`[${this._name}] ${str}`);
+        // Logger.info(`[${this._name}] ${str}`);
     }
 
     private _warn(str: string) {
-        Logger.warn(`[${this._name}] ${str}`);
+        // Logger.warn(`[${this._name}] ${str}`);
     }
 
     private _error(str: string) {
-       Logger.error(`[${this._name}] ${str}`);
+    //    Logger.error(`[${this._name}] ${str}`);
     }
 
     public hasChannel(channel: string): boolean {

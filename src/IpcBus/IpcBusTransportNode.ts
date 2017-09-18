@@ -93,13 +93,13 @@ export class IpcBusTransportNode extends IpcBusTransport {
         if (this._busConn) {
             if (args) {
                 const cmd = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent, args]};
-                let buf = IpcPacket.fromObject(cmd);
-                this._busConn.write(buf);
+                let buffer = IpcPacket.fromObject(cmd);
+                this._busConn.write(buffer);
             }
             else {
                 const cmd = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent]};
-                let buf = IpcPacket.fromObject(cmd);
-                this._busConn.write(buf);
+                let buffer = IpcPacket.fromObject(cmd);
+                this._busConn.write(buffer);
             }
             // if (args) {
             //     BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);

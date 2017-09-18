@@ -162,8 +162,8 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
         this._socketCleanUp(socket);
     }
 
-    private _onData(buffer: any, socket: any, server: any): void {
-        let data = JSON.parse(buffer);
+    private _onData(buffer: Buffer, socket: any, server: any): void {
+        let data = JSON.parse(buffer.toString());
         if (data && (data.type === 'cmd')) {
             switch (data.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_CONNECT:
