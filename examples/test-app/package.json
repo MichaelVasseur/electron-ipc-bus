@@ -1,0 +1,28 @@
+{
+  "name": "ipc-bus-tests",
+  "version": "1.0.0",
+  "description": "Test App for IPC subsystem",
+  "main": "Main.js",
+  "scripts": {
+    "start": "electron .",
+    "start-sandboxed": "electron . --enable-sandbox",
+    "build": "npm run build-ipc1 && npm run build-bundle-preload",
+    "build-ipc1": "npm install ../..",
+    "build-mklink": "mklink /j node_modules\\electron-ipc-bus ..\\..\\..\\electron-ipc-bus",
+    "build-ipc": "npm uninstall electron-ipc-bus && npm install ../..",
+    "link": "npm run link-electron-ipc",
+    "link-electron-ipc": "npm link ../../",
+    "build-bundle-preload": "browserify -o BundledBrowserWindowPreload.js -x electron BrowserWindowPreload.js"
+  },
+  "author": "Thomson Reuters",
+  "homepage": "http://www.thomsonreuters.com",
+  "devDependencies": {
+    "browserify": "13.1.1"
+  },
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "electron": "1.6.7",
+    "electron-ipc-bus": "^0.17.0",
+    "uuid": "2.0.3"
+  }
+}

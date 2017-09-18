@@ -37,8 +37,7 @@ let ipcBridge = null;
 
 
 // Load node-import without wrapping to variable. 
-require('node-import');
-imports('ProcessConnector');
+const ProcessConnector = require('./ProcessConnector');
 const PerfTests = require('./PerfTests.js');
 
 
