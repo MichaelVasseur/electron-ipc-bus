@@ -27,8 +27,8 @@ console.log('IPC Bus Path : ' + busPath);
 // IPC Bus
 const ipcBusModule = require('electron-ipc-bus');
 const ipcBusClient = ipcBusModule.CreateIpcBusClient(busPath);
-ipcBusModule.ActivateIpcBusTrace(true);
-ipcBusModule.ActivateServiceTrace(true);
+//ipcBusModule.ActivateIpcBusTrace(true);
+//ipcBusModule.ActivateServiceTrace(true);
 
 // Startup
 let ipcBrokerProcess = null;

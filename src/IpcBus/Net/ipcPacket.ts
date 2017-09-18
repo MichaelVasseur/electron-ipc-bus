@@ -62,12 +62,12 @@ export class IpcPacket extends EventEmitter {
 
     handleData(data: Buffer) {
         // assert(data instanceof Buffer, 'data should be a buffer');
-        if (!this._buf) {
-            this._buf = data;
-        }
-        else {
+        if (this._buf) {
             let length = this._buf.length + data.length;
             this._buf = Buffer.concat([this._buf, data], length);
+        }
+        else {
+            this._buf = data;
         }
 
         let packets: Buffer[] = [];
