@@ -107,7 +107,8 @@ export class IpcPacket extends EventEmitter {
                 }
                 else {
                     if (offset > 0) {
-                        currentBuffer.slice(offset);
+                        this._totalLength -= offset;
+                        this._buffers[0] = currentBuffer.slice(offset);
                     }
                     packets.push(Buffer.concat(this._buffers, packetSize));
                     while (currentBuffer && (currentBuffer.length <= packetSize)) {
@@ -118,6 +119,7 @@ export class IpcPacket extends EventEmitter {
                         currentBuffer = this._buffers[0];
                     }
                     if (this._buffers.length === 0) {
+                        // assert(this._totalLength === 0);
                         break;
                     }
                     offset = packetSize;
