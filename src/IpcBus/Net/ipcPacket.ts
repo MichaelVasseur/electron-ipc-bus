@@ -6,10 +6,13 @@ const headLength: number = 6;
 
 export class IpcPacket extends EventEmitter {
 
-    private _buf: Buffer;
+    private _buffers: Buffer[];
+    private _totalLength: number;
 
     constructor() {
         super();
+        this._totalLength = 0;
+        this._buffers = [];
     }
 
     on(event: 'packet', handler: (buffer: Buffer) => void): this;
@@ -29,7 +32,7 @@ export class IpcPacket extends EventEmitter {
 
     private static _getLength(buffer: Buffer, offset: number): number {
         if ((buffer[offset] !== separator) || (buffer[offset + 5] !== separator)) {
-            return 0;
+            return -1;
         }
         let len = buffer[offset + 4];
         for (let i = offset + 3; i > offset; --i) {
@@ -67,46 +70,73 @@ export class IpcPacket extends EventEmitter {
 
     handleData(data: Buffer) {
         // assert(data instanceof Buffer, 'data should be a buffer');
-        if (this._buf) {
-            let length = this._buf.length + data.length;
-            this._buf = Buffer.concat([this._buf, data], length);
+        let buffer: Buffer;
+        if (this._totalLength < headLength) {
+            buffer = this._buffers.pop();
+            if (buffer) {
+                let length = buffer.length + data.length;
+                buffer = Buffer.concat([buffer, data], length);
+            }
+            else {
+                buffer = data;
+            }
         }
         else {
-            this._buf = data;
+            buffer = data;
         }
+        this._totalLength += data.length;
+        this._buffers.push(buffer);
 
         let packets: Buffer[] = [];
 
         let offset = 0;
-        while ((this._buf.length - offset) >= headLength) {
-            let packetSize = IpcPacket._getLength(this._buf, offset);
+        while ((this._totalLength - offset) >= headLength) {
+            let packetSize = IpcPacket._getLength(this._buffers[0], offset);
             // if packet size error
             if (packetSize <= headLength) {
-                this._buf = null;
+                this._buffers = [];
                 this.emit('error', new Error('Get invalid packet size'));
                 return;
             }
             // if already get packet
-            if ((this._buf.length - offset) >= packetSize) {
-                // if already get packet
-                let packet = this._buf.slice(offset, offset + packetSize);
-                // move the offset
-                offset += packetSize;
-                packets.push(packet);
+            if ((this._totalLength - offset) >= packetSize) {
+                let currentBuffer = this._buffers[0];
+                if (currentBuffer.length - offset >= packetSize) {
+                    packets.push(currentBuffer.slice(offset, offset + packetSize));
+                    offset += packetSize;
+                }
+                else {
+                    if (offset > 0) {
+                        currentBuffer.slice(offset);
+                    }
+                    packets.push(Buffer.concat(this._buffers, packetSize));
+                    while (currentBuffer && (currentBuffer.length <= packetSize)) {
+                        this._totalLength -= currentBuffer.length;
+                        packetSize -= currentBuffer.length;
+
+                        this._buffers.shift();
+                        currentBuffer = this._buffers[0];
+                    }
+                    if (this._buffers.length === 0) {
+                        break;
+                    }
+                    offset = packetSize;
+                }
             }
             else {
                 break;
             }
         }
-
         if (offset === 0) {
             // nothing to do.
         }
-        else if (offset < this._buf.length) {
-            this._buf = this._buf.slice(offset, this._buf.length);
+        else if (offset < this._totalLength) {
+            this._totalLength -= offset;
+            this._buffers[0] = this._buffers[0].slice(offset);
         }
         else {
-            this._buf = null;
+            this._totalLength = 0;
+            this._buffers = [];
         }
         packets.forEach((packet) => {
             this.emit('packet', packet);
