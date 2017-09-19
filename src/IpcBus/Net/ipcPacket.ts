@@ -116,8 +116,6 @@ export class IpcPacket extends EventEmitter {
             let packetSize = ipcPacketHeader.size;
             // if already get packet
             if (this._totalLength >= packetSize) {
-                // Revaluate _totalLength before packetSize is modified
-                this._totalLength -= packetSize;
                 let currentBuffer = this._buffers[0];
                 if (currentBuffer.length - offset >= packetSize) {
                     packets.push(currentBuffer.slice(offset, offset + packetSize));
@@ -128,6 +126,7 @@ export class IpcPacket extends EventEmitter {
                         offset = 0;
                     }
                     packets.push(Buffer.concat(this._buffers, packetSize));
+                    // Don't waste your time to clean buffers if there are all used !
                     if (this._totalLength > 0) {
                         while (currentBuffer && (currentBuffer.length <= packetSize)) {
                             packetSize -= currentBuffer.length;
@@ -137,6 +136,8 @@ export class IpcPacket extends EventEmitter {
                         }
                     }
                 }
+                // Beware, take the original size here
+                this._totalLength -= ipcPacketHeader.size;
                 offset += packetSize;
             }
             else {
