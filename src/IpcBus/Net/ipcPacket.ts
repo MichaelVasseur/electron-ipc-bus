@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
-import * as net from 'net';
+// import * as net from 'net';
 
 const separator: number = '#'.charCodeAt(0);
 // const arrayS: number = '['.charCodeAt(0);
@@ -14,7 +14,6 @@ interface IpcPacketHeader {
     type: number;
     size: number;
 }
-
 
 export class IpcPacket extends EventEmitter {
 
@@ -43,7 +42,11 @@ export class IpcPacket extends EventEmitter {
         // assert(incr === offset + headLength - 1);
     }
 
-    private static _getHeader(buffer: Buffer, offset: number): IpcPacketHeader {
+    private static _getPacketHeader(buffers: Buffer[], offset: number): IpcPacketHeader {
+        let buffer = buffers[0];
+        if (offset + buffer.length < headLength) {
+            buffer = Buffer.concat(buffers, offset + headLength);
+        }
         let incr = offset;
         if (buffer[incr++] !== separator) {
             return null;
@@ -55,6 +58,10 @@ export class IpcPacket extends EventEmitter {
             return null;
         }
         return {type: type, size: len};
+    }
+
+    private static _getHeader(buffer: Buffer, offset: number): IpcPacketHeader {
+        return IpcPacket._getPacketHeader([buffer], offset);
     }
 
     static fromString(data: string, encoding?: string): Buffer {
@@ -92,76 +99,56 @@ export class IpcPacket extends EventEmitter {
 
     handleData(data: Buffer) {
         // assert(data instanceof Buffer, 'data should be a buffer');
-        let buffer: Buffer;
-        if (this._totalLength < headLength) {
-            buffer = this._buffers.pop();
-            if (buffer) {
-                let length = buffer.length + data.length;
-                buffer = Buffer.concat([buffer, data], length);
-            }
-            else {
-                buffer = data;
-            }
-        }
-        else {
-            buffer = data;
-        }
         this._totalLength += data.length;
-        this._buffers.push(buffer);
+        this._buffers.push(data);
 
         let packets: Buffer[] = [];
 
         let offset = 0;
-        while ((this._totalLength - offset) >= headLength) {
-            let ipcPacketHeader = IpcPacket._getHeader(this._buffers[0], offset);
+        while (this._totalLength >= headLength) {
+            let ipcPacketHeader = IpcPacket._getPacketHeader(this._buffers, offset);
             // if packet size error
             if (!ipcPacketHeader) {
                 this._buffers = [];
                 this.emit('error', new Error('Get invalid packet size'));
-                return;
+                break;
             }
             let packetSize = ipcPacketHeader.size;
             // if already get packet
-            if ((this._totalLength - offset) >= packetSize) {
+            if (this._totalLength >= packetSize) {
+                // Revaluate _totalLength before packetSize is modified
+                this._totalLength -= packetSize;
                 let currentBuffer = this._buffers[0];
                 if (currentBuffer.length - offset >= packetSize) {
                     packets.push(currentBuffer.slice(offset, offset + packetSize));
-                    offset += packetSize;
                 }
                 else {
                     if (offset > 0) {
-                        this._totalLength -= offset;
-                        this._buffers[0] = currentBuffer.slice(offset);
+                        this._buffers[0] = currentBuffer = currentBuffer.slice(offset);
+                        offset = 0;
                     }
                     packets.push(Buffer.concat(this._buffers, packetSize));
-                    while (currentBuffer && (currentBuffer.length <= packetSize)) {
-                        this._totalLength -= currentBuffer.length;
-                        packetSize -= currentBuffer.length;
+                    if (this._totalLength > 0) {
+                        while (currentBuffer && (currentBuffer.length <= packetSize)) {
+                            packetSize -= currentBuffer.length;
 
-                        this._buffers.shift();
-                        currentBuffer = this._buffers[0];
+                            this._buffers.shift();
+                            currentBuffer = this._buffers[0];
+                        }
                     }
-                    if (this._buffers.length === 0) {
-                        // assert(this._totalLength === 0);
-                        break;
-                    }
-                    offset = packetSize;
                 }
+                offset += packetSize;
             }
             else {
                 break;
             }
         }
-        if (offset === 0) {
-            // nothing to do.
-        }
-        else if (offset < this._totalLength) {
-            this._totalLength -= offset;
-            this._buffers[0] = this._buffers[0].slice(offset);
-        }
-        else {
+        if ((this._buffers.length === 0) || (this._totalLength === 0)) {
             this._totalLength = 0;
             this._buffers = [];
+        }
+        else if (offset > 0) {
+            this._buffers[0] = this._buffers[0].slice(offset);
         }
         packets.forEach((packet) => {
             this.emit('packet', packet);
