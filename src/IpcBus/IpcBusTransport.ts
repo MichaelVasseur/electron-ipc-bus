@@ -14,7 +14,6 @@ function GenerateReplyChannel(): string {
 
 /** @internal */
 export class IpcBusData {
-    peerId?: string;
     replyChannel?: string;
     resolve?: boolean;
     reject?: boolean;
@@ -23,7 +22,6 @@ export class IpcBusData {
 
 /** @internal */
 export abstract class IpcBusTransport {
-    protected _peerId: string;
     protected _ipcBusPeer: IpcBusInterfaces.IpcBusPeer;
     protected _requestFunctions: Map<string, Function>;
 
@@ -31,9 +29,8 @@ export abstract class IpcBusTransport {
     public eventEmitter: EventEmitter;
 
     constructor(ipcBusProcess: IpcBusInterfaces.IpcBusProcess, ipcOptions: IpcBusUtils.IpcOptions) {
-        this._ipcBusPeer = { name: '', process: ipcBusProcess };
+        this._ipcBusPeer = { id: uuid.v1(), name: '', process: ipcBusProcess };
         this.ipcOptions = ipcOptions;
-        this._peerId = uuid.v1();
         this._requestFunctions = new Map<string, Function>();
     }
 

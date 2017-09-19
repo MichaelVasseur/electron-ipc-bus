@@ -108,7 +108,6 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
         if (this._ipcRenderer) {
-            ipcBusData.peerId = this._peerId;
             this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, { channel: channel, sender: this.peer }, args);
         }
     }

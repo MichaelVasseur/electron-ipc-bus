@@ -85,7 +85,6 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
-        ipcBusData.peerId = this._peerId;
         this._ipcPushCommand(command, ipcBusData, { channel: channel, sender: this.peer }, args);
     }
 

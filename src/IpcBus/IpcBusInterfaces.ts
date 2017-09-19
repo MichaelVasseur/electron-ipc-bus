@@ -29,6 +29,7 @@ export interface IpcBusProcess {
 }
 
 export interface IpcBusPeer {
+    id: string;
     name: string;
     process: IpcBusProcess;
 }
