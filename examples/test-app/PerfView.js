@@ -2,13 +2,20 @@
 
 var processToMaster;
 var transaction = 1;
+var generateReportTimer;
+var generateReport = false;
+
 function doPerformance(type) {
     var bufferSize = 1024 * 1024;
     var memVal = document.querySelector(".memory-value");
     if (memVal) {
         bufferSize = memVal.value;
     }
-        
+    startPerformance(type, bufferSize);
+}
+
+function startPerformance(type, bufferSize) {
+    ++transaction;
     var typeCommandElt = document.querySelector('.typeCommand');
     var testParams =
     {
@@ -17,8 +24,8 @@ function doPerformance(type) {
         typeArgs: type,
         bufferSize: bufferSize
     };
-    ++transaction;
     processToMaster.send('start-performance-tests', testParams);
+    return transaction;
 }
 
 var results = new Map;
@@ -31,6 +38,29 @@ function doClear(event) {
      }
      results.clear();
      delays = [];   
+}
+
+function doSave() {
+    let cvsLike = [];
+    results.forEach((result) => {
+        if (result.start && result.stop) {
+            let cvsRow = [];
+            cvsRow.push(`${result.start.test.typeCommand} ${result.start.test.typeArgs} (${result.start.test.bufferSize})`);
+            cvsRow.push(`${result.start.type} => ${result.stop.type}`);
+            cvsRow.push(result.delay);
+            cvsLike.push(cvsRow);
+        }
+    });
+    processToMaster.send('save-performance-tests', cvsLike);
+}
+
+
+function sendReportToMaster() {
+    if (generateReport === false) {
+        return;
+    }
+    generateReport = false;
+    doSave();
 }
 
 function doTraceEnable(event) {
@@ -47,12 +77,32 @@ function doSort(event) {
     })
 }
 
+function doAutomaticTests(event) {
+    doClear(null);
+    let tests = [];
+    [100, 1000, 10000, 100000, 1000000, 10000000].forEach((size) => {
+        for(let occ = 0; occ < 3; ++occ) {
+            tests.push({size: size, type: 'string' });
+            tests.push({size: size, type: 'object' });
+            tests.push({size: size, type: 'args' });
+        }
+    });
+    let i = 0;
+    let int = setInterval(() => {
+        startPerformance(tests[i].type, tests[i].size);
+        if (++i >= tests.length) {
+            clearInterval(int);
+        }
+    }, 2000);
+    generateReport = true;
+}
+
 function onIPCBus_TestPerformanceStart(ipcBusEvent, msgTestStart) {
     var uuid = msgTestStart.uuid;
     let result = results.get(uuid);
     if (!result) {
         result = {};
-        results.set(uuid,result);
+        results.set(uuid, result);
     }
     result.start = msgTestStart;
     if (result.stop) {
@@ -90,11 +140,13 @@ function onIPCBus_TestPerformanceResult(result) {
     if (msgTestStart && msgTestStop) {
         var table = document.getElementById('perfResults');
         var row = table.insertRow(-1);
-        var cell0 = row.insertCell(-1);
+        var cellType = row.insertCell(-1);
+        var cellLink = row.insertCell(-1);
         var cell1 = row.insertCell(-1);
         var cell2 = row.insertCell(-1);
         var cell3 = row.insertCell(-1);
-        cell0.innerHTML = `${msgTestStart.test.typeCommand} ${msgTestStart.test.typeArgs} (${msgTestStart.test.bufferSize})`;
+        cellType.innerHTML = `${msgTestStart.test.typeCommand} ${msgTestStart.test.typeArgs} (${msgTestStart.test.bufferSize})`;
+        cellLink.innerHTML = `${msgTestStart.type} => ${msgTestStop.type}`;
         cell1.innerHTML = JSON.stringify(msgTestStart.peer);
         cell2.innerHTML = JSON.stringify(msgTestStop.peer);
         cell3.setAttribute('delay', result.delay);
@@ -127,6 +179,9 @@ function onIPCBus_TestPerformanceResult(result) {
             } 
             curRow.className = '';
         }
+
+        clearTimeout(generateReportTimer);
+        generateReportTimer = setTimeout(() => sendReportToMaster(), 1000);
     }
 }
 
@@ -138,6 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (memSlide && memVal) {
         memSlide.addEventListener("change", () => {
             memVal.value = memSlide.value;
+        });
+        memVal.addEventListener("change", () => {
+            memSlide.value = memVal.value;
         });
     }
 });
