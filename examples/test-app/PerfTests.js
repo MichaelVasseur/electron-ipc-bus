@@ -110,7 +110,7 @@ var PerfTests = function _PerfTests(type, busPath) {
     function allocateString(seed, num) {
         num = Number(num) / 100;
         var result = seed;
-        var str ='####################################################################################################';
+        var str ='0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789';
         while (true) {
             if (num & 1) { // (1)
                 result += str;

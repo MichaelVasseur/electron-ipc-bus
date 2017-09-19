@@ -46,8 +46,7 @@ function doSave() {
     results.forEach((result) => {
         if (result.start && result.stop) {
             let cvsRow = [];
-            cvsRow.push(`${result.start.test.typeCommand} ${result.start.test.typeArgs} (${result.start.test.bufferSize})`);
-            cvsRow.push(`${result.start.type} => ${result.stop.type}`);
+            cvsRow.push(`${result.start.test.typeCommand} ${result.start.test.typeArgs} (${result.start.test.bufferSize}) ${result.start.type} => ${result.stop.type}`);
             cvsRow.push(result.delay);
             cvsLike.push(cvsRow);
         }
