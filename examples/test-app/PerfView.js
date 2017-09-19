@@ -4,6 +4,7 @@ var processToMaster;
 var transaction = 1;
 var generateReportTimer;
 var generateReport = false;
+var noUpdate = false;
 
 function doPerformance(type) {
     var bufferSize = 1024 * 1024;
@@ -37,7 +38,7 @@ function doClear(event) {
           table.deleteRow(1);
      }
      results.clear();
-     delays = [];   
+     delays = [];
 }
 
 function doSave() {
@@ -88,10 +89,11 @@ function doAutomaticTests(event) {
         }
     });
     let i = 0;
-    let int = setInterval(() => {
+    let intV = setInterval(() => {
         startPerformance(tests[i].type, tests[i].size);
         if (++i >= tests.length) {
-            clearInterval(int);
+            clearInterval(intV);
+            save
         }
     }, 2000);
     generateReport = true;
@@ -181,7 +183,7 @@ function onIPCBus_TestPerformanceResult(result) {
         }
 
         clearTimeout(generateReportTimer);
-        generateReportTimer = setTimeout(() => sendReportToMaster(), 1000);
+        generateReportTimer = setTimeout(() => sendReportToMaster(), 2000);
     }
 }
 

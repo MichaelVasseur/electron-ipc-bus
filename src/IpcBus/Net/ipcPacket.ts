@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
+import * as net from 'net';
 
 const separator: number = '#'.charCodeAt(0);
 // const arrayS: number = '['.charCodeAt(0);
@@ -36,27 +37,21 @@ export class IpcPacket extends EventEmitter {
         let incr = offset;
         buffer[incr++] = separator;
         buffer[incr++] = ipcPacketHeader.type;
-        let len = ipcPacketHeader.size;
-        for (let i = 0; i < 4 && len; ++i) {
-            buffer[incr++] = len & 0xFF;
-            len >>= 8;
-        }
-        buffer[offset + headLength - 1] = separator;
+        buffer.writeUInt32LE(ipcPacketHeader.size, incr);
+        incr += 4;
+        buffer[incr] = separator;
         // assert(incr === offset + headLength - 1);
     }
 
     private static _getHeader(buffer: Buffer, offset: number): IpcPacketHeader {
-        let incr = offset + headLength;
-        if (buffer[--incr] !== separator) {
+        let incr = offset;
+        if (buffer[incr++] !== separator) {
             return null;
         }
-        let len = 0;
-        for (let i = 0; i < 4; ++i) {
-            len <<= 8;
-            len += buffer[--incr];
-        }
-        let type = buffer[--incr];
-        if (buffer[--incr] !== separator) {
+        let type = buffer[incr++];
+        let len = buffer.readUInt32LE(incr);
+        incr += 4;
+        if (buffer[incr] !== separator) {
             return null;
         }
         return {type: type, size: len};
