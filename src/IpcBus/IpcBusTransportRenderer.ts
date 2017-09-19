@@ -3,7 +3,7 @@
 import * as IpcBusUtils from './IpcBusUtils';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
-import { IpcBusTransport, IpcBusData, IpcBusCommand } from './IpcBusTransport';
+import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
 
 // Implementation for renderer process
 /** @internal */
@@ -56,11 +56,11 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         if (peerOrUndefined) {
             this._ipcBusPeer = peerOrUndefined;
             IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Standard listening for #${this._ipcBusPeer.name}`);
-            this._onIpcEventReceived = (eventEmitter: any, ipcBusCommand: IpcBusCommand) => this._onEventReceived(ipcBusCommand);
+            this._onIpcEventReceived = (eventEmitter: any, name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         } else {
             this._ipcBusPeer = eventOrPeer;
             IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Renderer] Activate Sandbox listening for #${this._ipcBusPeer.name}`);
-            this._onIpcEventReceived = (ipcBusCommand: IpcBusCommand) => this._onEventReceived(ipcBusCommand);
+            this._onIpcEventReceived = (name: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args: any[]) => this._onEventReceived(name, ipcBusData, ipcBusEvent, args);
         }
         this._ipcRenderer.addListener(IpcBusUtils.IPC_BUS_RENDERER_EVENT, this._onIpcEventReceived);
     };
@@ -94,7 +94,7 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
                             this._reset();
                         }
                     });
-                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, '', {}, [peerName]);
+                    this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '', [peerName]);
                 });
             });
         }
@@ -102,17 +102,13 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
     }
 
     ipcClose(): void {
-        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, '', {});
+        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
         this._reset();
     }
 
-    ipcPushCommand(command: string, channel: string, ipcBusData: IpcBusData, args?: any[]): void {
+    ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
         if (this._ipcRenderer) {
-            let ipcBusCommand: IpcBusCommand = { name: command, channel: channel, peer: this.peer, data: ipcBusData };
-            if (args) {
-                ipcBusCommand.args = args;
-            }
-            this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, ipcBusCommand);
+            this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, ipcBusData, { channel: channel, sender: this.peer }, args);
         }
     }
 }

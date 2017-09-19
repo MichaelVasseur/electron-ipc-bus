@@ -6,7 +6,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 // import * as util from 'util';
 
 import { IpcBusCommonClient } from './IpcBusClient';
-import { IpcBusTransport, IpcBusCommand } from './IpcBusTransport';
+import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
 import { IpcBusTransportNode } from './IpcBusTransportNode';
 import { IpcPacket } from './Net/ipcPacket';
 
@@ -76,7 +76,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                         clearTimeout(timer);
                         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
                         this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
-                        this._baseIpc.on('data', (buffer: any, socket: any, server: any) => this._onData(buffer, socket, server));
+                        this._baseIpc.on('data', (data: any, socket: any, server: any) => this._onData(data, socket, server));
 
                         this._ipcBusBrokerClient.connect(`Broker_${process.pid}`)
                             .then(() => {
@@ -165,88 +165,111 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     }
 
     private _onData(buffer: Buffer, socket: any, server: any): void {
-        let ipcBusCommand: IpcBusCommand = IpcPacket.toObject(buffer);
-        if (ipcBusCommand && ipcBusCommand.name) {
-            switch (ipcBusCommand.name) {
+        let data = IpcPacket.toObject(buffer);
+        if (data && (data.type === 'cmd')) {
+            switch (data.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_CONNECT: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Connect peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                        // const ipcBusData: IpcBusData = data.args[0];
+                        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Connect peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    this._ipcBusPeers.set(ipcBusCommand.peer.id, ipcBusCommand.peer);
-                    break;
-                }
+                        this._ipcBusPeers.set(ipcBusEvent.sender.id, ipcBusEvent.sender);
+                        break;
+                    }
                 case IpcBusUtils.IPC_BUS_COMMAND_DISCONNECT: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    // const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    if (this._ipcBusPeers.delete(ipcBusCommand.peer.id)) {
-                        this._subscriptions.releasePeerId(socket.remotePort, ipcBusCommand.peer.id);
+                    if (this._ipcBusPeers.delete(ipcBusEvent.sender.id)) {
+                        this._subscriptions.releasePeerId(socket.remotePort, ipcBusEvent.sender.id);
                     }
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_CLOSE: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Close peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}}`);
+                        // const ipcBusData: IpcBusData = data.args[0];
+                        const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                        IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Close peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}}`);
 
-                    this._socketCleanUp(socket);
-                    break;
-                }
+                        this._socketCleanUp(socket);
+                        break;
+                    }
                 case IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Subscribe to channel '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    // const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Subscribe to channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    this._subscriptions.addRef(ipcBusCommand.channel, socket.remotePort, socket, ipcBusCommand.peer.id);
+                    this._subscriptions.addRef(ipcBusEvent.channel, socket.remotePort, socket, ipcBusEvent.sender.id);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from channel '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe from channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    if (ipcBusCommand.data.unsubscribeAll) {
-                        this._subscriptions.releaseAll(ipcBusCommand.channel, socket.remotePort, ipcBusCommand.peer.id);
+                    if (ipcBusData.unsubscribeAll) {
+                        this._subscriptions.releaseAll(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.id);
                     }
                     else {
-                        this._subscriptions.release(ipcBusCommand.channel, socket.remotePort, ipcBusCommand.peer.id);
+                        this._subscriptions.release(ipcBusEvent.channel, socket.remotePort, ipcBusEvent.sender.id);
                     }
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_ALL: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    // const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Unsubscribe all '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    this._subscriptions.releasePeerId(socket.remotePort, ipcBusCommand.peer.id);
+                    this._subscriptions.releasePeerId(socket.remotePort, ipcBusEvent.sender.id);
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    // const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received send on channel '${ipcBusEvent.channel}' from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    // Send ipcBusCommand to subscribed connections
-                    this._subscriptions.forEachChannel(ipcBusCommand.channel, function (connData, channel) {
+                    // Send data to subscribed connections
+                    this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
+                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
                        connData.conn.write(buffer);
                     });
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on channel '${ipcBusCommand.channel}' (reply = '${ipcBusCommand.data.replyChannel}') from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
                     // Register on the replyChannel
-                    this._requestChannels.set(ipcBusCommand.data.replyChannel, socket);
+                    this._requestChannels.set(ipcBusData.replyChannel, socket);
 
-                    // Request ipcBusCommand to subscribed connections
-                    this._subscriptions.forEachChannel(ipcBusCommand.channel, function (connData, channel) {
+                    // Request data to subscribed connections
+                    this._subscriptions.forEachChannel(ipcBusEvent.channel, function (connData, channel) {
+                    //    BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE, ipcBusData, ipcBusEvent, data.args[2], connData.conn);
                         connData.conn.write(buffer);
                     });
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received response request on channel '${ipcBusCommand.channel}' (reply = '${ipcBusCommand.data.replyChannel}') from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}}`);
+                    const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received response request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}}`);
 
-                    let socket = this._requestChannels.get(ipcBusCommand.data.replyChannel);
+                    let socket = this._requestChannels.get(ipcBusData.replyChannel);
                     if (socket) {
-                        this._requestChannels.delete(ipcBusCommand.data.replyChannel);
-                        // Send ipcBusCommand to subscribed connections
+                        this._requestChannels.delete(ipcBusData.replyChannel);
+                        // Send data to subscribed connections
+                        // BaseIpc.Cmd.exec(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusData, ipcBusEvent, data.args[2], socket);
                         socket.write(buffer);
                     }
                     break;
                 }
                 case IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL: {
-                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received cancel request on channel '${ipcBusCommand.channel}' (reply = '${ipcBusCommand.data.replyChannel}') from peer #${ipcBusCommand.peer.id} - ${ipcBusCommand.peer.name}`);
+                    const ipcBusData: IpcBusData = data.args[0];
+                    const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = data.args[1];
+                    IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IPCBus:Broker] Received cancel request on channel '${ipcBusEvent.channel}' (reply = '${ipcBusData.replyChannel}') from peer #${ipcBusEvent.sender.id} - ${ipcBusEvent.sender.name}`);
 
-                    this._requestChannels.delete(ipcBusCommand.data.replyChannel);
+                    this._requestChannels.delete(ipcBusData.replyChannel);
                     break;
                 }
             }
