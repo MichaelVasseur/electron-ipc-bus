@@ -89,7 +89,10 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
         let bufferFooter = new Buffer(lenFooter);
         IpcPacketBuffer.writeFooter(bufferFooter, 0);
 
-        return Buffer.concat([bufferHeader, ...buffers, bufferFooter], len);
+        buffers.unshift(bufferHeader);
+        buffers.push(bufferFooter);
+
+        return Buffer.concat(buffers, len);
     }
 
     static from(data: any): Buffer {
