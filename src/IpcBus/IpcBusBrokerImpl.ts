@@ -8,7 +8,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 import { IpcBusCommonClient } from './IpcBusClient';
 import { IpcBusTransport, IpcBusCommand } from './IpcBusTransport';
 import { IpcBusTransportNode } from './IpcBusTransportNode';
-import { IpcPacket } from './Net/ipcPacket';
+import { IpcPacketBuffer } from './Net/ipcPacketBuffer';
 
 /** @internal */
 export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
@@ -165,7 +165,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     }
 
     private _onData(buffer: Buffer, socket: any, server: any): void {
-        let ipcBusCommand: IpcBusCommand = IpcPacket.toObject(buffer);
+        let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
         if (ipcBusCommand && ipcBusCommand.name) {
             switch (ipcBusCommand.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_CONNECT: {

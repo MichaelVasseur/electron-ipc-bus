@@ -15,7 +15,7 @@ interface IpcPacketHeader {
     size: number;
 }
 
-export class IpcPacket extends EventEmitter {
+export class IpcPacketBuffer extends EventEmitter {
 
     private _buffers: Buffer[];
     private _totalLength: number;
@@ -61,13 +61,13 @@ export class IpcPacket extends EventEmitter {
     }
 
     private static _getHeader(buffer: Buffer, offset: number): IpcPacketHeader {
-        return IpcPacket._getPacketHeader([buffer], offset);
+        return IpcPacketBuffer._getPacketHeader([buffer], offset);
     }
 
     static fromString(data: string, encoding?: string): Buffer {
         let len = data.length + headLength;
         let buffer = new Buffer(len);
-        IpcPacket._setHeader(buffer, 0, { type: objectS, size: len });
+        IpcPacketBuffer._setHeader(buffer, 0, { type: objectS, size: len });
         buffer.write(data, headLength, data.length, encoding);
         return buffer;
     }
@@ -75,7 +75,7 @@ export class IpcPacket extends EventEmitter {
     static fromBuffer(data: Buffer): Buffer {
         let len = data.length + headLength;
         let buffer = new Buffer(len);
-        IpcPacket._setHeader(buffer, 0, { type: objectB, size: len });
+        IpcPacketBuffer._setHeader(buffer, 0, { type: objectB, size: len });
         data.copy(buffer, headLength);
         return buffer;
     }
@@ -84,13 +84,13 @@ export class IpcPacket extends EventEmitter {
         let data = JSON.stringify(dataObject);
         let len = data.length + headLength;
         let buffer = new Buffer(len);
-        IpcPacket._setHeader(buffer, 0, { type: objectO, size: len });
+        IpcPacketBuffer._setHeader(buffer, 0, { type: objectO, size: len });
         buffer.write(data, headLength, data.length, 'utf8');
         return buffer;
     }
 
     static toObject(buffer: Buffer): any {
-        let ipcPacketHeader = IpcPacket._getHeader(buffer, 0);
+        let ipcPacketHeader = IpcPacketBuffer._getHeader(buffer, 0);
         if (ipcPacketHeader.type !== objectO) {
             return null;
         }
@@ -106,7 +106,7 @@ export class IpcPacket extends EventEmitter {
 
         let offset = 0;
         while (this._totalLength >= headLength) {
-            let ipcPacketHeader = IpcPacket._getPacketHeader(this._buffers, offset);
+            let ipcPacketHeader = IpcPacketBuffer._getPacketHeader(this._buffers, offset);
             // if packet size error
             if (!ipcPacketHeader) {
                 this._buffers = [];

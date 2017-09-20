@@ -2,15 +2,15 @@ import * as net from 'net';
 // import * as util from 'util';
 // import { EventEmitter } from 'events';
 import { IpcNet } from './ipcNet';
-import { IpcPacket } from './ipcPacket';
+import { IpcPacketBuffer } from './ipcPacketBuffer';
 
 export class IpcPacketNet extends IpcNet {
-  private _ipcPackets: Map<net.Socket, IpcPacket>;
+  private _ipcPackets: Map<net.Socket, IpcPacketBuffer>;
 
   constructor(options?: any) {
     super(options);
 
-    this._ipcPackets = new Map<net.Socket, IpcPacket>();
+    this._ipcPackets = new Map<net.Socket, IpcPacketBuffer>();
   }
 
 //   on(event: 'connect', handler: (socket: net.Socket) => void): this;
@@ -26,7 +26,7 @@ export class IpcPacketNet extends IpcNet {
 //   }
 
   protected _parseStream(socket: net.Socket, server?: net.Server) {
-    let ipcPacket = new IpcPacket();
+    let ipcPacket = new IpcPacketBuffer();
     this._ipcPackets.set(socket, ipcPacket);
 
     ipcPacket.on('packet', (buffer: Buffer) => {

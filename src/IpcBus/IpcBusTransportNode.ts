@@ -4,7 +4,7 @@ import * as IpcBusUtils from './IpcBusUtils';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
 import { IpcBusTransport, IpcBusCommand, IpcBusData } from './IpcBusTransport';
-import { IpcPacket } from './Net/ipcPacket';
+import { IpcPacketBuffer } from './Net/ipcPacketBuffer';
 
 // Implementation for Node process
 /** @internal */
@@ -64,7 +64,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     }
                 });
                 this._baseIpc.on('packet', (buffer: Buffer) => {
-                    let ipcBusCommand: IpcBusCommand = IpcPacket.toObject(buffer);
+                    let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
                     if (ipcBusCommand && ipcBusCommand.name) {
                         this._onEventReceived(ipcBusCommand);
                     }
@@ -94,7 +94,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
 
     protected _ipcPushCommand(ipcBusCommand: IpcBusCommand): void {
         if (this._busConn) {
-            let buffer = IpcPacket.fromObject(ipcBusCommand);
+            let buffer = IpcPacketBuffer.fromObject(ipcBusCommand);
             this._busConn.write(buffer);
         }
     }
