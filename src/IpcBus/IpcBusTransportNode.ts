@@ -1,4 +1,4 @@
-import { Ipc as BaseIpc } from './Net/ipc';
+import { IpcPacketNet as BaseIpc } from './Net/ipcPacketNet';
 
 import * as IpcBusUtils from './IpcBusUtils';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
@@ -63,7 +63,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
                         this._reset();
                     }
                 });
-                this._baseIpc.on('data', (buffer: Buffer) => {
+                this._baseIpc.on('packet', (buffer: Buffer) => {
                     let ipcBusCommand: IpcBusCommand = IpcPacket.toObject(buffer);
                     if (ipcBusCommand && ipcBusCommand.name) {
                         this._onEventReceived(ipcBusCommand);

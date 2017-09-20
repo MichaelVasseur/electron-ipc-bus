@@ -1,9 +1,8 @@
 import * as net from 'net';
 // import * as util from 'util';
 import { EventEmitter } from 'events';
-import { IpcPacket } from './ipcPacket';
 
-export class Ipc extends EventEmitter {
+export class IpcNet extends EventEmitter {
   private socketPath: string;
   private defaultPort: number;
   private defaultHost: string;
@@ -13,13 +12,10 @@ export class Ipc extends EventEmitter {
 
   private numReconnects: number;
 
-  private _ipcPackets: Map<net.Socket, IpcPacket>;
   private _socket: net.Socket;
 
   constructor(options?: any) {
     super();
-
-    this._ipcPackets = new Map<net.Socket, IpcPacket>();
 
     options = options || {};
 
@@ -32,18 +28,17 @@ export class Ipc extends EventEmitter {
     this.delayReconnect = options.delayReconnect != null ? options.delayReconnect : 3000;
   }
 
-  on(event: 'connect', handler: (socket: net.Socket) => void): this;
-  on(event: 'reconnect', handler: (socket: net.Socket) => void): this;
-  on(event: 'connection', handler: (socket: net.Socket, server: net.Server) => void): this;
-  on(event: 'listening', handler: (server: net.Server) => void): this;
-  on(event: 'close', handler: (err: Error, socket: net.Socket, server?: net.Server) => void): this;
-  on(event: 'error', handler: (err: Error) => void): this;
-  on(event: 'warn', handler: (err: Error) => void): this;
-  on(event: 'data', handler: (buffer: Buffer, socket: net.Socket, server?: net.Server) => void): this;
-  // on(event: 'packet', handler: (buffer: Buffer) => void): this;
-  on(event: string, handler: Function): this {
-    return super.on(event, handler);
-  }
+  // on(event: 'connect', handler: (socket: net.Socket) => void): this;
+  // on(event: 'reconnect', handler: (socket: net.Socket) => void): this;
+  // on(event: 'connection', handler: (socket: net.Socket, server: net.Server) => void): this;
+  // on(event: 'listening', handler: (server: net.Server) => void): this;
+  // on(event: 'close', handler: (err: Error, socket: net.Socket, server?: net.Server) => void): this;
+  // on(event: 'error', handler: (err: Error) => void): this;
+  // on(event: 'warn', handler: (err: Error) => void): this;
+  // on(event: 'data', handler: (buffer: Buffer, socket: net.Socket, server?: net.Server) => void): this;
+  // on(event: string, handler: Function): this {
+  //   return super.on(event, handler);
+  // }
 
   private _onSocketConnect(socket: net.Socket, port: number, host: string, cb: Function): void {
     socket.removeAllListeners('error');
@@ -245,11 +240,8 @@ export class Ipc extends EventEmitter {
   //   this.connect(port, host);
   // }
 
-  private _parseStream(socket: net.Socket, server?: net.Server) {
-    let ipcPacket = new IpcPacket();
-    this._ipcPackets.set(socket, ipcPacket);
-
-    ipcPacket.on('packet', (buffer: Buffer) => {
+  protected _parseStream(socket: net.Socket, server?: net.Server) {
+    socket.on('data', (buffer: Buffer) => {
       if (server) {
         this.emit('data', buffer, socket, server);
         // console.log('data-server', util.inspect(JSON.parse(buffer.toString())));
@@ -258,12 +250,6 @@ export class Ipc extends EventEmitter {
         this.emit('data', buffer, socket);
         // console.log('data', util.inspect(JSON.parse(buffer.toString())));
       }
-    });
-    socket.on('close', (had_error: any) => {
-      this._ipcPackets.delete(socket);
-    });
-    socket.on('data', (buffer: Buffer) => {
-      ipcPacket.handleData(buffer);
     });
   }
 }

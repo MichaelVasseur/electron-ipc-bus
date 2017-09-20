@@ -1,6 +1,6 @@
 //import { Buffer } from 'buffer';
 
-import { Ipc as BaseIpc } from './Net/ipc';
+import { IpcPacketNet as BaseIpc } from './Net/ipcPacketNet';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 import * as IpcBusUtils from './IpcBusUtils';
 // import * as util from 'util';
@@ -76,7 +76,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                         clearTimeout(timer);
                         this._baseIpc.on('connection', (socket: any, server: any) => this._onConnection(socket, server));
                         this._baseIpc.on('close', (err: any, socket: any, server: any) => this._onClose(err, socket, server));
-                        this._baseIpc.on('data', (buffer: any, socket: any, server: any) => this._onData(buffer, socket, server));
+                        this._baseIpc.on('packet', (buffer: any, socket: any, server: any) => this._onData(buffer, socket, server));
 
                         this._ipcBusBrokerClient.connect(`Broker_${process.pid}`)
                             .then(() => {

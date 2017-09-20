@@ -19,12 +19,12 @@ function startPerformance(type, bufferSize) {
     ++transaction;
     var typeCommandElt = document.querySelector('.typeCommand');
     var testParams =
-    {
-        transaction: transaction,
-        typeCommand: typeCommandElt.options[typeCommandElt.selectedIndex].text,
-        typeArgs: type,
-        bufferSize: bufferSize
-    };
+        {
+            transaction: transaction,
+            typeCommand: typeCommandElt.options[typeCommandElt.selectedIndex].text,
+            typeArgs: type,
+            bufferSize: bufferSize
+        };
     processToMaster.send('start-performance-tests', testParams);
     return transaction;
 }
@@ -33,19 +33,29 @@ var results = new Map;
 var delays = [];
 
 function doClear(event) {
-     var table = document.getElementById('perfResults');
-     while(table.rows.length > 1) {
-          table.deleteRow(1);
-     }
-     results.clear();
-     delays = [];
+    var table = document.getElementById('perfResults');
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+    results.clear();
+    delays = [];
 }
 
 function doSave() {
     let cvsLike = [];
+    {
+        let cvsRow = [];
+        cvsRow.push(`Type`);
+        cvsRow.push(`Link`);
+        cvsRow.push(`Ref`);
+        cvsRow.push('Time');
+        cvsLike.push(cvsRow);
+    }
     results.forEach((result) => {
         if (result.start && result.stop) {
             let cvsRow = [];
+            cvsRow.push(`${result.start.test.typeCommand} ${result.start.test.typeArgs} (${result.start.test.bufferSize})`);
+            cvsRow.push(`${result.start.type} => ${result.stop.type}`);
             cvsRow.push(`${result.start.test.typeCommand} ${result.start.test.typeArgs} (${result.start.test.bufferSize}) ${result.start.type} => ${result.stop.type}`);
             cvsRow.push(result.delay);
             cvsLike.push(cvsRow);
@@ -69,8 +79,8 @@ function doTraceEnable(event) {
 
 function doSort(event) {
     var table = document.getElementById('perfResults');
-    while(table.rows.length > 1) {
-         table.deleteRow(1);
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
     }
     delays.forEach((delay) => {
         onIPCBus_TestPerformanceResult(delay);
@@ -80,11 +90,11 @@ function doSort(event) {
 function doAutomaticTests(event) {
     doClear(null);
     let tests = [];
-    [100, 1000, 10000, 100000, 1000000, 10000000].forEach((size) => {
-        for(let occ = 0; occ < 3; ++occ) {
-            tests.push({size: size, type: 'string' });
-            tests.push({size: size, type: 'object' });
-            tests.push({size: size, type: 'args' });
+    [1000000, 3000000, 5000000, 7000000, 10000000].forEach((size) => {
+        for (let occ = 0; occ < 3; ++occ) {
+            tests.push({ size: size, type: 'string' });
+            tests.push({ size: size, type: 'object' });
+            tests.push({ size: size, type: 'args' });
         }
     });
     let i = 0;
@@ -116,7 +126,7 @@ function onIPCBus_TestPerformanceStop(ipcBusEvent, msgTestStop) {
     let result = results.get(uuid);
     if (!result) {
         result = {};
-        results.set(uuid,result);
+        results.set(uuid, result);
     }
     result.stop = msgTestStop;
     if (result.start) {
@@ -133,7 +143,7 @@ function onIPCBus_AddTestPerformanceResult(result) {
         delays.sort((l, r) => l.delay - r.delay);
     }
     onIPCBus_TestPerformanceResult(result);
-}    
+}
 
 function onIPCBus_TestPerformanceResult(result) {
     var msgTestStart = result.start;
@@ -156,7 +166,7 @@ function onIPCBus_TestPerformanceResult(result) {
         var q = (delays.length / 5);
         var q1 = Math.floor(q);
         var q2 = Math.floor(q * 2);
-        var q3 = Math.floor(q * 3); 
+        var q3 = Math.floor(q * 3);
         var q4 = Math.floor(q * 4);
 
         for (var i = 1; i < table.rows.length; ++i) {
@@ -165,19 +175,19 @@ function onIPCBus_TestPerformanceResult(result) {
             if (delay <= delays[q1].delay) {
                 curRow.className = 'success';
                 continue;
-            } 
+            }
             if (delay <= delays[q2].delay) {
                 curRow.className = 'info';
                 continue;
-            } 
+            }
             if (delay >= delays[q4].delay) {
                 curRow.className = 'danger';
                 continue;
-            } 
+            }
             if (delay >= delays[q3].delay) {
                 curRow.className = 'warning';
                 continue;
-            } 
+            }
             curRow.className = '';
         }
 
