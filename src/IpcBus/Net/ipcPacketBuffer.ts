@@ -19,12 +19,28 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     static fromNumber(dataNumber: number): Buffer {
-        let data = JSON.stringify(dataNumber);
-        let len = headerHelpers.NumberHeaderLength + data.length + headerHelpers.FooterLength;
-        let buffer = new Buffer(len);
-        let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Number, buffer, 0);
-        offset = buffer.writeUInt32LE(len, offset);
-        offset += buffer.write(data, offset, data.length, 'utf8');
+        let buffer: Buffer;
+        let offset = 0;
+        let absDataNumber = Math.abs(dataNumber);
+        // an integer
+        if ((Math.floor(dataNumber) === dataNumber) && (absDataNumber <= 0xFFFFFFFF)) {
+            buffer = new Buffer(headerHelpers.IntegerHeaderLength + 4 + headerHelpers.FooterLength);
+            if (dataNumber < 0) {
+                // negative integer
+                offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.NegativeInteger, buffer, 0);
+            } else {
+                // positive integer
+                offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.PositiveInteger, buffer, 0);
+            }
+            offset = buffer.writeUInt32LE(absDataNumber, offset);
+        }
+        // Either this is not an integer or it is outside of a 32-bit integer.
+        // Store as a double.
+        else {
+            buffer = new Buffer(headerHelpers.IntegerHeaderLength + 8 + headerHelpers.FooterLength);
+            offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Double, buffer, 0);
+            offset = buffer.writeDoubleLE(dataNumber, offset);
+        }
         IpcPacketBuffer.writeFooter(buffer, offset);
         return buffer;
     }
@@ -146,7 +162,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
                 arg = IpcPacketBuffer._toBuffer(header, bufferReader);
                 break;
             }
-            case headerHelpers.BufferType.Number: {
+            case headerHelpers.BufferType.PositiveInteger:
+            case headerHelpers.BufferType.NegativeInteger:
+            case headerHelpers.BufferType.Double: {
                 arg = IpcPacketBuffer._toNumber(header, bufferReader);
                 break;
             }
@@ -167,9 +185,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toBoolean(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): boolean {
-        let offset = bufferReader.offset + header.headerSize;
+        let offsetContent = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return (bufferReader.buffer[offset] === 0xFF);
+        return (bufferReader.buffer[offsetContent] === 0xFF);
     }
 
     static toNumber(buffer: Buffer, offset?: number): number {
@@ -181,9 +199,19 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toNumber(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): number {
-        let offset = bufferReader.offset + header.headerSize;
+        let offsetContent = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return JSON.parse(bufferReader.buffer.toString('utf8', offset, offset + header.contentSize));
+
+        switch (header.type) {
+            case headerHelpers.BufferType.Double:
+                return bufferReader.buffer.readDoubleBE(offsetContent);
+            case headerHelpers.BufferType.NegativeInteger:
+                return -bufferReader.buffer.readUInt32BE(offsetContent);
+            case headerHelpers.BufferType.PositiveInteger:
+                return +bufferReader.buffer.readUInt32BE(offsetContent);
+            default :
+                return 0;
+        }
     }
 
     static toObject(buffer: Buffer, offset?: number): any {
@@ -195,9 +223,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toObject(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
-        let offset = bufferReader.offset + header.headerSize;
+        let offsetContent = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return JSON.parse(bufferReader.buffer.toString('utf8', offset, offset + header.contentSize));
+        return JSON.parse(bufferReader.buffer.toString('utf8', offsetContent, offsetContent + header.contentSize));
     }
 
     static toString(buffer: Buffer, offset?: number, encoding?: string): string {
@@ -209,9 +237,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toString(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader, encoding?: string): string {
-        let offset = bufferReader.offset + header.headerSize;
+        let offsetContent = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return bufferReader.buffer.toString(encoding, offset, offset + header.contentSize);
+        return bufferReader.buffer.toString(encoding, offsetContent, offsetContent + header.contentSize);
     }
 
     static toBuffer(buffer: Buffer, offset?: number): Buffer {
@@ -223,9 +251,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toBuffer(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): Buffer {
-        let offset = bufferReader.offset + header.headerSize;
+        let offsetContent = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return bufferReader.buffer.slice(offset, offset + header.contentSize);
+        return bufferReader.buffer.slice(offsetContent, offsetContent + header.contentSize);
     }
 
     static toArrayAt(index: number, buffer: Buffer, offset?: number): any {
