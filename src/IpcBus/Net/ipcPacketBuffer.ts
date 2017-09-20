@@ -20,7 +20,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
 
     static fromNumber(dataNumber: number): Buffer {
         let data = JSON.stringify(dataNumber);
-        let len = headerHelpers.HeaderLength + data.length + headerHelpers.FooterLength;
+        let len = headerHelpers.NumberHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Number, buffer, 0);
         offset += buffer.writeUInt32LE(data.length, offset);
@@ -30,7 +30,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     static fromBoolean(dataBoolean: boolean): Buffer {
-        let len = headerHelpers.HeaderLength + 1 + headerHelpers.FooterLength;
+        let len = headerHelpers.BooleanHeaderLength + 1 + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Boolean, buffer, 0);
         buffer[offset++] = dataBoolean ? 0xFF : 0x00;
@@ -39,7 +39,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     static fromString(data: string, encoding?: string): Buffer {
-        let len = headerHelpers.HeaderLength + data.length + headerHelpers.FooterLength;
+        let len = headerHelpers.StringHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.String, buffer, 0);
         offset += buffer.writeUInt32LE(data.length, offset);
@@ -49,7 +49,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     static fromBuffer(data: Buffer): Buffer {
-        let len = headerHelpers.HeaderLength + 4 + data.length + headerHelpers.FooterLength;
+        let len = headerHelpers.BufferHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Buffer, buffer, 0);
         offset += buffer.writeUInt32LE(data.length, offset);
@@ -60,7 +60,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
 
     static fromObject(dataObject: Object): Buffer {
         let data = JSON.stringify(dataObject);
-        let len = headerHelpers.HeaderLength + 4 + data.length + headerHelpers.FooterLength;
+        let len = headerHelpers.ObjectHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Object, buffer, 0);
         offset += buffer.writeUInt32LE(data.length, offset);
@@ -77,7 +77,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
             buffersLength += buffer.length;
             buffers.push(buffer);
         });
-        let lenHeader = headerHelpers.HeaderLength + 4;
+        let lenHeader = headerHelpers.ArrayHeaderLength;
         let lenFooter = headerHelpers.FooterLength;
 
         let len = lenHeader + lenFooter + buffersLength;
@@ -89,10 +89,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
         let bufferFooter = new Buffer(lenFooter);
         IpcPacketBuffer.writeFooter(bufferFooter, 0);
 
-        buffers.unshift(bufferHeader);
-        buffers.push(bufferFooter);
-
-        return Buffer.concat(buffers, len);
+        return Buffer.concat([bufferHeader, ...buffers, bufferFooter], len);
     }
 
     static from(data: any): Buffer {

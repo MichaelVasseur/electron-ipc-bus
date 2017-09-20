@@ -1,9 +1,15 @@
 import { Buffer } from 'buffer';
 
-export const headerSeparator: number = '['.charCodeAt(0);
+const headerSeparator: number = '['.charCodeAt(0);
 export const footerSeparator: number = ']'.charCodeAt(0);
 export const HeaderLength: number = 2;
 export const FooterLength: number = 1;
+export const NumberHeaderLength: number = HeaderLength + 4;
+export const StringHeaderLength: number = HeaderLength + 4;
+export const BufferHeaderLength: number = HeaderLength + 4;
+export const ArrayHeaderLength: number = HeaderLength + 4;
+export const ObjectHeaderLength: number = HeaderLength + 4;
+export const BooleanHeaderLength: number = HeaderLength;
 
 export enum BufferType {
     NotValid = 'X'.charCodeAt(0),
