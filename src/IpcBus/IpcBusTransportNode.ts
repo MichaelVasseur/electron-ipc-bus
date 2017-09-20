@@ -64,9 +64,13 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     }
                 });
                 this._baseIpc.on('packet', (buffer: Buffer) => {
-                    let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
+                    // 1
+                    // let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
+                    // 2
+                    let args = IpcPacketBuffer.toArray(buffer);
+                    let ipcBusCommand: IpcBusCommand = args.shift();
                     if (ipcBusCommand && ipcBusCommand.name) {
-                        this._onEventReceived(ipcBusCommand, ipcBusCommand.args || []);
+                        this._onEventReceived(ipcBusCommand, args);
                     }
                 });
                 this._baseIpc.on('close', (conn: any) => {
@@ -90,19 +94,19 @@ export class IpcBusTransportNode extends IpcBusTransport {
 
     protected _ipcPushCommand(ipcBusCommand: IpcBusCommand, args?: any[]): void {
         if (this._busConn) {
-            if (args) {
-                ipcBusCommand.args = args;
-            }
-            let buffer = IpcPacketBuffer.fromObject(ipcBusCommand);
-            this._busConn.write(buffer);
             // if (args) {
-            //     args = [ipcBusCommand, ...args];
+            //     ipcBusCommand.args = args;
             // }
-            // else {
-            //     args = [ipcBusCommand];
-            // }
-            // let buffer = IpcPacketBuffer.fromArray(args);
-            // this._busConn.write(args);
+            // let buffer = IpcPacketBuffer.fromObject(ipcBusCommand);
+            // this._busConn.write(buffer);
+            if (args) {
+                args = [ipcBusCommand, ...args];
+            }
+            else {
+                args = [ipcBusCommand];
+            }
+            let buffer = IpcPacketBuffer.fromArray(args);
+            this._busConn.write(buffer);
         }
     }
 }
