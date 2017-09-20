@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
 // import { IpcPacketBuffer, IpcPacketBufferHeader, headerLength } from './ipcPacketBuffer';
-import { IpcPacketBufferHeader } from './ipcPacketBuffer';
+import { IpcPacketBufferHeader } from './ipcPacketBufferHeader';
 
 export class IpcPacketBufferDecoder extends EventEmitter {
     private _buffers: Buffer[];
