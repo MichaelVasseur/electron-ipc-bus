@@ -190,7 +190,7 @@ export class IpcBusBridgeImpl extends IpcBusTransportNode implements IpcBusInter
             default :
                 break;
         }
-        this._ipcPushCommand({name: command, channel: channel, peer: ipcBusPeer, data: ipcBusData, args: args});
+        this._ipcPushCommand({name: command, channel: channel, peer: ipcBusPeer, data: ipcBusData}, args);
     }
 }
 
