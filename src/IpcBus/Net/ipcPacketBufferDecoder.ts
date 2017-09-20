@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
-import { IpcPacketBuffer, headerLength } from './ipcPacketBuffer';
+// import { IpcPacketBuffer, IpcPacketBufferHeader, headerLength } from './ipcPacketBuffer';
+import { IpcPacketBufferHeader } from './ipcPacketBuffer';
 
 export class IpcPacketBufferDecoder extends EventEmitter {
     private _buffers: Buffer[];
@@ -27,12 +28,15 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         let packets: Buffer[] = [];
 
         let offset = 0;
-        while (this._totalLength >= headerLength) {
-            let header = IpcPacketBuffer._getPacketHeader(this._buffers, offset);
+        while (this._totalLength > 0) {
+            let header = IpcPacketBufferHeader.getPacketHeader(this._buffers, offset);
             // if packet size error
             if (!header) {
                 this._buffers = [];
                 this.emit('error', new Error('Get invalid packet size'));
+                break;
+            }
+            if (!header.isAvailable()) {
                 break;
             }
             let packetSize = header.size;

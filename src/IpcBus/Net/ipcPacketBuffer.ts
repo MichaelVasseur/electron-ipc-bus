@@ -10,6 +10,7 @@ const objectBuffer: number = 'B'.charCodeAt(0);
 const objectArray: number = 'A'.charCodeAt(0);
 const objectBoolean: number = 'b'.charCodeAt(0);
 const objectNumber: number = 'n'.charCodeAt(0);
+const objectNotAvailable: number = 'x'.charCodeAt(0);
 
 class BufferReader {
     offset: number;
@@ -28,6 +29,10 @@ export class IpcPacketBufferHeader {
     constructor(type: number, size: number) {
         this.type = type;
         this.size = size;
+    }
+
+    isAvailable(): boolean {
+        return this.type !== objectNotAvailable;
     }
 
     isArray(): boolean {
@@ -53,16 +58,8 @@ export class IpcPacketBufferHeader {
     isBoolean(): boolean {
         return this.type === objectBoolean;
     }
-}
 
-export class IpcPacketBuffer extends IpcPacketBufferHeader {
-    buffer: Buffer;
-
-    constructor(type: number, size: number) {
-        super(type, size);
-    }
-
-    static _setHeader(buffer: Buffer, offset: number, header: IpcPacketBufferHeader) {
+    static setHeader(buffer: Buffer, offset: number, header: IpcPacketBufferHeader) {
         let incr = offset;
         buffer[incr++] = separator;
         buffer[incr++] = header.type;
@@ -72,10 +69,21 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
         // assert(incr === offset + headerLength - 1);
     }
 
-    static _getPacketHeader(buffers: Buffer[], offset: number): IpcPacketBufferHeader {
+    static getPacketHeader(buffers: Buffer[], offset: number): IpcPacketBufferHeader {
         let buffer = buffers[0];
-        if (offset + buffer.length < headerLength) {
-            buffer = Buffer.concat(buffers, offset + headerLength);
+        const offsetHeaderLength =  offset + headerLength;
+        // Buffer is too short for containing a header
+        if (buffer.length < offsetHeaderLength) {
+            // No hope, there is only one buffer
+            if (buffers.length === 1) {
+                return new IpcPacketBufferHeader(objectNotAvailable, -1);
+            }
+            // Create a buffer buffers with the minium size
+            buffer = Buffer.concat(buffers, offsetHeaderLength);
+            // Still not enough !
+            if (buffer.length < offsetHeaderLength) {
+                return new IpcPacketBufferHeader(objectNotAvailable, -1);
+            }
         }
         let incr = offset;
         if (buffer[incr++] !== separator) {
@@ -90,15 +98,23 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
         return new IpcPacketBufferHeader(type, len);
     }
 
-    static _getHeader(buffer: Buffer, offset: number): IpcPacketBufferHeader {
-        return IpcPacketBuffer._getPacketHeader([buffer], offset);
+    static getHeader(buffer: Buffer, offset: number): IpcPacketBufferHeader {
+        return IpcPacketBufferHeader.getPacketHeader([buffer], offset);
+    }
+}
+
+export class IpcPacketBuffer extends IpcPacketBufferHeader {
+    buffer: Buffer;
+
+    constructor(type: number, size: number) {
+        super(type, size);
     }
 
     static fromNumber(dataNumber: number): Buffer {
         let data = JSON.stringify(dataNumber);
         let len = data.length + headerLength;
         let buffer = new Buffer(len);
-        IpcPacketBuffer._setHeader(buffer, 0, new IpcPacketBufferHeader(objectNumber, len));
+        IpcPacketBufferHeader.setHeader(buffer, 0, new IpcPacketBufferHeader(objectNumber, len));
         buffer.write(data, headerLength, data.length, 'utf8');
         return buffer;
     }
@@ -107,7 +123,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
         let data = JSON.stringify(dataBoolean);
         let len = data.length + headerLength;
         let buffer = new Buffer(len);
-        IpcPacketBuffer._setHeader(buffer, 0, new IpcPacketBufferHeader(objectBoolean, len));
+        IpcPacketBufferHeader.setHeader(buffer, 0, new IpcPacketBufferHeader(objectBoolean, len));
         buffer.write(data, headerLength, data.length, 'utf8');
         return buffer;
     }
@@ -115,7 +131,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     static fromString(data: string, encoding?: string): Buffer {
         let len = data.length + headerLength;
         let buffer = new Buffer(len);
-        IpcPacketBuffer._setHeader(buffer, 0, new IpcPacketBufferHeader(objectString, len));
+        IpcPacketBufferHeader.setHeader(buffer, 0, new IpcPacketBufferHeader(objectString, len));
         buffer.write(data, headerLength, data.length, encoding);
         return buffer;
     }
@@ -123,7 +139,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     static fromBuffer(data: Buffer): Buffer {
         let len = data.length + headerLength;
         let buffer = new Buffer(len);
-        IpcPacketBuffer._setHeader(buffer, 0, new IpcPacketBufferHeader(objectBuffer, len));
+        IpcPacketBufferHeader.setHeader(buffer, 0, new IpcPacketBufferHeader(objectBuffer, len));
         data.copy(buffer, headerLength);
         return buffer;
     }
@@ -132,7 +148,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
         let data = JSON.stringify(dataObject);
         let len = data.length + headerLength;
         let buffer = new Buffer(len);
-        IpcPacketBuffer._setHeader(buffer, 0, new IpcPacketBufferHeader(objectObject, len));
+        IpcPacketBufferHeader.setHeader(buffer, 0, new IpcPacketBufferHeader(objectObject, len));
         buffer.write(data, headerLength, data.length, 'utf8');
         return buffer;
     }
@@ -147,7 +163,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
         });
         let len = BufferLength + headerLength;
         let bufferHeader = new Buffer(headerLength);
-        IpcPacketBuffer._setHeader(bufferHeader, 0, new IpcPacketBufferHeader(objectArray, len));
+        IpcPacketBufferHeader.setHeader(bufferHeader, 0, new IpcPacketBufferHeader(objectArray, len));
         buffers.unshift(bufferHeader);
         return Buffer.concat(buffers, len);
     }
@@ -185,7 +201,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
 
     private static _to(bufferReader: BufferReader): any {
         let arg: any;
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         switch (header.type) {
             case objectArray: {
                 arg = IpcPacketBuffer._toArray(bufferReader);
@@ -220,7 +236,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     }
 
     private static _toBoolean(bufferReader: BufferReader): boolean {
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isBoolean() === false) {
             return null;
         }
@@ -234,7 +250,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     }
 
     private static _toNumber(bufferReader: BufferReader): number {
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isNumber() === false) {
             return null;
         }
@@ -248,7 +264,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     }
 
     private static _toObject(bufferReader: BufferReader): any {
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isObject() === false) {
             return null;
         }
@@ -263,7 +279,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
 
     private static _toString(bufferReader: BufferReader, encoding?: string): string {
         encoding = encoding || 'utf8';
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isString() === false) {
             return null;
         }
@@ -277,7 +293,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     }
 
     private static _toBuffer(bufferReader: BufferReader): Buffer {
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isBuffer() === false) {
             return null;
         }
@@ -291,13 +307,13 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     }
 
     private static _toArrayAt(index: number, bufferReader: BufferReader): any {
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isArray() === false) {
             return null;
         }
         bufferReader.offset += headerLength;
         while ((index > 0) && (bufferReader.offset < header.size)) {
-            let headerArg = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+            let headerArg = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
             bufferReader.offset += headerArg.size;
             --index;
         }
@@ -313,7 +329,7 @@ export class IpcPacketBuffer extends IpcPacketBufferHeader {
     }
 
     private static _toArray(bufferReader: BufferReader): any[] {
-        let header = IpcPacketBuffer._getHeader(bufferReader.buffer, bufferReader.offset);
+        let header = IpcPacketBufferHeader.getHeader(bufferReader.buffer, bufferReader.offset);
         if (header.isArray() === false) {
             return null;
         }
