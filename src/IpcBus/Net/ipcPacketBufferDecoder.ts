@@ -126,7 +126,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         let buffers: Buffer[] = [];
         let BufferLength = 0;
         args.forEach((arg) => {
-            let buffer = IpcPacketBufferDecoder.from(args);
+            let buffer = IpcPacketBufferDecoder.from(arg);
             BufferLength += buffer.length;
             buffers.push(buffer);
         });
@@ -186,7 +186,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         }
         let offset = bufferReader.offset;
         bufferReader.offset += header.size;
-        return JSON.parse(bufferReader.buffer.toString('utf8', offset + headerLength, header.size));
+        return JSON.parse(bufferReader.buffer.toString('utf8', offset + headerLength, offset + header.size));
     }
 
     static toString(buffer: Buffer, offset?: number, encoding?: string): string {
@@ -201,7 +201,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         }
         let offset = bufferReader.offset;
         bufferReader.offset += header.size;
-        return bufferReader.buffer.toString(encoding, offset + headerLength);
+        return bufferReader.buffer.toString(encoding, offset + headerLength, offset + header.size);
     }
 
     static toBuffer(buffer: Buffer, offset?: number): Buffer {
@@ -215,7 +215,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         }
         let offset = bufferReader.offset;
         bufferReader.offset += header.size;
-        return bufferReader.buffer.slice(offset + headerLength);
+        return bufferReader.buffer.slice(offset + headerLength, offset + header.size);
     }
 
     static toArray(buffer: Buffer, offset?: number): any[] {
