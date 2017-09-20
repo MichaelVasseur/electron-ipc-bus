@@ -31,15 +31,15 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         while (this._totalLength > 0) {
             let header = IpcPacketBufferHeader.getPacketHeader(this._buffers, offset);
             // if packet size error
-            if (!header) {
+            if (!header.isValid()) {
                 this._buffers = [];
                 this.emit('error', new Error('Get invalid packet size'));
                 break;
             }
-            if (!header.isAvailable()) {
+            if (header.partial) {
                 break;
             }
-            let packetSize = header.size;
+            let packetSize = header.packetSize;
             let packet: Buffer;
             // if already get packet
             if (this._totalLength >= packetSize) {
@@ -67,7 +67,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
                 this.emit('packet', packet);
 
                 // Beware, take the original size here
-                this._totalLength -= header.size;
+                this._totalLength -= header.packetSize;
                 offset += packetSize;
             }
             else {
