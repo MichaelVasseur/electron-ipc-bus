@@ -23,7 +23,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
         let len = headerHelpers.NumberHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Number, buffer, 0);
-        offset += buffer.writeUInt32LE(data.length, offset);
+        offset = buffer.writeUInt32LE(len, offset);
         offset += buffer.write(data, offset, data.length, 'utf8');
         IpcPacketBuffer.writeFooter(buffer, offset);
         return buffer;
@@ -42,7 +42,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
         let len = headerHelpers.StringHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.String, buffer, 0);
-        offset += buffer.writeUInt32LE(data.length, offset);
+        offset = buffer.writeUInt32LE(len, offset);
         offset += buffer.write(data, offset, data.length, encoding);
         IpcPacketBuffer.writeFooter(buffer, offset);
         return buffer;
@@ -52,7 +52,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
         let len = headerHelpers.BufferHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Buffer, buffer, 0);
-        offset += buffer.writeUInt32LE(data.length, offset);
+        offset = buffer.writeUInt32LE(len, offset);
         offset += data.copy(buffer, offset);
         IpcPacketBuffer.writeFooter(buffer, offset);
         return buffer;
@@ -63,7 +63,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
         let len = headerHelpers.ObjectHeaderLength + data.length + headerHelpers.FooterLength;
         let buffer = new Buffer(len);
         let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Object, buffer, 0);
-        offset += buffer.writeUInt32LE(data.length, offset);
+        offset = buffer.writeUInt32LE(len, offset);
         offset += buffer.write(data, offset, data.length, 'utf8');
         IpcPacketBuffer.writeFooter(buffer, offset);
         return buffer;
@@ -84,7 +84,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
 
         let bufferHeader = new Buffer(lenHeader);
         let offsetHeader = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Array, bufferHeader, 0);
-        offsetHeader += bufferHeader.writeUInt32LE(len, offsetHeader);
+        offsetHeader = bufferHeader.writeUInt32LE(len, offsetHeader);
 
         let bufferFooter = new Buffer(lenFooter);
         IpcPacketBuffer.writeFooter(bufferFooter, 0);
@@ -164,7 +164,7 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toBoolean(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): boolean {
-        let offset = bufferReader.offset;
+        let offset = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
         return (bufferReader.buffer[offset] === 0xFF);
     }
@@ -178,9 +178,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toNumber(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): number {
-        let offset = bufferReader.offset;
+        let offset = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return JSON.parse(bufferReader.buffer.toString('utf8', offset + header.headerSize, offset + header.contentSize));
+        return JSON.parse(bufferReader.buffer.toString('utf8', offset, offset + header.contentSize));
     }
 
     static toObject(buffer: Buffer, offset?: number): any {
@@ -192,9 +192,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toObject(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
-        let offset = bufferReader.offset;
+        let offset = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return JSON.parse(bufferReader.buffer.toString('utf8', offset + header.headerSize, offset + header.contentSize));
+        return JSON.parse(bufferReader.buffer.toString('utf8', offset, offset + header.contentSize));
     }
 
     static toString(buffer: Buffer, offset?: number, encoding?: string): string {
@@ -206,9 +206,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toString(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader, encoding?: string): string {
-        let offset = bufferReader.offset;
+        let offset = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return bufferReader.buffer.toString(encoding, offset + header.headerSize, offset + header.contentSize);
+        return bufferReader.buffer.toString(encoding, offset, offset + header.contentSize);
     }
 
     static toBuffer(buffer: Buffer, offset?: number): Buffer {
@@ -220,9 +220,9 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toBuffer(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): Buffer {
-        let offset = bufferReader.offset;
+        let offset = bufferReader.offset + header.headerSize;
         bufferReader.offset += header.packetSize;
-        return bufferReader.buffer.slice(offset + header.headerSize, offset + header.contentSize);
+        return bufferReader.buffer.slice(offset, offset + header.contentSize);
     }
 
     static toArrayAt(index: number, buffer: Buffer, offset?: number): any {
@@ -235,14 +235,15 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
 
     private static _toArrayAt(header: headerHelpers.IpcPacketBufferHeader, index: number, bufferReader: BufferReader): any {
         bufferReader.offset += header.headerSize;
-        let headerArg: headerHelpers.IpcPacketBufferHeader;
-        while ((index > 0) && (bufferReader.offset < header.contentSize)) {
-            headerArg = new headerHelpers.IpcPacketBufferHeader(bufferReader.buffer, bufferReader.offset);
+        let offsetContentSize = bufferReader.offset + header.contentSize;
+        while ((index > 0) && (bufferReader.offset < offsetContentSize)) {
+            let headerArg = new headerHelpers.IpcPacketBufferHeader(bufferReader.buffer, bufferReader.offset);
             bufferReader.offset += headerArg.packetSize;
             --index;
         }
         let arg: any;
         if (index === 0) {
+            let headerArg = new headerHelpers.IpcPacketBufferHeader(bufferReader.buffer, bufferReader.offset);
             arg = IpcPacketBuffer._to(headerArg, bufferReader);
         }
         return arg;
@@ -257,9 +258,10 @@ export class IpcPacketBuffer { // extends headerHelpers.headerHelpers.IpcPacketB
     }
 
     private static _toArray(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any[] {
-        let args = [];
         bufferReader.offset += header.headerSize;
-        while (bufferReader.offset < header.contentSize) {
+        let offsetContentSize = bufferReader.offset + header.contentSize;
+        let args = [];
+        while (bufferReader.offset < offsetContentSize) {
             let header = new headerHelpers.IpcPacketBufferHeader(bufferReader.buffer, bufferReader.offset);
             let arg = IpcPacketBuffer._to(header, bufferReader);
             args.push(arg);

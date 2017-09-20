@@ -28,7 +28,10 @@ export class IpcPacketBufferHeader {
     headerSize: number;
     partial: boolean;
 
-    constructor(buffer: Buffer, offset: number) {
+    constructor(buffer: Buffer, offset?: number) {
+        if (offset == null) {
+            offset = 0;
+        }
         this.partial = false;
         this.type = BufferType.NotValid;
         if (buffer[offset++] === headerSeparator) {
@@ -44,22 +47,22 @@ export class IpcPacketBufferHeader {
             case BufferType.String:
             case BufferType.Buffer:
             case BufferType.Number: {
-                this.headerSize = HeaderLength + 4;
+                this.headerSize = ObjectHeaderLength;
                 if (offset + 4 >= buffer.length) {
                     this.partial = true;
                 }
                 else {
-                    this.contentSize = buffer.readUInt32LE(offset);
+                    this.packetSize = buffer.readUInt32LE(offset);
                 }
                 break;
             }
             case BufferType.Boolean: {
-                this.headerSize = HeaderLength + 1;
+                this.headerSize = BooleanHeaderLength;
                 if (offset + 1 >= buffer.length) {
                     this.partial = true;
                 }
                 else {
-                    this.contentSize = 1;
+                    this.packetSize = this.headerSize + 1 + FooterLength;
                 }
                 break;
             }
@@ -67,8 +70,8 @@ export class IpcPacketBufferHeader {
                 this.type = BufferType.NotValid;
                 break;
         }
-        if (this.contentSize > 0) {
-            this.packetSize = this.contentSize + FooterLength + this.headerSize;
+        if (this.packetSize > 0) {
+            this.contentSize = this.packetSize - FooterLength - this.headerSize;
         }
     }
 
