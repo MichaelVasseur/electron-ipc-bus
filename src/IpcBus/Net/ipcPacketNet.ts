@@ -2,15 +2,15 @@ import * as net from 'net';
 // import * as util from 'util';
 // import { EventEmitter } from 'events';
 import { IpcNet } from './ipcNet';
-import { IpcPacketBuffer } from './ipcPacketBuffer';
+import { IpcPacketBufferDecoder } from './ipcPacketBufferDecoder';
 
 export class IpcPacketNet extends IpcNet {
-  private _ipcPackets: Map<net.Socket, IpcPacketBuffer>;
+  private _ipcPacketDecoders: Map<net.Socket, IpcPacketBufferDecoder>;
 
   constructor(options?: any) {
     super(options);
 
-    this._ipcPackets = new Map<net.Socket, IpcPacketBuffer>();
+    this._ipcPacketDecoders = new Map<net.Socket, IpcPacketBufferDecoder>();
   }
 
 //   on(event: 'connect', handler: (socket: net.Socket) => void): this;
@@ -26,10 +26,10 @@ export class IpcPacketNet extends IpcNet {
 //   }
 
   protected _parseStream(socket: net.Socket, server?: net.Server) {
-    let ipcPacket = new IpcPacketBuffer();
-    this._ipcPackets.set(socket, ipcPacket);
+    let ipcPacketDecoders = new IpcPacketBufferDecoder();
+    this._ipcPacketDecoders.set(socket, ipcPacketDecoders);
 
-    ipcPacket.on('packet', (buffer: Buffer) => {
+    ipcPacketDecoders.on('packet', (buffer: Buffer) => {
       if (server) {
         this.emit('packet', buffer, socket, server);
         // console.log('data-server', util.inspect(JSON.parse(buffer.toString())));
@@ -40,10 +40,10 @@ export class IpcPacketNet extends IpcNet {
       }
     });
     socket.on('close', (had_error: any) => {
-      this._ipcPackets.delete(socket);
+      this._ipcPacketDecoders.delete(socket);
     });
     socket.on('data', (buffer: Buffer) => {
-      ipcPacket.handleData(buffer);
+      ipcPacketDecoders.handleData(buffer);
     });
   }
 }
