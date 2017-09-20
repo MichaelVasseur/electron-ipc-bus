@@ -1,5 +1,5 @@
 // import { Buffer } from 'buffer';
-import { EventEmitter } from 'events';
+// import { EventEmitter } from 'events';
 import { IpcPacketBufferDecoder } from './ipcPacketBufferDecoder';
 // import * as net from 'net';
 
