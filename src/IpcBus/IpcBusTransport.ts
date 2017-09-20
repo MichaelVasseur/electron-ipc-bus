@@ -48,12 +48,12 @@ export abstract class IpcBusTransport {
         return this._ipcBusPeer;
     }
 
-    protected _onEventReceived(ipcBusCommand: IpcBusCommand) {
+    protected _onEventReceived(ipcBusCommand: IpcBusCommand, args: any[]) {
         switch (ipcBusCommand.name) {
             case IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] Emit message received on channel '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.name}`);
                 const ipcBusEvent: IpcBusInterfaces.IpcBusEvent = { channel: ipcBusCommand.channel, sender: ipcBusCommand.peer };
-                this.eventEmitter.emit(ipcBusCommand.channel, ipcBusEvent, ...ipcBusCommand.args);
+                this.eventEmitter.emit(ipcBusCommand.channel, ipcBusEvent, ...args);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTMESSAGE: {
@@ -69,14 +69,14 @@ export abstract class IpcBusTransport {
                         this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE, ipcBusCommand.data.replyChannel, ipcBusCommand.data, [err]);
                     }
                 };
-                this.eventEmitter.emit(ipcBusCommand.channel, ipcBusEvent, ...ipcBusCommand.args);
+                this.eventEmitter.emit(ipcBusCommand.channel, ipcBusEvent, ...args);
                 break;
             }
             case IpcBusUtils.IPC_BUS_COMMAND_REQUESTRESPONSE: {
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] Emit request response received on channel '${ipcBusCommand.channel}' from peer #${ipcBusCommand.peer.name} (replyChannel '${ipcBusCommand.data.replyChannel}')`);
                 const localRequestCallback = this._requestFunctions.get(ipcBusCommand.data.replyChannel);
                 if (localRequestCallback) {
-                    localRequestCallback(ipcBusCommand);
+                    localRequestCallback(ipcBusCommand, args);
                 }
                 break;
             }
@@ -92,7 +92,7 @@ export abstract class IpcBusTransport {
             const ipcBusData: IpcBusData = { replyChannel: GenerateReplyChannel() };
 
             // Prepare reply's handler, we have to change the replyChannel to channel
-            const localRequestCallback = (ipcBusCommand: IpcBusCommand) => {
+            const localRequestCallback = (ipcBusCommand: IpcBusCommand, args: any[]) => {
                 // The channel is not generated one
                 let ipcBusEvent: IpcBusInterfaces.IpcBusEvent = { channel: channel, sender: ipcBusCommand.peer };
                 IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] Peer #${ipcBusEvent.sender.name} replied to request on ${ipcBusCommand.data.replyChannel}`);
@@ -102,12 +102,12 @@ export abstract class IpcBusTransport {
                 // this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_REQUESTCANCEL, IpcBusData, ipcBusEvent);
                 if (ipcBusCommand.data.resolve) {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] resolve`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = { event: ipcBusEvent, payload: ipcBusCommand.args[0] };
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = { event: ipcBusEvent, payload: args[0] };
                     resolve(response);
                 }
                 else if (ipcBusCommand.data.reject) {
                     IpcBusUtils.Logger.enable && IpcBusUtils.Logger.info(`[IpcBusClient] reject`);
-                    let response: IpcBusInterfaces.IpcBusRequestResponse = { event: ipcBusEvent, err: ipcBusCommand.args[0] };
+                    let response: IpcBusInterfaces.IpcBusRequestResponse = { event: ipcBusEvent, err: args[0] };
                     reject(response);
                 }
                 else {

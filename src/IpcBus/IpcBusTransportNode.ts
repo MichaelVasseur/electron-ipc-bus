@@ -66,7 +66,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
                 this._baseIpc.on('packet', (buffer: Buffer) => {
                     let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
                     if (ipcBusCommand && ipcBusCommand.name) {
-                        this._onEventReceived(ipcBusCommand);
+                        this._onEventReceived(ipcBusCommand, ipcBusCommand.args || []);
                     }
                 });
                 this._baseIpc.on('close', (conn: any) => {
@@ -85,8 +85,7 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     ipcPushCommand(command: string, channel: string, ipcBusData: IpcBusData, args?: any[]): void {
-        let ipcBusCommand: IpcBusCommand = { name: command, channel: channel, peer: this.peer, data: ipcBusData };
-        this._ipcPushCommand(ipcBusCommand);
+        this._ipcPushCommand({ name: command, channel: channel, peer: this.peer, data: ipcBusData }, args);
     }
 
     protected _ipcPushCommand(ipcBusCommand: IpcBusCommand, args?: any[]): void {
@@ -96,6 +95,14 @@ export class IpcBusTransportNode extends IpcBusTransport {
             }
             let buffer = IpcPacketBuffer.fromObject(ipcBusCommand);
             this._busConn.write(buffer);
+            // if (args) {
+            //     args = [ipcBusCommand, ...args];
+            // }
+            // else {
+            //     args = [ipcBusCommand];
+            // }
+            // let buffer = IpcPacketBuffer.fromArray(args);
+            // this._busConn.write(args);
         }
     }
 }
