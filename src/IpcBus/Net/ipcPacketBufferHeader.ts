@@ -4,20 +4,30 @@ const headerSeparator: number = '['.charCodeAt(0);
 export const footerSeparator: number = ']'.charCodeAt(0);
 export const HeaderLength: number = 2;
 export const FooterLength: number = 1;
-export const NumberHeaderLength: number = HeaderLength + 4;
+export const IntegerHeaderLength: number = HeaderLength;
+export const DoubleHeaderLength: number = HeaderLength;
 export const StringHeaderLength: number = HeaderLength + 4;
 export const BufferHeaderLength: number = HeaderLength + 4;
 export const ArrayHeaderLength: number = HeaderLength + 4;
 export const ObjectHeaderLength: number = HeaderLength + 4;
 export const BooleanHeaderLength: number = HeaderLength;
 
+export const MaxHeaderLength: number = HeaderLength + 4;
+
+export const DoublePacketSize = DoubleHeaderLength + 8 + FooterLength;
+export const IntegerPacketSize = DoubleHeaderLength + 4 + FooterLength;
+export const BooleanPacketSize = DoubleHeaderLength + 1 + FooterLength;
+
 export enum BufferType {
-    NotValid = 'X'.charCodeAt(0),
+    HeaderNotValid = 'X'.charCodeAt(0),
+    HeaderPartial = 'x'.charCodeAt(0),
     String = 's'.charCodeAt(0),
     Buffer = 'B'.charCodeAt(0),
     Boolean = 'b'.charCodeAt(0),
     Array = 'A'.charCodeAt(0),
-    Number = 'n'.charCodeAt(0),
+    PositiveInteger = 'p'.charCodeAt(0),
+    NegativeInteger = 'n'.charCodeAt(0),
+    Double = 'd'.charCodeAt(0),
     Object = 'O'.charCodeAt(0)
 };
 
@@ -26,57 +36,106 @@ export class IpcPacketBufferHeader {
     packetSize: number;
     contentSize: number;
     headerSize: number;
-    partial: boolean;
 
-    constructor(buffer: Buffer, offset?: number) {
-        if (offset == null) {
-            offset = 0;
-        }
-        this.partial = false;
-        this.type = BufferType.NotValid;
-        if (buffer[offset++] === headerSeparator) {
-            this.read(buffer, offset);
+    static __ipcPacketBufferHeader: IpcPacketBufferHeader = new IpcPacketBufferHeader(Buffer.from([BufferHeaderLength, BufferType.HeaderPartial]), 0);
+    static partial(): IpcPacketBufferHeader {
+        return IpcPacketBufferHeader.__ipcPacketBufferHeader;
+    }
+
+    constructor(buffer?: Buffer, offset?: number) {
+        if (buffer) {
+            this.readHeader(buffer, offset);
         }
     }
 
-    read(buffer: Buffer, offset: number): void {
+    readHeader(buffer: Buffer, offset?: number): void {
+        offset = +offset || 0;
+        this.type = BufferType.HeaderNotValid;
+        if (buffer[offset++] !== headerSeparator) {
+            return;
+        }
         this.type = buffer[offset++];
         switch (this.type) {
+            case BufferType.Double:
+                this.headerSize = DoubleHeaderLength;
+                if (offset + this.headerSize >= buffer.length) {
+                    this.type = BufferType.HeaderPartial;
+                }
+                else {
+                    this.packetSize = DoublePacketSize;
+                    this.contentSize = 8;
+                }
+                break;
+            case BufferType.NegativeInteger:
+            case BufferType.PositiveInteger:
+                this.headerSize = IntegerHeaderLength;
+                if (offset + this.headerSize >= buffer.length) {
+                    this.type = BufferType.HeaderPartial;
+                }
+                else {
+                    this.packetSize = IntegerPacketSize;
+                    this.contentSize = 4;
+                }
+                break;
             case BufferType.Array:
             case BufferType.Object:
             case BufferType.String:
             case BufferType.Buffer:
-            case BufferType.Number: {
                 this.headerSize = ObjectHeaderLength;
-                if (offset + 4 >= buffer.length) {
-                    this.partial = true;
+                if (offset + this.headerSize >= buffer.length) {
+                    this.type = BufferType.HeaderPartial;
                 }
                 else {
                     this.packetSize = buffer.readUInt32LE(offset);
+                    offset += 4;
+                    this.contentSize = this.packetSize - this.headerSize - FooterLength;
                 }
                 break;
-            }
             case BufferType.Boolean: {
                 this.headerSize = BooleanHeaderLength;
-                if (offset + 1 >= buffer.length) {
-                    this.partial = true;
+                if (offset + this.headerSize >= buffer.length) {
+                    this.type = BufferType.HeaderPartial;
                 }
                 else {
-                    this.packetSize = this.headerSize + 1 + FooterLength;
+                    this.packetSize = BooleanPacketSize;
+                    this.contentSize = 1;
                 }
                 break;
             }
-            default :
-                this.type = BufferType.NotValid;
+            case BufferType.HeaderNotValid :
+            case BufferType.HeaderPartial :
                 break;
-        }
-        if (this.packetSize > 0) {
-            this.contentSize = this.packetSize - FooterLength - this.headerSize;
+            default :
+                this.type = BufferType.HeaderNotValid;
+                break;
         }
     }
 
+    readHeaderFromBuffers(buffers: Buffer[], offset: number): void {
+        let buffer = buffers[0];
+        const offsetHeaderLength =  offset + MaxHeaderLength;
+        // Buffer is too short for containing a header
+        if (buffer.length < offsetHeaderLength) {
+            // No hope, there is only one buffer
+            if (buffers.length === 1) {
+                this.type = BufferType.HeaderPartial;
+            }
+            // Create a buffer buffers with the minium size
+            buffer = Buffer.concat(buffers, offsetHeaderLength);
+            // Still not enough !
+            if (buffer.length < offsetHeaderLength) {
+                this.type = BufferType.HeaderPartial;
+            }
+        }
+        this.readHeader(buffer, offset);
+    }
+
     isValid(): boolean {
-        return this.type !== BufferType.NotValid;
+        return this.type !== BufferType.HeaderNotValid;
+    }
+
+    isPartial(): boolean {
+        return this.type === BufferType.HeaderPartial;
     }
 
     isArray(): boolean {
@@ -96,7 +155,14 @@ export class IpcPacketBufferHeader {
     }
 
     isNumber(): boolean {
-        return this.type === BufferType.Number;
+        switch(this.type) {
+            case BufferType.NegativeInteger:
+            case BufferType.PositiveInteger:
+            case BufferType.Double:
+                return true;
+            default :
+                return false;
+        }
     }
 
     isBoolean(): boolean {
@@ -107,26 +173,5 @@ export class IpcPacketBufferHeader {
         buffer[offset++] = headerSeparator;
         buffer[offset++] = bufferType;
         return offset;
-    }
-
-    static getPacketHeader(buffers: Buffer[], offset: number): IpcPacketBufferHeader {
-        let buffer = buffers[0];
-        let header = new IpcPacketBufferHeader(buffer, offset);
-        if (header.isValid()) {
-            // Buffer is too short for containing a header
-            if (header.partial) {
-                // No hope, there is only one buffer
-                if (buffers.length === 1) {
-                    return header;
-                }
-                // Create a buffer buffers with the expected header size
-                buffer = Buffer.concat(buffers, offset + header.headerSize);
-                // Still not enough !
-                if (buffer.length < offset + header.headerSize) {
-                    return header;
-                }
-            }
-        }
-        return header;
     }
 }

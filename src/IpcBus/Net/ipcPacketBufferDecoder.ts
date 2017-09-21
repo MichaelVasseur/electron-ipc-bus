@@ -27,16 +27,17 @@ export class IpcPacketBufferDecoder extends EventEmitter {
 
         let packets: Buffer[] = [];
 
+        let header = new IpcPacketBufferHeader();
         let offset = 0;
         while (this._totalLength > 0) {
-            let header = IpcPacketBufferHeader.getPacketHeader(this._buffers, offset);
+            header.readHeaderFromBuffers(this._buffers, offset);
             // if packet size error
             if (!header.isValid()) {
                 this._buffers = [];
                 this.emit('error', new Error('Get invalid packet size'));
                 break;
             }
-            if (header.partial) {
+            if (header.isPartial()) {
                 break;
             }
             let packetSize = header.packetSize;
