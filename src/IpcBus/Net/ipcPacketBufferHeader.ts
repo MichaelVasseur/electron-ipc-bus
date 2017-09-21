@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { BufferReader } from './bufferReader';
+import { BufferWriter } from './bufferWriter';
 
 const headerSeparator: number = '['.charCodeAt(0);
 export const footerSeparator: number = ']'.charCodeAt(0);
@@ -45,10 +46,10 @@ export class IpcPacketBufferHeader {
         }
     }
 
-    readHeader(bufferReader: BufferReader): void {
+    readHeader(bufferReader: BufferReader): number {
         this.type = BufferType.HeaderNotValid;
         if (bufferReader.readByte() !== headerSeparator) {
-            return;
+            return 0;
         }
         this.type = bufferReader.readByte();
         switch (this.type) {
@@ -104,6 +105,7 @@ export class IpcPacketBufferHeader {
                 this.type = BufferType.HeaderNotValid;
                 break;
         }
+        return bufferReader.offset;
     }
 
     readHeaderFromBuffers(buffers: Buffer[], offset: number): void {
@@ -164,9 +166,8 @@ export class IpcPacketBufferHeader {
         return this.type === BufferType.Boolean;
     }
 
-    static writeHeader(bufferType: BufferType, buffer: Buffer, offset: number): number {
-        buffer[offset++] = headerSeparator;
-        buffer[offset++] = bufferType;
-        return offset;
+    static writeHeader(bufferWriter: BufferWriter, bufferType: BufferType): number {
+        bufferWriter.writeByte(headerSeparator);
+        return bufferWriter.writeByte(bufferType);
     }
 }

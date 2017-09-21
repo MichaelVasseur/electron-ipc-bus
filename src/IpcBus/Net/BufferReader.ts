@@ -17,9 +17,13 @@ export class BufferReader {
         return this._offset;
     }
 
-    skip(offset?: number) {
-        offset = offset || 1;
-        this._offset += offset;
+    seek(offset: number): number {
+        return this._offset = offset;
+    }
+
+    skip(offsetStep?: number) {
+        offsetStep = offsetStep || 1;
+        this._offset += offsetStep;
     }
 
     readByte(): number {
