@@ -1,16 +1,6 @@
 import { Buffer } from 'buffer';
+import { BufferReader } from './bufferReader';
 import * as headerHelpers from './ipcPacketBufferHeader';
-
-
-class BufferReader {
-    offset: number;
-    buffer: Buffer;
-
-    constructor(buffer: Buffer, offset?: number) {
-        this.buffer = buffer;
-        this.offset = +offset || 0;
-    }
-}
 
 export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
     static writeFooter(buffer: Buffer, offset: number): number {
@@ -20,12 +10,12 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     // Thanks to https://github.com/tests-always-included/buffer-serializer/
     static fromNumber(dataNumber: number): Buffer {
-        let offset = 0;
         // An integer
         if (Math.floor(dataNumber) === dataNumber) {
             let absDataNumber = Math.abs(dataNumber);
             // 32-bit integer
             if (absDataNumber <= 0xFFFFFFFF) {
+                let offset = 0;
                 let buffer = new Buffer(headerHelpers.IntegerPacketSize);
                 // Negative integer
                 if (dataNumber < 0) {
@@ -43,7 +33,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
         // Either this is not an integer or it is outside of a 32-bit integer.
         // Store as a double.
         let buffer = new Buffer(headerHelpers.DoublePacketSize);
-        offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Double, buffer, 0);
+        let offset = headerHelpers.IpcPacketBufferHeader.writeHeader(headerHelpers.BufferType.Double, buffer, 0);
         offset = buffer.writeDoubleLE(dataNumber, offset);
         IpcPacketBuffer.writeFooter(buffer, offset);
         return buffer;
@@ -116,11 +106,11 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static from(data: any): Buffer {
         let buffer: Buffer;
-        if (Array.isArray(data)) {
-            buffer = IpcPacketBuffer.fromArray(data);
-        }
-        else if (Buffer.isBuffer(data)) {
+        if (Buffer.isBuffer(data)) {
             buffer = IpcPacketBuffer.fromBuffer(data);
+        }
+        else if (Array.isArray(data)) {
+            buffer = IpcPacketBuffer.fromArray(data);
         }
         else {
             switch (typeof data) {
@@ -142,8 +132,9 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
     }
 
     static to(buffer: Buffer, offset?: number): any {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
-        return IpcPacketBuffer._to(header, new BufferReader(buffer, offset));
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
+        return IpcPacketBuffer._to(header, reader);
     }
 
     private static _to(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
@@ -180,128 +171,138 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
     }
 
     static toBoolean(buffer: Buffer, offset?: number): boolean {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isBoolean() === false) {
             return null;
         }
-        return IpcPacketBuffer._toBoolean(header, new BufferReader(buffer, offset));
+        return IpcPacketBuffer._toBoolean(header, reader);
     }
 
     private static _toBoolean(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): boolean {
-        let offsetContent = bufferReader.offset + header.headerSize;
-        bufferReader.offset += header.packetSize;
-        return (bufferReader.buffer[offsetContent] === 0xFF);
+        let data: boolean = (bufferReader.readByte() === 0xFF);
+        bufferReader.skip(headerHelpers.FooterLength);
+        return data;
     }
 
     static toNumber(buffer: Buffer, offset?: number): number {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isNumber() === false) {
             return null;
         }
-        return IpcPacketBuffer._toNumber(header, new BufferReader(buffer, offset));
+        return IpcPacketBuffer._toNumber(header, reader);
     }
 
     private static _toNumber(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): number {
-        let offsetContent = bufferReader.offset + header.headerSize;
-        bufferReader.offset += header.packetSize;
-
+        let data: number;
         switch (header.type) {
             case headerHelpers.BufferType.Double:
-                return bufferReader.buffer.readDoubleBE(offsetContent);
+                data = bufferReader.readDouble();
+                break;
             case headerHelpers.BufferType.NegativeInteger:
-                return -bufferReader.buffer.readUInt32BE(offsetContent);
+                data = -bufferReader.readUInt32();
+                break;
             case headerHelpers.BufferType.PositiveInteger:
-                return +bufferReader.buffer.readUInt32BE(offsetContent);
-            default :
-                return 0;
+                data = +bufferReader.readUInt32();
+                break;
+            default:
+                data = null;
+                break;
         }
+        bufferReader.skip(headerHelpers.FooterLength);
+        return data;
     }
 
     static toObject(buffer: Buffer, offset?: number): any {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isObject() === false) {
             return null;
         }
-        return IpcPacketBuffer._toObject(header, new BufferReader(buffer, offset));
+        return IpcPacketBuffer._toObject(header, reader);
     }
 
     private static _toObject(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
-        let offsetContent = bufferReader.offset + header.headerSize;
-        bufferReader.offset += header.packetSize;
-        return JSON.parse(bufferReader.buffer.toString('utf8', offsetContent, offsetContent + header.contentSize));
+        let data = bufferReader.readString('utf8', header.contentSize);
+        bufferReader.skip(headerHelpers.FooterLength);
+        return JSON.parse(data);
     }
 
     static toString(buffer: Buffer, offset?: number, encoding?: string): string {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isString() === false) {
             return null;
         }
-        return IpcPacketBuffer._toString(header, new BufferReader(buffer, offset), encoding);
+        return IpcPacketBuffer._toString(header, reader, encoding);
     }
 
     private static _toString(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader, encoding?: string): string {
-        let offsetContent = bufferReader.offset + header.headerSize;
-        bufferReader.offset += header.packetSize;
-        return bufferReader.buffer.toString(encoding, offsetContent, offsetContent + header.contentSize);
+        let data = bufferReader.readString(encoding, header.contentSize);
+        bufferReader.skip(headerHelpers.FooterLength);
+        return data;
     }
 
     static toBuffer(buffer: Buffer, offset?: number): Buffer {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isBuffer() === false) {
             return null;
         }
-        return IpcPacketBuffer._toBuffer(header, new BufferReader(buffer, offset));
+        return IpcPacketBuffer._toBuffer(header, reader);
     }
 
     private static _toBuffer(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): Buffer {
-        let offsetContent = bufferReader.offset + header.headerSize;
-        bufferReader.offset += header.packetSize;
-        return bufferReader.buffer.slice(offsetContent, offsetContent + header.contentSize);
+        let data = bufferReader.readBuffer(header.contentSize);
+        bufferReader.skip(headerHelpers.FooterLength);
+        return data;
     }
 
     static toArrayAt(index: number, buffer: Buffer, offset?: number): any {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isArray() === false) {
             return null;
         }
-        return IpcPacketBuffer._toArrayAt(header, index, new BufferReader(buffer, offset));
+        return IpcPacketBuffer._toArrayAt(header, index, reader);
     }
 
     private static _toArrayAt(header: headerHelpers.IpcPacketBufferHeader, index: number, bufferReader: BufferReader): any {
-        bufferReader.offset += header.headerSize;
         let offsetContentSize = bufferReader.offset + header.contentSize;
         let headerArg = new headerHelpers.IpcPacketBufferHeader();
         while ((index > 0) && (bufferReader.offset < offsetContentSize)) {
-            headerArg.readHeader(bufferReader.buffer, bufferReader.offset);
-            bufferReader.offset += headerArg.packetSize;
+            headerArg.readHeader(bufferReader);
+            bufferReader.skip(headerArg.contentSize + headerHelpers.FooterLength);
             --index;
         }
         let arg: any;
         if (index === 0) {
-            headerArg.readHeader(bufferReader.buffer, bufferReader.offset);
+            headerArg.readHeader(bufferReader);
             arg = IpcPacketBuffer._to(headerArg, bufferReader);
         }
         return arg;
     }
 
     static toArray(buffer: Buffer, offset?: number): any[] {
-        let header = new headerHelpers.IpcPacketBufferHeader(buffer, offset);
+        let reader = new BufferReader(buffer, offset);
+        let header = new headerHelpers.IpcPacketBufferHeader(reader);
         if (header.isArray() === false) {
             return null;
         }
-        return IpcPacketBuffer._toArray(header, new BufferReader(buffer, offset));
+        return IpcPacketBuffer._toArray(header, reader);
     }
 
     private static _toArray(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any[] {
-        bufferReader.offset += header.headerSize;
         let offsetContentSize = bufferReader.offset + header.contentSize;
         let args = [];
         let headerArg = new headerHelpers.IpcPacketBufferHeader();
         while (bufferReader.offset < offsetContentSize) {
-            headerArg.readHeader(bufferReader.buffer, bufferReader.offset);
+            headerArg.readHeader(bufferReader);
             let arg = IpcPacketBuffer._to(headerArg, bufferReader);
             args.push(arg);
         }
+        bufferReader.skip(headerHelpers.FooterLength);
         return args;
     }
 }
