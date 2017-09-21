@@ -1,52 +1,56 @@
 // import { Buffer } from 'buffer';
 
 export class BufferReader {
-    offset: number;
-    buffer: Buffer;
+    private _offset: number;
+    private _buffer: Buffer;
 
     constructor(buffer: Buffer, offset?: number) {
-        this.buffer = buffer;
-        this.offset = offset || 0;
+        this._buffer = buffer;
+        this._offset = offset || 0;
     }
 
     get length(): number {
-        return this.buffer.length;
+        return this._buffer.length;
+    }
+
+    get offset(): number {
+        return this._offset;
     }
 
     skip(offset?: number) {
         offset = offset || 1;
-        this.offset += offset;
+        this._offset += offset;
     }
 
     readByte(): number {
-        return this.buffer[this.offset++];
+        return this._buffer[this._offset++];
     }
 
     readUInt32(): number {
-        let start = this.offset;
-        this.offset += 4;
-        return this.buffer.readUInt32LE(start);
+        let start = this._offset;
+        this._offset += 4;
+        return this._buffer.readUInt32LE(start);
     }
 
     readDouble(): number {
-        let start = this.offset;
-        this.offset += 8;
-        return this.buffer.readDoubleBE(start);
+        let start = this._offset;
+        this._offset += 8;
+        return this._buffer.readDoubleBE(start);
     }
 
     readString(encoding?: string, len?: number): string {
         encoding = encoding || 'utf8';
-        let start = this.offset;
-        let end = start + (len || this.buffer.length);
-        this.offset = end;
-        return this.buffer.toString(encoding, start, end);
+        let start = this._offset;
+        let end = start + (len || this._buffer.length);
+        this._offset = end;
+        return this._buffer.toString(encoding, start, end);
     }
 
     readBuffer(len?: number): Buffer {
-        let start = this.offset;
-        let end = start + (len || this.buffer.length);
-        this.offset = end;
-        return this.buffer.slice(start, end);
+        let start = this._offset;
+        let end = start + (len || this._buffer.length);
+        this._offset = end;
+        return this._buffer.slice(start, end);
     }
 }
 
