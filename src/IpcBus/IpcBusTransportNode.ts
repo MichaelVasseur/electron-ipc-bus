@@ -1,10 +1,10 @@
-/// <reference path='../typings/easy-ipc.d.ts'/>
+import { IpcPacketNet as BaseIpc } from './Net/ipcPacketNet';
 
 import * as IpcBusUtils from './IpcBusUtils';
-import * as BaseIpc from 'easy-ipc';
 import * as IpcBusInterfaces from './IpcBusInterfaces';
 
-import { IpcBusTransport, IpcBusData } from './IpcBusTransport';
+import { IpcBusTransport, IpcBusCommand, IpcBusData } from './IpcBusTransport';
+import { IpcPacketBuffer } from './Net/ipcPacketBuffer';
 
 // Implementation for Node process
 /** @internal */
@@ -56,16 +56,21 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     this._busConn = conn;
                     if (this._baseIpc) {
                         clearTimeout(timer);
-                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, {}, '');
+                        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CONNECT, '', {});
                         resolve('connected');
                     }
                     else {
                         this._reset();
                     }
                 });
-                this._baseIpc.on('data', (data: any) => {
-                    if (BaseIpc.Cmd.isCmd(data)) {
-                        this._onEventReceived(data.name, data.args[0], data.args[1], data.args[2]);
+                this._baseIpc.on('packet', (buffer: Buffer) => {
+                    // 1
+                    // let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
+                    // 2
+                    let args = IpcPacketBuffer.toArray(buffer);
+                    let ipcBusCommand: IpcBusCommand = args.shift();
+                    if (ipcBusCommand && ipcBusCommand.name) {
+                        this._onEventReceived(ipcBusCommand, args);
                     }
                 });
                 this._baseIpc.on('close', (conn: any) => {
@@ -79,31 +84,29 @@ export class IpcBusTransportNode extends IpcBusTransport {
     }
 
     ipcClose() {
-        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, {}, '');
+        this.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_CLOSE, '', {});
         this._reset();
     }
 
-    ipcPushCommand(command: string, ipcBusData: IpcBusData, channel: string, args?: any[]): void {
-        ipcBusData.peerId = this._peerId;
-        this._ipcPushCommand(command, ipcBusData, { channel: channel, sender: this.peer }, args);
+    ipcPushCommand(command: string, channel: string, ipcBusData: IpcBusData, args?: any[]): void {
+        this._ipcPushCommand({ name: command, channel: channel, peer: this.peer, data: ipcBusData }, args);
     }
 
-    protected _ipcPushCommand(command: string, ipcBusData: IpcBusData, ipcBusEvent: IpcBusInterfaces.IpcBusEvent, args?: any[]): void {
+    protected _ipcPushCommand(ipcBusCommand: IpcBusCommand, args?: any[]): void {
         if (this._busConn) {
+            // if (args) {
+            //     ipcBusCommand.args = args;
+            // }
+            // let buffer = IpcPacketBuffer.fromObject(ipcBusCommand);
+            // this._busConn.write(buffer);
             if (args) {
-                const buffer = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent, args]};
-                this._busConn.write(buffer);
+                args = [ipcBusCommand, ...args];
             }
             else {
-                const buffer = {type: 'cmd', name: command, args: [ipcBusData, ipcBusEvent]};
-                this._busConn.write(buffer);
+                args = [ipcBusCommand];
             }
-            // if (args) {
-            //     BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, args, this._busConn);
-            // }
-            // else {
-            //     BaseIpc.Cmd.exec(command, ipcBusData, ipcBusEvent, this._busConn);
-            // }
+            let buffer = IpcPacketBuffer.fromArray(args);
+            this._busConn.write(buffer);
         }
     }
 }

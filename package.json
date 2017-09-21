@@ -36,7 +36,6 @@
   "types": "./lib/electron-ipc-bus.d.ts",
   "browser": "./lib/electron-ipc-bus-browser.js",
   "dependencies": {
-    "easy-ipc": "0.2.2",
     "uuid": "3.0.1"
   },
   "devDependencies": {

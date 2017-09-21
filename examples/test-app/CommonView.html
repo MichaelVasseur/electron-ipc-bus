@@ -18,85 +18,85 @@
 
 <body>
     <div id="SubscriptionItem-template" class="panel panel-default" style="display:none">
-<div class="panel-heading">Topic <b class="topicSubscribeName"></b>
-    <input type="button" class="btn btn-primary" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
-</div>
-<div class="panel-body">
-    <form class="form-inline">
-        <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
-        <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
-<div class="input-group">
-    <span class="input-group-addon">Auto Response</span>
-    <input class="form-control topicAutoReply" class="form-control" type="text" />
-</div>
-</form>
-</div>
-</div>
-
-<div id="ProcessBrowserToolbar" style="display:none">
-<input type="button" class="btn btn-primary" onclick="doNewNodeProcess(event)" value="New node process"></<input>
-<input type="button" class="btn btn-primary" onclick="doNewRendererProcess(event)" value="New renderer process"></<input>
-<input type="button" class="btn btn-primary" onclick="doOpenPerfView(event)" value="Performances"></<input>
-</div>
-<div id="ProcessRendererToolbar" style="display:none">
-<input type="button" class="btn btn-primary" onclick="doNewRendererInstance(event)" value="New affinity renderer"></<input>
-</div>
-<h3 id="ProcessTitle">Master</h3>
-<div id="ProcessMonitor" class="panel-group" topic-process="fake">
-    <div id="ProcessActions" class="panel panel-default">
-        <div class="panel-heading">Actions</div>
+        <div class="panel-heading">Topic <b class="topicSubscribeName"></b>
+            <input type="button" class="btn btn-primary" onclick="doUnsubscribeFromTopic(event)" value="Unsubscribe"></<input>
+        </div>
         <div class="panel-body">
-            <form class="form-inline topicSubscribe">
+            <form class="form-inline">
+                <textarea rows="2" cols="32" class="form-control topicReceived"></textarea>
+                <input type="button" class="form-control" onclick="doClearTopic(event)" value="Clear"></<input>
                 <div class="input-group">
-                    <span class="input-group-addon">Topic</span>
-                    <input class="topicSubscribeName form-control" type="text" />
+                    <span class="input-group-addon">Auto Response</span>
+                    <input class="form-control topicAutoReply" class="form-control" type="text" />
                 </div>
-                <input type="button" class="btn btn-primary" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
-</form>
-<form class="form-inline topicSend">
-    <div class="input-group">
-        <span class="input-group-addon">Topic</span>
-        <input class="topicSendName form-control" type="text" />
+            </form>
+        </div>
     </div>
-    <div class="input-group">
-        <span class="input-group-addon">Message</span>
-        <input class="topicSendMsg form-control" type="text" />
+
+    <div id="ProcessBrowserToolbar" style="display:none">
+        <input type="button" class="btn btn-primary" onclick="doNewNodeProcess(event)" value="New node process"></<input>
+        <input type="button" class="btn btn-primary" onclick="doNewRendererProcess(event)" value="New renderer process"></<input>
+        <input type="button" class="btn btn-primary" onclick="doOpenPerfView(event)" value="Performances"></<input>
     </div>
-    <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
-</form>
-<form class="form-inline topicRequest">
-    <div class="input-group">
-        <span class="input-group-addon">Topic</span>
-        <input class="topicRequestName form-control" type="text" />
+    <div id="ProcessRendererToolbar" style="display:none">
+        <input type="button" class="btn btn-primary" onclick="doNewRendererInstance(event)" value="New affinity renderer"></<input>
     </div>
-    <div class="input-group">
-        <span class="input-group-addon">Message</span>
-        <input class="topicRequestMsg form-control" type="text" />
-    </div>
-    <div class="input-group">
-        <span class="input-group-addon">Response</span>
-        <input class="topicRequestResponse form-control" type="text" readonly/>
-    </div>
-    <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Promise"></<input>
-</form>
-</div>
-</div>
-<div id="ProcessSubscriptions" class="panel panel-default">
-</div>
-<div id="ProcessBrokerState" class="panel panel-default" style="display:none">
-<div class="panel-heading">Broker State
-    <input type="button" class="btn btn-primary" onclick="doQueryBrokerState()" value="Refresh"></input>
-</div>
-<div class="panel-body">
-    <table id="brokerStatesList" class="table" border="1">
-        <tr>
-            <th>Topic</th>
-            <th>Peer</th>
-            <th>Count</th>
-        </tr>
-    </table>
-</div>
-</div>
+    <h3 id="ProcessTitle">Master</h3>
+    <div id="ProcessMonitor" class="panel-group" topic-process="fake">
+        <div id="ProcessActions" class="panel panel-default">
+            <div class="panel-heading">Actions</div>
+            <div class="panel-body">
+                <form class="form-inline topicSubscribe">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicSubscribeName form-control" type="text" />
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doSubscribeToTopic(event)" value="Subscribe"></<input>
+                </form>
+                <form class="form-inline topicSend">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicSendName form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Message</span>
+                        <input class="topicSendMsg form-control" type="text" />
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doSendMessageToTopic(event)" value="Send"></<input>
+                </form>
+                <form class="form-inline topicRequest">
+                    <div class="input-group">
+                        <span class="input-group-addon">Topic</span>
+                        <input class="topicRequestName form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Message</span>
+                        <input class="topicRequestMsg form-control" type="text" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Response</span>
+                        <input class="topicRequestResponse form-control" type="text" readonly/>
+                    </div>
+                    <input type="button" class="btn btn-primary" onclick="doRequestMessageToTopic(event)" value="Promise"></<input>
+                </form>
+            </div>
+        </div>
+        <div id="ProcessSubscriptions" class="panel panel-default">
+        </div>
+        <div id="ProcessBrokerState" class="panel panel-default" style="display:none">
+            <div class="panel-heading">Broker State
+                <input type="button" class="btn btn-primary" onclick="doQueryBrokerState()" value="Refresh"></input>
+            </div>
+            <div class="panel-body">
+                <table id="brokerStatesList" class="table" border="1">
+                    <tr>
+                        <th>Topic</th>
+                        <th>Peer</th>
+                        <th>Count</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
 </body>
 
 </html>

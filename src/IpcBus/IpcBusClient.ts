@@ -41,7 +41,7 @@ export class IpcBusCommonClient extends EventEmitter
     }
 
     send(channel: string, ...args: any[]) {
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, {}, channel, args);
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SENDMESSAGE, channel, {}, args);
     }
 
     request(timeoutDelayOrChannel: number | string, ...args: any[]): Promise<IpcBusInterfaces.IpcBusRequestResponse> {
@@ -57,13 +57,13 @@ export class IpcBusCommonClient extends EventEmitter
     // EventEmitter API
     addListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.addListener(channel, listener);
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, channel);
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, channel, {});
         return this;
     }
 
     removeListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.removeListener(channel, listener);
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {}, channel);
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, channel, {});
         return this;
     }
 
@@ -74,7 +74,7 @@ export class IpcBusCommonClient extends EventEmitter
     once(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.once(channel, listener);
         // removeListener will be automatically called by NodeJS when callback has been triggered
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, channel);
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, channel, {});
         return this;
     }
 
@@ -84,10 +84,10 @@ export class IpcBusCommonClient extends EventEmitter
 
     removeAllListeners(channel?: string): this {
         if (channel) {
-            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, {unsubscribeAll: true}, channel);
+            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_CHANNEL, channel, {unsubscribeAll: true});
         }
         else {
-            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_ALL, {}, '');
+            this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_UNSUBSCRIBE_ALL, '', {});
         }
         super.removeAllListeners(channel);
         return this;
@@ -96,13 +96,13 @@ export class IpcBusCommonClient extends EventEmitter
     // Added in Node 6...
     prependListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.prependListener(channel, listener);
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, channel);
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, channel, {});
         return this;
     }
 
     prependOnceListener(channel: string, listener: IpcBusInterfaces.IpcBusListener): this {
         super.prependOnceListener(channel, listener);
-        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, {}, channel);
+        this._ipcBusTransport.ipcPushCommand(IpcBusUtils.IPC_BUS_COMMAND_SUBSCRIBE_CHANNEL, channel, {});
         return this;
     }
 }

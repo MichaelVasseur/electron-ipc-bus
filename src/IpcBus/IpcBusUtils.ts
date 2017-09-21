@@ -14,10 +14,6 @@ export const IPC_BUS_COMMAND_REQUESTMESSAGE = 'IpcBusCommand:requestMessage';
 export const IPC_BUS_COMMAND_REQUESTRESPONSE = 'IpcBusCommand:requestResponse';
 export const IPC_BUS_COMMAND_REQUESTCANCEL = 'IpcBusCommand:requestCancel';
 
-export const IPC_BUS_EVENT_SENDMESSAGE = 'IpcBusEvent:onSendMessage';
-export const IPC_BUS_EVENT_REQUESTMESSAGE = 'IpcBusEvent:onRequestMessage';
-export const IPC_BUS_EVENT_REQUESTRESPONSE = 'IpcBusEvent:onRequestResponse';
-
 export const IPC_BUS_TIMEOUT = 2000;
 
 /** @internal */
@@ -110,15 +106,15 @@ export class ChannelConnectionMap<T extends string | number> {
     }
 
     private _info(str: string) {
-        Logger.info(`[${this._name}] ${str}`);
+        // Logger.info(`[${this._name}] ${str}`);
     }
 
     private _warn(str: string) {
-        Logger.warn(`[${this._name}] ${str}`);
+        // Logger.warn(`[${this._name}] ${str}`);
     }
 
     private _error(str: string) {
-       Logger.error(`[${this._name}] ${str}`);
+    //    Logger.error(`[${this._name}] ${str}`);
     }
 
     public hasChannel(channel: string): boolean {

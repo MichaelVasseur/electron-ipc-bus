@@ -84,6 +84,8 @@ var MainProcess = (function () {
         processMainFromView.on('new-renderer', doNewRenderer);
         processMainFromView.on('new-perf', doNewPerfView);
         processMainFromView.on('start-performance-tests', doPerformanceTests)
+        processMainFromView.on('save-performance-tests', savePerformanceTests);
+        
         processMainFromView.on('queryState', doQueryState);
 
         console.log('<MAIN> ProcessConnect ready');
@@ -147,6 +149,21 @@ var MainProcess = (function () {
 
         function doPerformanceTests(testParams) {
             perfTests.doPerformanceTests(testParams);
+        }
+
+        function savePerformanceTests(cvsLike) {
+            var dataToWrite = "";
+            cvsLike.forEach((cvsRow) => {
+                dataToWrite += "\""+ cvsRow.join('\";\"') + '\"\n';
+            });
+            var fs = require('fs');
+            fs.writeFile('./perfResults.csv', dataToWrite, 'utf8', function (err) {
+              if (err) {
+                console.log('Some error occured - file either not saved or corrupted file saved.');
+              } else{
+                console.log('It\'s saved!');
+              }
+            });
         }
 
         function doNewPerfView() {
@@ -446,7 +463,7 @@ util.inherits(TimeServiceImpl, EventEmitter);
 
 function startApp() {
     console.log('<MAIN> Connected to broker !');
-    var testService = false;
+    var testService = true;
 
     if (testService) {
         // Create the proxy (client-side)

@@ -30,6 +30,8 @@
             <input type="button" class="btn btn-primary" onclick="doPerformance('args')" value="Run (args)"></input>
             <input type="button" class="btn btn-primary" onclick="doClear()" value="Clear"></input>
             <input type="button" class="btn btn-primary" onclick="doSort()" value="Sort"></input>
+            <input type="button" class="btn btn-primary" onclick="doSave()" value="Save"></input>
+            <input type="button" class="btn btn-primary" onclick="doAutomaticTests()" value="Automatic Tests"></input>
             <label class="btn btn-primary">
                 <input type="checkbox" class="traceEnable" onclick="doTraceEnable(event)" checked autocomplete="off">Trace enable
             </label>
@@ -49,6 +51,7 @@
                 <table id="perfResults" class="table" border="1">
                     <tr>
                         <th>Type</th>
+                        <th>Link</th>
                         <th>From</th>
                         <th>To</th>
                         <th>time (ms)</th>
