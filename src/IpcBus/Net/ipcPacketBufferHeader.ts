@@ -4,17 +4,18 @@ import { BufferWriter } from './bufferWriter';
 
 const headerSeparator: number = '['.charCodeAt(0);
 export const footerSeparator: number = ']'.charCodeAt(0);
-export const HeaderLength: number = 2;
-export const FooterLength: number = 1;
-export const IntegerHeaderLength: number = HeaderLength;
-export const DoubleHeaderLength: number = HeaderLength;
-export const StringHeaderLength: number = HeaderLength + 4;
-export const BufferHeaderLength: number = HeaderLength + 4;
-export const ArrayHeaderLength: number = HeaderLength + 4;
-export const ObjectHeaderLength: number = HeaderLength + 4;
-export const BooleanHeaderLength: number = HeaderLength;
 
-export const MaxHeaderLength: number = HeaderLength + 4;
+const MinHeaderLength: number = 2;
+const MaxHeaderLength: number = MinHeaderLength + 4;
+
+export const FooterLength: number = 1;
+export const IntegerHeaderLength: number = MinHeaderLength;
+export const DoubleHeaderLength: number = MinHeaderLength;
+export const StringHeaderLength: number = MinHeaderLength + 4;
+export const BufferHeaderLength: number = MinHeaderLength + 4;
+export const ArrayHeaderLength: number = MinHeaderLength + 4;
+export const ObjectHeaderLength: number = MinHeaderLength + 4;
+export const BooleanHeaderLength: number = MinHeaderLength;
 
 export const DoublePacketSize = DoubleHeaderLength + 8 + FooterLength;
 export const IntegerPacketSize = DoubleHeaderLength + 4 + FooterLength;
@@ -27,8 +28,8 @@ export enum BufferType {
     Buffer = 'B'.charCodeAt(0),
     Boolean = 'b'.charCodeAt(0),
     Array = 'A'.charCodeAt(0),
-    PositiveInteger = 'p'.charCodeAt(0),
-    NegativeInteger = 'n'.charCodeAt(0),
+    PositiveInteger = '+'.charCodeAt(0),
+    NegativeInteger = '-'.charCodeAt(0),
     Double = 'd'.charCodeAt(0),
     Object = 'O'.charCodeAt(0)
 };
@@ -98,9 +99,6 @@ export class IpcPacketBufferHeader {
                 }
                 break;
             }
-            case BufferType.HeaderNotValid :
-            case BufferType.HeaderPartial :
-                break;
             default :
                 this.type = BufferType.HeaderNotValid;
                 break;
@@ -110,14 +108,14 @@ export class IpcPacketBufferHeader {
 
     readHeaderFromBuffers(buffers: Buffer[], offset: number): void {
         let buffer = buffers[0];
-        const offsetHeaderLength =  offset + MaxHeaderLength;
+        const offsetHeaderLength = offset + MaxHeaderLength;
         // Buffer is too short for containing a header
         if (buffer.length < offsetHeaderLength) {
             // No hope, there is only one buffer
             if (buffers.length === 1) {
                 this.type = BufferType.HeaderPartial;
             }
-            // Create a buffer buffers with the minium size
+            // Create a buffer buffers with the minimum size
             buffer = Buffer.concat(buffers, offsetHeaderLength);
             // Still not enough !
             if (buffer.length < offsetHeaderLength) {

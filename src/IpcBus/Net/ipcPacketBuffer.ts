@@ -264,10 +264,10 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
         if (header.isArray() === false) {
             return null;
         }
-        return IpcPacketBuffer._toArrayAt(header, index, bufferReader);
+        return IpcPacketBuffer._toArrayAt(index, header, bufferReader);
     }
 
-    private static _toArrayAt(header: headerHelpers.IpcPacketBufferHeader, index: number, bufferReader: BufferReader): any {
+    private static _toArrayAt(index: number, header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
         let offsetContentSize = bufferReader.offset + header.contentSize;
         let headerArg = new headerHelpers.IpcPacketBufferHeader();
         while ((index > 0) && (bufferReader.offset < offsetContentSize)) {

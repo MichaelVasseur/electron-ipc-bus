@@ -242,14 +242,7 @@ export class IpcNet extends EventEmitter {
 
   protected _parseStream(socket: net.Socket, server?: net.Server) {
     socket.on('data', (buffer: Buffer) => {
-      if (server) {
         this.emit('data', buffer, socket, server);
-        // console.log('data-server', util.inspect(JSON.parse(buffer.toString())));
-      }
-      else {
-        this.emit('data', buffer, socket);
-        // console.log('data', util.inspect(JSON.parse(buffer.toString())));
-      }
     });
   }
 }
