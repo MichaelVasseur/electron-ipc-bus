@@ -72,6 +72,11 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     if (ipcBusCommand && ipcBusCommand.name) {
                         this._onEventReceived(ipcBusCommand, args);
                     }
+                    else {
+                        console.log(ipcBusCommand);
+                        console.log(args);
+                        throw "IpcBusTransportNode: Not valid packet !";
+                    }
                 });
                 this._baseIpc.on('close', (conn: any) => {
                     this._onClose();

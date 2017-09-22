@@ -257,5 +257,9 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                 }
             }
         }
+        else {
+            console.log(ipcBusCommand);
+            throw "IpcBusBrokerImpl: Not valid packet !";
+        }
     }
 }
