@@ -151,8 +151,9 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         header.writeHeader(bufferWriter);
         header.writeFooter(bufferWriter);
 
+        let headerArg = new wrap.IpcPacketBufferWrap();
         args.forEach((arg) => {
-            IpcPacketBuffer._from(header, bufferWriter, arg);
+            IpcPacketBuffer._from(headerArg, bufferWriter, arg);
         });
     }
 
