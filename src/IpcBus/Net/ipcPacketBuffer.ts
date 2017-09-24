@@ -15,6 +15,11 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         this._buffer = Buffer.alloc(this.packetSize);
     }
 
+    protected setPacketSize(packetSize: number) {
+        super.setPacketSize(packetSize);
+        this._buffer = Buffer.alloc(this.packetSize);
+    }
+
     get buffer(): Buffer {
         return this._buffer;
     }

@@ -93,6 +93,9 @@ export class IpcPacketBufferWrap {
     }
 
     set packetSize(packetSize: number) {
+        if (this._packetSize === packetSize) {
+            return;
+        }
         switch (this._type) {
             case BufferType.Array:
             case BufferType.Object:
@@ -103,7 +106,7 @@ export class IpcPacketBufferWrap {
             }
     }
 
-    private setPacketSize(packetSize: number) {
+    protected setPacketSize(packetSize: number) {
         this._packetSize = packetSize;
         this._contentSize = this._packetSize - this._headerSize - FooterLength;
     }
