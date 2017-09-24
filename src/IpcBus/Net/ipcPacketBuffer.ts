@@ -146,20 +146,14 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
-        let bufferWriterArgs = new BufferCollectionWriter();
-        let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
-        args.forEach((arg) => {
-            IpcPacketBuffer._from(headerArg, bufferWriterArgs, arg);
-        });
-
         header.type = wrap.BufferType.Array;
-        header.contentSize = bufferWriterArgs.length;
-
+        header.argsLen = args.length;
         header.writeHeader(bufferWriter);
-        bufferWriterArgs.buffers.forEach((buffer) => {
-            bufferWriter.writeBuffer(buffer);
-        });
         header.writeFooter(bufferWriter);
+
+        args.forEach((arg) => {
+            IpcPacketBuffer._from(header, bufferWriter, arg);
+        });
     }
 
     static from(data: any): IpcPacketBuffer {
@@ -326,9 +320,15 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     private static _toArrayAt(index: number, header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
-        let offsetContentSize = bufferReader.offset + header.contentSize;
+        let argsLen = header.argsLen;
+        bufferReader.skip(header.footerSize);
+
+        if (index >= argsLen) {
+            return null;
+        }
+
         let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
-        while ((index > 0) && (bufferReader.offset < offsetContentSize)) {
+        while (index > 0) {
             headerArg.readHeader(bufferReader);
             bufferReader.skip(headerArg.contentSize + header.footerSize);
             --index;
@@ -350,15 +350,17 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     private static _toArray(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any[] {
-        let offsetContentSize = bufferReader.offset + header.contentSize;
+        let argsLen = header.argsLen;
+        bufferReader.skip(header.footerSize);
+
         let args = [];
         let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
-        while (bufferReader.offset < offsetContentSize) {
+        while (argsLen > 0) {
             headerArg.readHeader(bufferReader);
             let arg = IpcPacketBuffer._to(headerArg, bufferReader);
             args.push(arg);
+            --argsLen;
         }
-        bufferReader.skip(header.footerSize);
         return args;
     }
 }

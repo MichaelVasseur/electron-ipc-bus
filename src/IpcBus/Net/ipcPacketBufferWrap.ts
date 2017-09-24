@@ -9,13 +9,11 @@ const MinHeaderLength: number = 2;
 const MaxHeaderLength: number = MinHeaderLength + 4;
 
 const FooterLength: number = 1;
-const IntegerHeaderLength: number = MinHeaderLength;
-const DoubleHeaderLength: number = MinHeaderLength;
 // const StringHeaderLength: number = MinHeaderLength + 4;
 // const BufferHeaderLength: number = MinHeaderLength + 4;
 // const ArrayHeaderLength: number = MinHeaderLength + 4;
 const ObjectHeaderLength: number = MinHeaderLength + 4;
-const BooleanHeaderLength: number = MinHeaderLength;
+const ArrayHeaderLength: number = MinHeaderLength + 4;
 
 export enum BufferType {
     HeaderNotValid = 'X'.charCodeAt(0),
@@ -36,6 +34,7 @@ export class IpcPacketBufferWrap {
     protected _packetSize: number;
     protected _contentSize: number;
     protected _headerSize: number;
+    protected _argsLen: number;
 
     protected constructor() {
         this._type = BufferType.HeaderNotValid;
@@ -64,28 +63,39 @@ export class IpcPacketBufferWrap {
         this._type = bufferType;
         switch (this._type) {
             case BufferType.Double:
-                this._headerSize = DoubleHeaderLength;
+                this._headerSize = MinHeaderLength;
                 this.setContentSize(8);
                 break;
             case BufferType.NegativeInteger:
             case BufferType.PositiveInteger:
-                this._headerSize = IntegerHeaderLength;
+                this._headerSize = MinHeaderLength;
                 this.setContentSize(4);
                 break;
             case BufferType.Array:
+                this._headerSize = ArrayHeaderLength;
+                this.setContentSize(0);
+                break;
             case BufferType.Object:
             case BufferType.String:
             case BufferType.Buffer:
                 this._headerSize = ObjectHeaderLength;
                 break;
             case BufferType.Boolean:
-                this._headerSize = BooleanHeaderLength;
+                this._headerSize = MinHeaderLength;
                 this.setContentSize(1);
                 break;
-            default :
+            default:
                 this._type = BufferType.HeaderNotValid;
                 break;
         }
+    }
+
+    get argsLen(): number {
+        return this._argsLen;
+    }
+
+    set argsLen(argsLen: number) {
+        this._argsLen = argsLen;
     }
 
     get packetSize(): number {
@@ -97,13 +107,12 @@ export class IpcPacketBufferWrap {
             return;
         }
         switch (this._type) {
-            case BufferType.Array:
             case BufferType.Object:
             case BufferType.String:
             case BufferType.Buffer:
                 this.setPacketSize(packetSize);
                 break;
-            }
+        }
     }
 
     protected setPacketSize(packetSize: number) {
@@ -120,7 +129,6 @@ export class IpcPacketBufferWrap {
             return;
         }
         switch (this._type) {
-            case BufferType.Array:
             case BufferType.Object:
             case BufferType.String:
             case BufferType.Buffer:
@@ -129,7 +137,7 @@ export class IpcPacketBufferWrap {
         }
     }
 
-    protected setContentSize(contentSize: number){
+    protected setContentSize(contentSize: number) {
         this._contentSize = contentSize;
         this._packetSize = this._contentSize + this._headerSize + FooterLength;
     }
@@ -154,6 +162,8 @@ export class IpcPacketBufferWrap {
         else {
             switch (this.type) {
                 case BufferType.Array:
+                    this._argsLen = bufferReader.readUInt32();
+                    break;
                 case BufferType.Object:
                 case BufferType.String:
                 case BufferType.Buffer:
@@ -208,12 +218,12 @@ export class IpcPacketBufferWrap {
     }
 
     isNumber(): boolean {
-        switch(this._type) {
+        switch (this._type) {
             case BufferType.NegativeInteger:
             case BufferType.PositiveInteger:
             case BufferType.Double:
                 return true;
-            default :
+            default:
                 return false;
         }
     }
@@ -226,6 +236,8 @@ export class IpcPacketBufferWrap {
         bufferWriter.writeBytes([headerSeparator, this._type]);
         switch (this._type) {
             case BufferType.Array:
+                bufferWriter.writeUInt32(this._argsLen);
+                break;
             case BufferType.Object:
             case BufferType.String:
             case BufferType.Buffer:
