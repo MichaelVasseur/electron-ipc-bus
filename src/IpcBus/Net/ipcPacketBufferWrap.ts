@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import { BufferReader } from './bufferReader';
-import { BufferWriter } from './bufferWriter';
+import { BufferHelperWriter } from './bufferHelperWriter';
 
 const headerSeparator: number = '['.charCodeAt(0);
 const footerSeparator: number = ']'.charCodeAt(0);
@@ -222,9 +222,8 @@ export class IpcPacketBufferWrap {
         return this._type === BufferType.Boolean;
     }
 
-    writeHeader(bufferWriter: BufferWriter): number {
-        bufferWriter.writeByte(headerSeparator);
-        bufferWriter.writeByte(this._type);
+    writeHeader(bufferWriter: BufferHelperWriter): number {
+        bufferWriter.writeBytes([headerSeparator, this._type]);
         switch (this._type) {
             case BufferType.Array:
             case BufferType.Object:
@@ -233,10 +232,10 @@ export class IpcPacketBufferWrap {
                 bufferWriter.writeUInt32(this._packetSize);
                 break;
         }
-        return bufferWriter.offset;
+        return bufferWriter.length;
     }
 
-    writeFooter(bufferWriter: BufferWriter): number {
+    writeFooter(bufferWriter: BufferHelperWriter): number {
         return bufferWriter.writeByte(footerSeparator);
     }
 }

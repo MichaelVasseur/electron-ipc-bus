@@ -1,6 +1,7 @@
 // import { Buffer } from 'buffer';
+import { BufferHelperWriter } from './bufferHelperWriter';
 
-export class BufferWriter {
+export class BufferHelperWriter implements BufferHelperWriter {
     private _offset: number;
     private _buffer: Buffer;
 
@@ -11,6 +12,10 @@ export class BufferWriter {
 
     get buffer(): Buffer {
         return this._buffer;
+    }
+
+    get buffers(): Buffer[] {
+        return [this._buffer];
     }
 
     get length(): number {
@@ -24,6 +29,15 @@ export class BufferWriter {
     writeByte(data: number): number {
         this._buffer[this._offset] = data;
         return ++this._offset;
+    }
+
+    writeBytes(dataArray: number[]): number {
+        let l = dataArray.length;
+        for(let i = 0; i < l; ++i) {
+            this._buffer[this._offset] = dataArray[i];
+            ++this._offset;
+        }
+        return this._offset;
     }
 
     writeUInt32(data: number): number {
