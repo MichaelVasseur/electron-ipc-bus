@@ -1,20 +1,20 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
-// import { IpcPacketBuffer, IpcPacketBufferHeader, headerLength } from './ipcPacketBuffer';
-import { IpcPacketBufferHeader, BufferType } from './ipcPacketBufferHeader';
+// import { IpcPacketBuffer, IpcPacketBufferWrap, headerLength } from './ipcPacketBuffer';
+import { IpcPacketBufferWrap, BufferType } from './ipcPacketBufferWrap';
 
 export class IpcPacketBufferDecoder extends EventEmitter {
     private _buffers: Buffer[];
     private _totalLength: number;
     private _offset: number;
-    private _header: IpcPacketBufferHeader;
+    private _header: IpcPacketBufferWrap;
 
     constructor() {
         super();
         this._totalLength = 0;
         this._offset = 0;
         this._buffers = [];
-        this._header = IpcPacketBufferHeader.fromType(BufferType.HeaderNotValid);
+        this._header = IpcPacketBufferWrap.fromType(BufferType.HeaderNotValid);
     }
 
     on(event: 'packet', handler: (buffer: Buffer) => void): this;

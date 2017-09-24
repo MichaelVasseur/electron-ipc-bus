@@ -30,7 +30,7 @@ export enum BufferType {
     Object = 'O'.charCodeAt(0)
 };
 
-export class IpcPacketBufferHeader {
+export class IpcPacketBufferWrap {
     private _type: BufferType;
     private _packetSize: number;
     private _contentSize: number;
@@ -41,13 +41,13 @@ export class IpcPacketBufferHeader {
     }
 
     static fromType(bufferType: BufferType) {
-        let header = new IpcPacketBufferHeader();
+        let header = new IpcPacketBufferWrap();
         header.type = bufferType;
         return header;
     }
 
     static fromBufferHeader(bufferReader: BufferReader) {
-        let header = new IpcPacketBufferHeader();
+        let header = new IpcPacketBufferWrap();
         header.readHeader(bufferReader);
         return header;
     }

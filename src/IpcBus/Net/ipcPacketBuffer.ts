@@ -1,9 +1,9 @@
 import { Buffer } from 'buffer';
 import { BufferReader } from './bufferReader';
 import { BufferWriter } from './bufferWriter';
-import * as headerHelpers from './ipcPacketBufferHeader';
+import * as wrap from './ipcPacketBufferWrap';
 
-export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
+export class IpcPacketBuffer { // extends wrap.IpcPacketBufferWrap {
     // Thanks to https://github.com/tests-always-included/buffer-serializer/
     static fromNumber(dataNumber: number): Buffer {
         // An integer
@@ -11,14 +11,14 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
             let absDataNumber = Math.abs(dataNumber);
             // 32-bit integer
             if (absDataNumber <= 0xFFFFFFFF) {
-                let header: headerHelpers.IpcPacketBufferHeader;
+                let header: wrap.IpcPacketBufferWrap;
                 // Negative integer
                 if (dataNumber < 0) {
-                    headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.NegativeInteger);
+                    wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.NegativeInteger);
                 }
                 // Positive integer
                 else {
-                    headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.PositiveInteger);
+                    wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.PositiveInteger);
                 }
                 let bufferWriter = new BufferWriter(new Buffer(header.packetSize));
                 header.writeHeader(bufferWriter);
@@ -29,7 +29,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
         }
         // Either this is not an integer or it is outside of a 32-bit integer.
         // Store as a double.
-        let header = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.Double);
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.Double);
 
         let bufferWriter = new BufferWriter(new Buffer(header.packetSize));
         header.writeHeader(bufferWriter);
@@ -39,7 +39,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
     }
 
     static fromBoolean(dataBoolean: boolean): Buffer {
-        let header = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.Boolean);
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.Boolean);
 
         let bufferWriter = new BufferWriter(new Buffer(header.packetSize));
         header.writeHeader(bufferWriter);
@@ -49,7 +49,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
     }
 
     static fromString(data: string, encoding?: string): Buffer {
-        let header = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.String);
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.String);
         header.contentSize = data.length;
 
         let bufferWriter = new BufferWriter(new Buffer(header.packetSize));
@@ -61,7 +61,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static fromObject(dataObject: Object): Buffer {
         let data = JSON.stringify(dataObject);
-        let header = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.Object);
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.Object);
         header.contentSize = data.length;
 
         let bufferWriter = new BufferWriter(new Buffer(header.packetSize));
@@ -72,7 +72,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
     }
 
     static fromBuffer(data: Buffer): Buffer {
-        let header = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.Buffer);
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.Buffer);
         header.contentSize = data.length;
 
         let bufferWriter = new BufferWriter(new Buffer(header.packetSize));
@@ -91,7 +91,7 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
             buffers.push(buffer);
         });
 
-        let header = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.Array);
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.Array);
         header.contentSize = buffersLength;
 
         let bufferWriterHeader = new BufferWriter(new Buffer(header.headerSize));
@@ -135,36 +135,36 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static to(buffer: Buffer, offset?: number): any {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         return IpcPacketBuffer._to(header, bufferReader);
     }
 
-    private static _to(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
+    private static _to(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
         let arg: any;
         switch (header.type) {
-            case headerHelpers.BufferType.Array: {
+            case wrap.BufferType.Array: {
                 arg = IpcPacketBuffer._toArray(header, bufferReader);
                 break;
             }
-            case headerHelpers.BufferType.Object: {
+            case wrap.BufferType.Object: {
                 arg = IpcPacketBuffer._toObject(header, bufferReader);
                 break;
             }
-            case headerHelpers.BufferType.String: {
+            case wrap.BufferType.String: {
                 arg = IpcPacketBuffer._toString(header, bufferReader);
                 break;
             }
-            case headerHelpers.BufferType.Buffer: {
+            case wrap.BufferType.Buffer: {
                 arg = IpcPacketBuffer._toBuffer(header, bufferReader);
                 break;
             }
-            case headerHelpers.BufferType.PositiveInteger:
-            case headerHelpers.BufferType.NegativeInteger:
-            case headerHelpers.BufferType.Double: {
+            case wrap.BufferType.PositiveInteger:
+            case wrap.BufferType.NegativeInteger:
+            case wrap.BufferType.Double: {
                 arg = IpcPacketBuffer._toNumber(header, bufferReader);
                 break;
             }
-            case headerHelpers.BufferType.Boolean: {
+            case wrap.BufferType.Boolean: {
                 arg = IpcPacketBuffer._toBoolean(header, bufferReader);
                 break;
             }
@@ -174,14 +174,14 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toBoolean(buffer: Buffer, offset?: number): boolean {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isBoolean() === false) {
             return null;
         }
         return IpcPacketBuffer._toBoolean(header, bufferReader);
     }
 
-    private static _toBoolean(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): boolean {
+    private static _toBoolean(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): boolean {
         let data: boolean = (bufferReader.readByte() === 0xFF);
         bufferReader.skip(header.footerSize);
         return data;
@@ -189,23 +189,23 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toNumber(buffer: Buffer, offset?: number): number {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isNumber() === false) {
             return null;
         }
         return IpcPacketBuffer._toNumber(header, bufferReader);
     }
 
-    private static _toNumber(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): number {
+    private static _toNumber(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): number {
         let data: number;
         switch (header.type) {
-            case headerHelpers.BufferType.Double:
+            case wrap.BufferType.Double:
                 data = bufferReader.readDouble();
                 break;
-            case headerHelpers.BufferType.NegativeInteger:
+            case wrap.BufferType.NegativeInteger:
                 data = -bufferReader.readUInt32();
                 break;
-            case headerHelpers.BufferType.PositiveInteger:
+            case wrap.BufferType.PositiveInteger:
                 data = +bufferReader.readUInt32();
                 break;
             default:
@@ -218,14 +218,14 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toObject(buffer: Buffer, offset?: number): any {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isObject() === false) {
             return null;
         }
         return IpcPacketBuffer._toObject(header, bufferReader);
     }
 
-    private static _toObject(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
+    private static _toObject(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
         let data = bufferReader.readString('utf8', header.contentSize);
         bufferReader.skip(header.footerSize);
         return JSON.parse(data);
@@ -233,14 +233,14 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toString(buffer: Buffer, offset?: number, encoding?: string): string {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isString() === false) {
             return null;
         }
         return IpcPacketBuffer._toString(header, bufferReader, encoding);
     }
 
-    private static _toString(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader, encoding?: string): string {
+    private static _toString(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader, encoding?: string): string {
         let data = bufferReader.readString(encoding, header.contentSize);
         bufferReader.skip(header.footerSize);
         return data;
@@ -248,14 +248,14 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toBuffer(buffer: Buffer, offset?: number): Buffer {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isBuffer() === false) {
             return null;
         }
         return IpcPacketBuffer._toBuffer(header, bufferReader);
     }
 
-    private static _toBuffer(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): Buffer {
+    private static _toBuffer(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): Buffer {
         let data = bufferReader.readBuffer(header.contentSize);
         bufferReader.skip(header.footerSize);
         return data;
@@ -263,16 +263,16 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toArrayAt(index: number, buffer: Buffer, offset?: number): any {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isArray() === false) {
             return null;
         }
         return IpcPacketBuffer._toArrayAt(index, header, bufferReader);
     }
 
-    private static _toArrayAt(index: number, header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any {
+    private static _toArrayAt(index: number, header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
         let offsetContentSize = bufferReader.offset + header.contentSize;
-        let headerArg = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.HeaderNotValid);
+        let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
         while ((index > 0) && (bufferReader.offset < offsetContentSize)) {
             headerArg.readHeader(bufferReader);
             bufferReader.skip(headerArg.contentSize + header.footerSize);
@@ -288,17 +288,17 @@ export class IpcPacketBuffer { // extends headerHelpers.IpcPacketBufferHeader {
 
     static toArray(buffer: Buffer, offset?: number): any[] {
         let bufferReader = new BufferReader(buffer, offset);
-        let header = headerHelpers.IpcPacketBufferHeader.fromBufferHeader(bufferReader);
+        let header = wrap.IpcPacketBufferWrap.fromBufferHeader(bufferReader);
         if (header.isArray() === false) {
             return null;
         }
         return IpcPacketBuffer._toArray(header, bufferReader);
     }
 
-    private static _toArray(header: headerHelpers.IpcPacketBufferHeader, bufferReader: BufferReader): any[] {
+    private static _toArray(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any[] {
         let offsetContentSize = bufferReader.offset + header.contentSize;
         let args = [];
-        let headerArg = headerHelpers.IpcPacketBufferHeader.fromType(headerHelpers.BufferType.HeaderNotValid);
+        let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
         while (bufferReader.offset < offsetContentSize) {
             headerArg.readHeader(bufferReader);
             let arg = IpcPacketBuffer._to(headerArg, bufferReader);
