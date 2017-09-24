@@ -3,23 +3,19 @@ import { BufferReader } from './bufferReader';
 import { BufferWriter } from './bufferWriter';
 
 const headerSeparator: number = '['.charCodeAt(0);
-export const footerSeparator: number = ']'.charCodeAt(0);
+const footerSeparator: number = ']'.charCodeAt(0);
 
 const MinHeaderLength: number = 2;
 const MaxHeaderLength: number = MinHeaderLength + 4;
 
-export const FooterLength: number = 1;
-export const IntegerHeaderLength: number = MinHeaderLength;
-export const DoubleHeaderLength: number = MinHeaderLength;
-export const StringHeaderLength: number = MinHeaderLength + 4;
-export const BufferHeaderLength: number = MinHeaderLength + 4;
-export const ArrayHeaderLength: number = MinHeaderLength + 4;
-export const ObjectHeaderLength: number = MinHeaderLength + 4;
-export const BooleanHeaderLength: number = MinHeaderLength;
-
-export const DoublePacketSize = DoubleHeaderLength + 8 + FooterLength;
-export const IntegerPacketSize = DoubleHeaderLength + 4 + FooterLength;
-export const BooleanPacketSize = DoubleHeaderLength + 1 + FooterLength;
+const FooterLength: number = 1;
+const IntegerHeaderLength: number = MinHeaderLength;
+const DoubleHeaderLength: number = MinHeaderLength;
+// const StringHeaderLength: number = MinHeaderLength + 4;
+// const BufferHeaderLength: number = MinHeaderLength + 4;
+// const ArrayHeaderLength: number = MinHeaderLength + 4;
+const ObjectHeaderLength: number = MinHeaderLength + 4;
+const BooleanHeaderLength: number = MinHeaderLength;
 
 export enum BufferType {
     HeaderNotValid = 'X'.charCodeAt(0),
@@ -35,73 +31,125 @@ export enum BufferType {
 };
 
 export class IpcPacketBufferHeader {
-    type: BufferType;
-    packetSize: number;
-    contentSize: number;
-    headerSize: number;
+    private _type: BufferType;
+    private _packetSize: number;
+    private _contentSize: number;
+    private _headerSize: number;
 
-    constructor(bufferReader?: BufferReader) {
-        this.type = BufferType.HeaderNotValid;
-        if (bufferReader) {
-            this.readHeader(bufferReader);
-        }
+    private constructor() {
+        this._type = BufferType.HeaderNotValid;
     }
 
-    readHeader(bufferReader: BufferReader): number {
-        this.type = BufferType.HeaderNotValid;
-        if (bufferReader.readByte() !== headerSeparator) {
-            return 0;
-        }
-        this.type = bufferReader.readByte();
-        switch (this.type) {
+    static fromType(bufferType: BufferType) {
+        let header = new IpcPacketBufferHeader();
+        header.type = bufferType;
+        return header;
+    }
+
+    static fromBufferHeader(bufferReader: BufferReader) {
+        let header = new IpcPacketBufferHeader();
+        header.readHeader(bufferReader);
+        return header;
+    }
+
+    get type(): BufferType {
+        return this._type;
+    }
+
+    set type(bufferType: BufferType) {
+        this._type = bufferType;
+        switch (this._type) {
             case BufferType.Double:
-                this.headerSize = DoubleHeaderLength;
-                if (bufferReader.offset + this.headerSize >= bufferReader.length) {
-                    this.type = BufferType.HeaderPartial;
-                }
-                else {
-                    this.packetSize = DoublePacketSize;
-                    this.contentSize = 8;
-                }
+                this._headerSize = DoubleHeaderLength;
+                this.setContentSize(8);
                 break;
             case BufferType.NegativeInteger:
             case BufferType.PositiveInteger:
-                this.headerSize = IntegerHeaderLength;
-                if (bufferReader.offset + this.headerSize >= bufferReader.length) {
-                    this.type = BufferType.HeaderPartial;
-                }
-                else {
-                    this.packetSize = IntegerPacketSize;
-                    this.contentSize = 4;
-                }
+                this._headerSize = IntegerHeaderLength;
+                this.setContentSize(4);
                 break;
             case BufferType.Array:
             case BufferType.Object:
             case BufferType.String:
             case BufferType.Buffer:
-                this.headerSize = ObjectHeaderLength;
-                if (bufferReader.offset + this.headerSize >= bufferReader.length) {
-                    this.type = BufferType.HeaderPartial;
-                }
-                else {
-                    this.packetSize = bufferReader.readUInt32();
-                    this.contentSize = this.packetSize - this.headerSize - FooterLength;
-                }
+                this._headerSize = ObjectHeaderLength;
                 break;
-            case BufferType.Boolean: {
-                this.headerSize = BooleanHeaderLength;
-                if (bufferReader.offset + this.headerSize >= bufferReader.length) {
-                    this.type = BufferType.HeaderPartial;
-                }
-                else {
-                    this.packetSize = BooleanPacketSize;
-                    this.contentSize = 1;
-                }
+            case BufferType.Boolean:
+                this._headerSize = BooleanHeaderLength;
+                this.setContentSize(1);
+                break;
+            default :
+                this._type = BufferType.HeaderNotValid;
+                break;
+        }
+    }
+
+    get packetSize(): number {
+        return this._packetSize;
+    }
+
+    set packetSize(packetSize: number) {
+        switch (this._type) {
+            case BufferType.Array:
+            case BufferType.Object:
+            case BufferType.String:
+            case BufferType.Buffer:
+                this.setPacketSize(packetSize);
                 break;
             }
-            default :
-                this.type = BufferType.HeaderNotValid;
+    }
+
+    private setPacketSize(packetSize: number) {
+        this._packetSize = packetSize;
+        this._contentSize = this._packetSize - this._headerSize - FooterLength;
+    }
+
+    get contentSize(): number {
+        return this._contentSize;
+    }
+
+    set contentSize(contentSize: number) {
+        switch (this._type) {
+            case BufferType.Array:
+            case BufferType.Object:
+            case BufferType.String:
+            case BufferType.Buffer:
+                this.setContentSize(contentSize);
                 break;
+        }
+    }
+
+    private setContentSize(contentSize: number){
+        this._contentSize = contentSize;
+        this._packetSize = this._contentSize + this._headerSize + FooterLength;
+    }
+
+    get footerSize(): number {
+        return FooterLength;
+    }
+
+    get headerSize(): number {
+        return this._headerSize;
+    }
+
+    readHeader(bufferReader: BufferReader): number {
+        this._type = BufferType.HeaderNotValid;
+        if (bufferReader.readByte() !== headerSeparator) {
+            return 0;
+        }
+        this.type = bufferReader.readByte();
+        if (bufferReader.offset + this._headerSize >= bufferReader.length) {
+            this._type = BufferType.HeaderPartial;
+        }
+        else {
+            switch (this.type) {
+                case BufferType.Array:
+                case BufferType.Object:
+                case BufferType.String:
+                case BufferType.Buffer:
+                    this.setPacketSize(bufferReader.readUInt32());
+                    break;
+            }
         }
         return bufferReader.offset;
     }
@@ -113,44 +161,44 @@ export class IpcPacketBufferHeader {
         if (buffer.length < offsetHeaderLength) {
             // No hope, there is only one buffer
             if (buffers.length === 1) {
-                this.type = BufferType.HeaderPartial;
+                this._type = BufferType.HeaderPartial;
             }
             // Create a buffer buffers with the minimum size
             buffer = Buffer.concat(buffers, offsetHeaderLength);
             // Still not enough !
             if (buffer.length < offsetHeaderLength) {
-                this.type = BufferType.HeaderPartial;
+                this._type = BufferType.HeaderPartial;
             }
         }
         this.readHeader(new BufferReader(buffer, offset));
     }
 
     isValid(): boolean {
-        return this.type !== BufferType.HeaderNotValid;
+        return this._type !== BufferType.HeaderNotValid;
     }
 
     isPartial(): boolean {
-        return this.type === BufferType.HeaderPartial;
+        return this._type === BufferType.HeaderPartial;
     }
 
     isArray(): boolean {
-        return this.type === BufferType.Array;
+        return this._type === BufferType.Array;
     }
 
     isObject(): boolean {
-        return this.type === BufferType.Object;
+        return this._type === BufferType.Object;
     }
 
     isString(): boolean {
-        return this.type === BufferType.String;
+        return this._type === BufferType.String;
     }
 
     isBuffer(): boolean {
-        return this.type === BufferType.Buffer;
+        return this._type === BufferType.Buffer;
     }
 
     isNumber(): boolean {
-        switch(this.type) {
+        switch(this._type) {
             case BufferType.NegativeInteger:
             case BufferType.PositiveInteger:
             case BufferType.Double:
@@ -161,11 +209,24 @@ export class IpcPacketBufferHeader {
     }
 
     isBoolean(): boolean {
-        return this.type === BufferType.Boolean;
+        return this._type === BufferType.Boolean;
     }
 
-    static writeHeader(bufferWriter: BufferWriter, bufferType: BufferType): number {
+    writeHeader(bufferWriter: BufferWriter): number {
         bufferWriter.writeByte(headerSeparator);
-        return bufferWriter.writeByte(bufferType);
+        bufferWriter.writeByte(this._type);
+        switch (this._type) {
+            case BufferType.Array:
+            case BufferType.Object:
+            case BufferType.String:
+            case BufferType.Buffer:
+                bufferWriter.writeUInt32(this._packetSize);
+                break;
+        }
+        return bufferWriter.offset;
+    }
+
+    writeFooter(bufferWriter: BufferWriter): number {
+        return bufferWriter.writeByte(footerSeparator);
     }
 }
