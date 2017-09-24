@@ -1,8 +1,11 @@
+import * as net from 'net';
+
 import { Buffer } from 'buffer';
 import { BufferReader } from './bufferReader';
-import { BufferHelperWriter } from './bufferHelperWriter';
-// import { BufferWriter } from './bufferWriter';
+import { Writer } from './writer';
+// import { Writer } from './writer';
 import { BufferCollectionWriter } from './bufferCollectionWriter';
+import { SocketWriter } from './SocketWriter';
 import * as wrap from './ipcPacketBufferWrap';
 
 export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
@@ -38,7 +41,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromNumber(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, dataNumber: number): void {
+    private static _fromNumber(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, dataNumber: number): void {
         // An integer
         if (Math.floor(dataNumber) === dataNumber) {
             let absDataNumber = Math.abs(dataNumber);
@@ -74,7 +77,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromBoolean(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, dataBoolean: boolean): void {
+    private static _fromBoolean(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, dataBoolean: boolean): void {
         header.type = wrap.BufferType.Boolean;
         header.writeHeader(bufferWriter);
         bufferWriter.writeByte(dataBoolean ? 0xFF : 0x00);
@@ -89,7 +92,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromString(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, data: string, encoding?: string): void {
+    private static _fromString(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: string, encoding?: string): void {
         header.type = wrap.BufferType.String;
         header.contentSize = data.length;
         header.writeHeader(bufferWriter);
@@ -105,7 +108,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromObject(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, dataObject: Object): void {
+    private static _fromObject(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, dataObject: Object): void {
         let data = JSON.stringify(dataObject);
 
         header.type = wrap.BufferType.Object;
@@ -124,13 +127,19 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromBuffer(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, data: Buffer): void {
+    private static _fromBuffer(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: Buffer): void {
         header.type = wrap.BufferType.Buffer;
         header.contentSize = data.length;
 
         header.writeHeader(bufferWriter);
         bufferWriter.writeBuffer(data);
         header.writeFooter(bufferWriter);
+    }
+
+    static fromArrayToSocket(args: any[], socket: net.Socket): void {
+        let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
+        let bufferWriter = new SocketWriter(socket);
+        IpcPacketBuffer._fromArray(header, bufferWriter, args);
     }
 
     static fromArray(args: any[]): IpcPacketBuffer {
@@ -141,7 +150,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, args: any[]): void {
+    private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
         let bufferWriterArgs = new BufferCollectionWriter();
         let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
         args.forEach((arg) => {
@@ -185,7 +194,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return buffer;
     }
 
-    private static _from(header: wrap.IpcPacketBufferWrap, bufferWriter: BufferHelperWriter, data: any): void {
+    private static _from(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: any): void {
         if (Buffer.isBuffer(data)) {
             IpcPacketBuffer._fromBuffer(header, bufferWriter, data);
         }

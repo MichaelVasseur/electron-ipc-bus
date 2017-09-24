@@ -94,20 +94,15 @@ export class IpcBusTransportNode extends IpcBusTransport {
 
     protected _ipcPushCommand(ipcBusCommand: IpcBusCommand, args?: any[]): void {
         if (this._busConn) {
-            // if (args) {
-            //     ipcBusCommand.args = args;
-            // }
-            // let buffer = IpcPacketBuffer.fromObject(ipcBusCommand);
-            // this._busConn.write(buffer);
             if (args) {
                 args = [ipcBusCommand, ...args];
             }
             else {
                 args = [ipcBusCommand];
             }
-            // let buffer: Buffer = IpcPacketBuffer.fromArray(args);
             let packet = IpcPacketBuffer.fromArray(args);
             this._busConn.write(packet.buffer);
+            // IpcPacketBuffer.fromArrayToSocket(args, this._busConn);
         }
     }
 }

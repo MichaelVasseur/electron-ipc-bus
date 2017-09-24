@@ -1,7 +1,7 @@
 // import { Buffer } from 'buffer';
-import { BufferHelperWriter } from './bufferHelperWriter';
+import { Writer } from './writer';
 
-export class BufferHelperWriter implements BufferHelperWriter {
+export class BufferWriter implements Writer {
     private _offset: number;
     private _buffer: Buffer;
 
