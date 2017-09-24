@@ -63,11 +63,11 @@ export class IpcBusTransportNode extends IpcBusTransport {
                         this._reset();
                     }
                 });
-                this._baseIpc.on('packet', (buffer: Buffer) => {
+                this._baseIpc.on('packet', (packet: IpcPacketBuffer) => {
                     // 1
                     // let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
                     // 2
-                    let args = IpcPacketBuffer.toArray(buffer);
+                    let args = packet.toArray();
                     let ipcBusCommand: IpcBusCommand = args.shift();
                     if (ipcBusCommand && ipcBusCommand.name) {
                         this._onEventReceived(ipcBusCommand, args);
@@ -105,8 +105,9 @@ export class IpcBusTransportNode extends IpcBusTransport {
             else {
                 args = [ipcBusCommand];
             }
-            let buffer = IpcPacketBuffer.fromArray(args);
-            this._busConn.write(buffer);
+            // let buffer: Buffer = IpcPacketBuffer.fromArray(args);
+            let packet = IpcPacketBuffer.fromArray(args);
+            this._busConn.write(packet.buffer);
         }
     }
 }

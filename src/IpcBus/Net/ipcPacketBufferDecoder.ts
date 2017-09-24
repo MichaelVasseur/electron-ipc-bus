@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
-// import { IpcPacketBuffer, IpcPacketBufferWrap, headerLength } from './ipcPacketBuffer';
 import { IpcPacketBufferWrap, BufferType } from './ipcPacketBufferWrap';
+import { IpcPacketBuffer } from './ipcPacketBuffer';
 
 export class IpcPacketBufferDecoder extends EventEmitter {
     private _buffers: Buffer[];
@@ -17,8 +17,8 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         this._header = IpcPacketBufferWrap.fromType(BufferType.HeaderNotValid);
     }
 
-    on(event: 'packet', handler: (buffer: Buffer) => void): this;
-    on(event: 'packet[]', handler: (buffer: Buffer[]) => void): this;
+    on(event: 'packet', handler: (buffer: IpcPacketBuffer) => void): this;
+    on(event: 'packet[]', handler: (buffer: IpcPacketBuffer[]) => void): this;
     on(event: 'error', handler: (err: Error) => void): this;
     on(event: string, handler: Function): this {
         return super.on(event, handler);
@@ -28,7 +28,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
         this._totalLength += data.length;
         this._buffers.push(data);
 
-        let packets: Buffer[] = [];
+        let packets: IpcPacketBuffer[] = [];
 
         while (this._totalLength > 0) {
             this._header.readHeaderFromBuffers(this._buffers, this._offset);
@@ -51,17 +51,17 @@ export class IpcPacketBufferDecoder extends EventEmitter {
             // Compute totalLengh in advance (see the opt after concat call)
             this._totalLength -= this._header.packetSize;
 
-            let packet: Buffer;
+            let buffer: Buffer;
             let currentBuffer = this._buffers[0];
             if (currentBuffer.length - this._offset >= packetSize) {
-                packet = currentBuffer.slice(this._offset, this._offset + packetSize);
+                buffer = currentBuffer.slice(this._offset, this._offset + packetSize);
             }
             else {
                 if (this._offset > 0) {
                     this._buffers[0] = currentBuffer = currentBuffer.slice(this._offset);
                     this._offset = 0;
                 }
-                packet = Buffer.concat(this._buffers, packetSize);
+                buffer = Buffer.concat(this._buffers, packetSize);
                 // Don't waste your time to clean buffers if there were all used !
                 if (this._totalLength > 0) {
                     while (currentBuffer && (currentBuffer.length <= packetSize)) {
@@ -72,6 +72,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
                     }
                 }
             }
+            let packet = IpcPacketBuffer.fromPacketBuffer(this._header, buffer);
             packets.push(packet);
             this.emit('packet', packet);
 

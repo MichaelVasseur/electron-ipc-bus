@@ -164,14 +164,14 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
         this._socketCleanUp(socket);
     }
 
-    private _onData(buffer: Buffer, socket: any, server: any): void {
+    private _onData(packet: IpcPacketBuffer, socket: any, server: any): void {
         // 1
         // let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
         // 2
         // let args = IpcPacketBuffer.toArray(buffer);
         // let ipcBusCommand: IpcBusCommand = args[0];
         // 3
-        let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toArrayAt(0, buffer);
+        let ipcBusCommand: IpcBusCommand = packet.toArrayAt(0);
         if (ipcBusCommand && ipcBusCommand.name) {
             switch (ipcBusCommand.name) {
                 case IpcBusUtils.IPC_BUS_COMMAND_CONNECT: {
@@ -222,7 +222,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
 
                     // Send ipcBusCommand to subscribed connections
                     this._subscriptions.forEachChannel(ipcBusCommand.channel, function (connData, channel) {
-                       connData.conn.write(buffer);
+                       connData.conn.write(packet.buffer);
                     });
                     break;
                 }
@@ -234,7 +234,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
 
                     // Request ipcBusCommand to subscribed connections
                     this._subscriptions.forEachChannel(ipcBusCommand.channel, function (connData, channel) {
-                        connData.conn.write(buffer);
+                        connData.conn.write(packet.buffer);
                     });
                     break;
                 }
@@ -245,7 +245,7 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
                     if (socket) {
                         this._requestChannels.delete(ipcBusCommand.data.replyChannel);
                         // Send ipcBusCommand to subscribed connections
-                        socket.write(buffer);
+                        socket.write(packet.buffer);
                     }
                     break;
                 }

@@ -20,6 +20,7 @@ const BooleanHeaderLength: number = MinHeaderLength;
 export enum BufferType {
     HeaderNotValid = 'X'.charCodeAt(0),
     HeaderPartial = 'x'.charCodeAt(0),
+    ContentPartial = 'y'.charCodeAt(0),
     String = 's'.charCodeAt(0),
     Buffer = 'B'.charCodeAt(0),
     Boolean = 'b'.charCodeAt(0),
@@ -31,12 +32,12 @@ export enum BufferType {
 };
 
 export class IpcPacketBufferWrap {
-    private _type: BufferType;
-    private _packetSize: number;
-    private _contentSize: number;
-    private _headerSize: number;
+    protected _type: BufferType;
+    protected _packetSize: number;
+    protected _contentSize: number;
+    protected _headerSize: number;
 
-    private constructor() {
+    protected constructor() {
         this._type = BufferType.HeaderNotValid;
     }
 
@@ -57,6 +58,9 @@ export class IpcPacketBufferWrap {
     }
 
     set type(bufferType: BufferType) {
+        if (this._type === bufferType) {
+            return;
+        }
         this._type = bufferType;
         switch (this._type) {
             case BufferType.Double:
@@ -109,6 +113,9 @@ export class IpcPacketBufferWrap {
     }
 
     set contentSize(contentSize: number) {
+        if (this._contentSize === contentSize) {
+            return;
+        }
         switch (this._type) {
             case BufferType.Array:
             case BufferType.Object:
@@ -119,7 +126,7 @@ export class IpcPacketBufferWrap {
         }
     }
 
-    private setContentSize(contentSize: number){
+    protected setContentSize(contentSize: number){
         this._contentSize = contentSize;
         this._packetSize = this._contentSize + this._headerSize + FooterLength;
     }
