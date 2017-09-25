@@ -9,12 +9,18 @@ export class IpcPacketBufferDecoder extends EventEmitter {
     private _offset: number;
     private _header: IpcPacketBufferWrap;
 
+    expectedArgs: number;
+    packetArgs: IpcPacketBuffer[];
+
     constructor() {
         super();
         this._totalLength = 0;
         this._offset = 0;
         this._buffers = [];
         this._header = IpcPacketBufferWrap.fromType(BufferType.HeaderNotValid);
+
+        this.packetArgs = [];
+        this.expectedArgs = 0;
     }
 
     on(event: 'packet', handler: (buffer: IpcPacketBuffer) => void): this;
@@ -22,6 +28,33 @@ export class IpcPacketBufferDecoder extends EventEmitter {
     on(event: 'error', handler: (err: Error) => void): this;
     on(event: string, handler: Function): this {
         return super.on(event, handler);
+    }
+
+    handlePacket(packet: IpcPacketBuffer): IpcPacketBuffer | null {
+        if (this.packetArgs.length > 0) {
+            this.packetArgs.push(packet);
+            if (packet.isArrayLen()) {
+                this.expectedArgs += packet.argsLen;
+            }
+            if (--this.expectedArgs === 0) {
+                let buffersLen = 0;
+                let buffers = this.packetArgs.map(packet => {
+                    buffersLen += packet.buffer.length;
+                    return packet.buffer;
+                });
+                let packet = IpcPacketBuffer.fromPacketBuffer(this.packetArgs[0], Buffer.concat(buffers, buffersLen));
+                this.packetArgs = [];
+                this.expectedArgs = 0;
+                return packet;
+            }
+            return null;
+        }
+        if (packet.isArrayLen()) {
+            this.packetArgs.push(packet);
+            this.expectedArgs = packet.argsLen;
+            return null;
+        }
+        return packet;
     }
 
     handleData(data: Buffer): void {
@@ -72,9 +105,14 @@ export class IpcPacketBufferDecoder extends EventEmitter {
                     }
                 }
             }
-            let packet = IpcPacketBuffer.fromPacketBuffer(this._header, buffer);
-            packets.push(packet);
-            this.emit('packet', packet);
+            // let packet = IpcPacketBuffer.fromPacketBuffer(this._header, buffer);
+            // packets.push(packet);
+            // this.emit('packet', packet);
+            let packet = this.handlePacket(IpcPacketBuffer.fromPacketBuffer(this._header, buffer));
+            if (packet) {
+                packets.push(packet);
+                this.emit('packet', packet);
+            }
 
             this._offset += packetSize;
         }

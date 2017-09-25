@@ -23,6 +23,7 @@
     "bootstrap": "^3.3.7",
     "electron": "1.6.7",
     "electron-ipc-bus": "^0.17.0",
+    "typescript": "^2.5.2",
     "uuid": "2.0.3"
   }
 }

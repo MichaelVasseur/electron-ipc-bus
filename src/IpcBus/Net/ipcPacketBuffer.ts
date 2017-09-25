@@ -131,10 +131,11 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         header.writeFooter(bufferWriter);
     }
 
-    static fromArrayToSocket(args: any[], socket: net.Socket): void {
+    static fromArrayToSocket(args: any[], socket: net.Socket): number {
         let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
         let bufferWriter = new SocketWriter(socket);
         IpcPacketBuffer._fromArray(header, bufferWriter, args);
+        return bufferWriter.length;
     }
 
     static fromArray(args: any[]): IpcPacketBuffer {
@@ -145,16 +146,32 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
-    private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
-        header.type = wrap.BufferType.Array;
-        header.argsLen = args.length;
-        header.writeHeader(bufferWriter);
-        header.writeFooter(bufferWriter);
+    // private static _fromArrayLen(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
+    //     header.type = wrap.BufferType.ArrayLen;
+    //     header.argsLen = args.length;
+    //     header.writeHeader(bufferWriter);
+    //     header.writeFooter(bufferWriter);
+    //     let headerArg = new wrap.IpcPacketBufferWrap();
+    //     args.forEach((arg) => {
+    //         IpcPacketBuffer._from(headerArg, bufferWriter, arg);
+    //     });
+    // }
 
+    private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
+        let bufferWriterArgs = new BufferCollectionWriter();
         let headerArg = new wrap.IpcPacketBufferWrap();
         args.forEach((arg) => {
-            IpcPacketBuffer._from(headerArg, bufferWriter, arg);
+            IpcPacketBuffer._from(headerArg, bufferWriterArgs, arg);
         });
+
+        header.type = wrap.BufferType.Array;
+        header.contentSize = bufferWriterArgs.length;
+        header.writeHeader(bufferWriter);
+        bufferWriterArgs.buffers.forEach((buffer) => {
+            bufferWriter.writeBuffer(buffer);
+        });
+        header.writeFooter(bufferWriter);
+
     }
 
     static from(data: any): IpcPacketBuffer {
@@ -321,15 +338,9 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     private static _toArrayAt(index: number, header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
-        let argsLen = header.argsLen;
-        bufferReader.skip(header.footerSize);
-
-        if (index >= argsLen) {
-            return null;
-        }
-
+        let offsetContentSize = bufferReader.offset + header.contentSize;
         let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
-        while (index > 0) {
+        while ((index > 0) && (bufferReader.offset < offsetContentSize)) {
             headerArg.readHeader(bufferReader);
             bufferReader.skip(headerArg.contentSize + header.footerSize);
             --index;
@@ -342,6 +353,28 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return arg;
     }
 
+    // private static _toArrayLenAt(index: number, header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
+    //     let argsLen = header.argsLen;
+    //     bufferReader.skip(header.footerSize);
+
+    //     if (index >= argsLen) {
+    //         return null;
+    //     }
+
+    //     let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
+    //     while (index > 0) {
+    //         headerArg.readHeader(bufferReader);
+    //         bufferReader.skip(headerArg.contentSize + header.footerSize);
+    //         --index;
+    //     }
+    //     let arg: any;
+    //     if (index === 0) {
+    //         headerArg.readHeader(bufferReader);
+    //         arg = IpcPacketBuffer._to(headerArg, bufferReader);
+    //     }
+    //     return arg;
+    // }
+
     toArray(): any[] {
         if (this.isArray() === false) {
             return null;
@@ -351,17 +384,30 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     private static _toArray(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any[] {
-        let argsLen = header.argsLen;
-        bufferReader.skip(header.footerSize);
-
+        let offsetContentSize = bufferReader.offset + header.contentSize;
         let args = [];
         let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
-        while (argsLen > 0) {
+        while (bufferReader.offset < offsetContentSize) {
             headerArg.readHeader(bufferReader);
             let arg = IpcPacketBuffer._to(headerArg, bufferReader);
             args.push(arg);
-            --argsLen;
         }
+        bufferReader.skip(header.footerSize);
         return args;
     }
+
+    // private static _toArrayLen(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any[] {
+    //     let argsLen = header.argsLen;
+    //     bufferReader.skip(header.footerSize);
+
+    //     let args = [];
+    //     let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
+    //     while (argsLen > 0) {
+    //         headerArg.readHeader(bufferReader);
+    //         let arg = IpcPacketBuffer._to(headerArg, bufferReader);
+    //         args.push(arg);
+    //         --argsLen;
+    //     }
+    //     return args;
+    // }
 }

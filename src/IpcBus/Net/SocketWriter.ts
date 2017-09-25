@@ -24,7 +24,7 @@ export class SocketWriter implements Writer {
     }
 
     get length(): number {
-        return null;
+        return this._length;
     }
 
     writeByte(data: number): number {
