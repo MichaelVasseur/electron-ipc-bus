@@ -64,9 +64,6 @@ export class IpcPacketNet extends IpcNet {
 
   protected _parseStream(socket: net.Socket, server?: net.Server) {
     let ipcPacketConsolidator = new IpcPacketConsolidator(this, socket, server);
-    socket.on('packet', (...args: any[]) => {
-      this.emit('packet', ...args);
-    });
     socket.on('close', (had_error: any) => {
       ipcPacketConsolidator = null;
     });

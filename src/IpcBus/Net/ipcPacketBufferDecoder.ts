@@ -39,7 +39,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
                 break;
             }
             // if not enough data accumulated for reading the header, exit
-            if (this._header.isPartial()) {
+            if (this._header.isPartial() || this._header.isUnknown()) {
                 break;
             }
             let packetSize = this._header.packetSize;
@@ -49,7 +49,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
             }
 
             // Compute totalLengh in advance (see the opt after concat call)
-            this._totalLength -= this._header.packetSize;
+            this._totalLength -= packetSize;
 
             let buffer: Buffer;
             let currentBuffer = this._buffers[0];

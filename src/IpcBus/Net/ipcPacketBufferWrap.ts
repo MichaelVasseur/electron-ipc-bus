@@ -18,8 +18,8 @@ const ArrayHeaderLength: number = MinHeaderLength + 4;
 export enum BufferType {
     // 88
     HeaderNotValid = 'X'.charCodeAt(0),
-    // 120
-    HeaderPartial = 'x'.charCodeAt(0),
+    // 85
+    HeaderUnknown = 'U'.charCodeAt(0),
     // 121
     ContentPartial = 'y'.charCodeAt(0),
     // 115
@@ -46,6 +46,7 @@ export class IpcPacketBufferWrap {
     protected _contentSize: number;
     protected _headerSize: number;
     protected _argsLen: number;
+    protected _partial: boolean;
 
     protected constructor() {
         this._type = BufferType.HeaderNotValid;
@@ -68,9 +69,6 @@ export class IpcPacketBufferWrap {
     }
 
     set type(bufferType: BufferType) {
-        if (this._type === bufferType) {
-            return;
-        }
         this._type = bufferType;
         switch (this._type) {
             case BufferType.Double:
@@ -167,8 +165,12 @@ export class IpcPacketBufferWrap {
         return this._type !== BufferType.HeaderNotValid;
     }
 
+    isUnknown(): boolean {
+        return this._type === BufferType.HeaderUnknown;
+    }
+
     isPartial(): boolean {
-        return this._type === BufferType.HeaderPartial;
+        return this._partial;
     }
 
     isArray(): boolean {
@@ -218,8 +220,8 @@ export class IpcPacketBufferWrap {
     }
 
     readHeader(bufferReader: BufferReader): number {
+        this._type = BufferType.HeaderUnknown;
         if (bufferReader.EOF) {
-            this._type = BufferType.HeaderPartial;
             return bufferReader.offset;
         }
         if (bufferReader.readByte() !== headerSeparator) {
@@ -227,20 +229,15 @@ export class IpcPacketBufferWrap {
             return bufferReader.offset;
         }
         if (bufferReader.EOF) {
-            this._type = BufferType.HeaderPartial;
             return bufferReader.offset;
         }
         this.type = bufferReader.readByte();
         if (bufferReader.offset + (this._headerSize - 2) > bufferReader.length) {
-            this._type = BufferType.HeaderPartial;
+            this._partial = true;
         }
         else {
+            this._partial = false;
             switch (this.type) {
-                case BufferType.Double:
-                case BufferType.NegativeInteger:
-                case BufferType.PositiveInteger:
-                case BufferType.Boolean:
-                    break;
                 case BufferType.Array:
                     this._argsLen = bufferReader.readUInt32();
                     break;
@@ -248,10 +245,6 @@ export class IpcPacketBufferWrap {
                 case BufferType.String:
                 case BufferType.Buffer:
                     this.setPacketSize(bufferReader.readUInt32());
-                    break;
-                default:
-                    // Invalid buffer type
-                    this._type = BufferType.HeaderNotValid;
                     break;
             }
         }
@@ -265,7 +258,7 @@ export class IpcPacketBufferWrap {
         if (buffer.length < offsetHeaderLength) {
             // No hope, there is not enough buffers
             if (totalLength < offsetHeaderLength) {
-                this._type = BufferType.HeaderPartial;
+                this._type = BufferType.HeaderUnknown;
                 return;
             }
             // Create a buffer from buffers with the minimum size
@@ -275,8 +268,7 @@ export class IpcPacketBufferWrap {
         if (this.isPartial()) {
             // No hope, there is not enough buffers
             if (totalLength < this.headerSize) {
-                this._type = BufferType.HeaderPartial;
-                return;
+                 return;
             }
             buffer = Buffer.concat(buffers, this.headerSize);
             this.readHeader(new BufferReader(buffer, offset));
