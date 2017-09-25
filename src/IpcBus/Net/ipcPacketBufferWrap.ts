@@ -22,10 +22,12 @@ export enum BufferType {
     String = 's'.charCodeAt(0),
     Buffer = 'B'.charCodeAt(0),
     Boolean = 'b'.charCodeAt(0),
+    // 65
     Array = 'A'.charCodeAt(0),
     PositiveInteger = '+'.charCodeAt(0),
     NegativeInteger = '-'.charCodeAt(0),
     Double = 'd'.charCodeAt(0),
+    // 79
     Object = 'O'.charCodeAt(0)
 };
 
@@ -79,6 +81,8 @@ export class IpcPacketBufferWrap {
             case BufferType.String:
             case BufferType.Buffer:
                 this._headerSize = ObjectHeaderLength;
+                // By default
+                this.setContentSize(0);
                 break;
             case BufferType.Boolean:
                 this._headerSize = MinHeaderLength;
@@ -156,7 +160,7 @@ export class IpcPacketBufferWrap {
             return 0;
         }
         this.type = bufferReader.readByte();
-        if (bufferReader.offset + this._headerSize >= bufferReader.length) {
+        if (bufferReader.offset + (this._headerSize - 2) > bufferReader.length) {
             this._type = BufferType.HeaderPartial;
         }
         else {
@@ -174,21 +178,18 @@ export class IpcPacketBufferWrap {
         return bufferReader.offset;
     }
 
-    readHeaderFromBuffers(buffers: Buffer[], offset: number): void {
+    readHeaderFromBuffers(buffers: Buffer[], totalLength: number, offset: number): void {
         let buffer = buffers[0];
         const offsetHeaderLength = offset + MaxHeaderLength;
         // Buffer is too short for containing a header
         if (buffer.length < offsetHeaderLength) {
-            // No hope, there is only one buffer
-            if (buffers.length === 1) {
+            // No hope, there is not enough buffers
+            if (totalLength < offsetHeaderLength) {
                 this._type = BufferType.HeaderPartial;
+                return;
             }
             // Create a buffer buffers with the minimum size
             buffer = Buffer.concat(buffers, offsetHeaderLength);
-            // Still not enough !
-            if (buffer.length < offsetHeaderLength) {
-                this._type = BufferType.HeaderPartial;
-            }
         }
         this.readHeader(new BufferReader(buffer, offset));
     }
