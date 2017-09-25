@@ -268,16 +268,18 @@ export class IpcPacketBufferWrap {
                 this._type = BufferType.HeaderPartial;
                 return;
             }
-            // Create a buffer from buffers with the maximum size
+            // Create a buffer from buffers with the minimum size
             buffer = Buffer.concat(buffers, offsetHeaderLength);
-            this.readHeader(new BufferReader(buffer, offset));
+        }
+        this.readHeader(new BufferReader(buffer, offset));
+        if (this.isPartial()) {
             if (totalLength < this.headerSize) {
                 this._type = BufferType.HeaderPartial;
                 return;
             }
             buffer = Buffer.concat(buffers, this.headerSize);
+            this.readHeader(new BufferReader(buffer, offset));
         }
-        this.readHeader(new BufferReader(buffer, offset));
     }
 
     writeFooter(bufferWriter: Writer): number {
