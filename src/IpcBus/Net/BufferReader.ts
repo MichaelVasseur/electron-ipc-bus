@@ -9,6 +9,10 @@ export class BufferReader {
         this._offset = offset || 0;
     }
 
+    get EOF(): boolean {
+        return (this._offset >= this._buffer.length);
+    }
+
     get length(): number {
         return this._buffer.length;
     }

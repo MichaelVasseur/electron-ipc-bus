@@ -24,15 +24,11 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromPacketBuffer(wrap: wrap.IpcPacketBufferWrap, buffer: Buffer) {
         let packet = new IpcPacketBuffer();
-        packet._type = wrap.type;
-        packet._packetSize = wrap.packetSize;
-        packet._contentSize = wrap.contentSize;
-        packet._headerSize = wrap.headerSize;
+        Object.assign(packet, wrap);
         packet._buffer = buffer;
         return packet;
     }
 
-    // Thanks to https://github.com/tests-always-included/buffer-serializer/
     static fromNumber(dataNumber: number): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
         let bufferWriter = new BufferCollectionWriter();
@@ -41,6 +37,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
+    // Thanks to https://github.com/tests-always-included/buffer-serializer/
     private static _fromNumber(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, dataNumber: number): void {
         // An integer
         if (Math.floor(dataNumber) === dataNumber) {
@@ -58,12 +55,12 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
                 header.writeHeader(bufferWriter);
                 bufferWriter.writeUInt32(absDataNumber);
                 header.writeFooter(bufferWriter);
+                return;
             }
         }
         // Either this is not an integer or it is outside of a 32-bit integer.
         // Store as a double.
         header.type = wrap.BufferType.Double;
-
         header.writeHeader(bufferWriter);
         bufferWriter.writeDouble(dataNumber);
         header.writeFooter(bufferWriter);
@@ -113,7 +110,6 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
         header.type = wrap.BufferType.Object;
         header.contentSize = data.length;
-
         header.writeHeader(bufferWriter);
         bufferWriter.writeString(data, 'utf8');
         header.writeFooter(bufferWriter);
@@ -130,7 +126,6 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     private static _fromBuffer(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: Buffer): void {
         header.type = wrap.BufferType.Buffer;
         header.contentSize = data.length;
-
         header.writeHeader(bufferWriter);
         bufferWriter.writeBuffer(data);
         header.writeFooter(bufferWriter);
@@ -168,54 +163,35 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     static from(data: any): IpcPacketBuffer {
-        let buffer: IpcPacketBuffer;
-        if (Buffer.isBuffer(data)) {
-            buffer = IpcPacketBuffer.fromBuffer(data);
-        }
-        else if (Array.isArray(data)) {
-            buffer = IpcPacketBuffer.fromArray(data);
-        }
-        else {
-            switch (typeof data) {
-                case 'object':
-                    buffer = IpcPacketBuffer.fromObject(data);
-                    break;
-                case 'string':
-                    buffer = IpcPacketBuffer.fromString(data);
-                    break;
-                case 'number':
-                    buffer = IpcPacketBuffer.fromNumber(data);
-                    break;
-                case 'boolean':
-                    buffer = IpcPacketBuffer.fromBoolean(data);
-                    break;
-            }
-        }
-        return buffer;
+        let packet = new IpcPacketBuffer();
+        let bufferWriter = new BufferCollectionWriter();
+        IpcPacketBuffer._from(packet, bufferWriter, data);
+        packet._buffer = bufferWriter.buffer;
+        return packet;
     }
 
     private static _from(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: any): void {
-        if (Buffer.isBuffer(data)) {
-            IpcPacketBuffer._fromBuffer(header, bufferWriter, data);
-        }
-        else if (Array.isArray(data)) {
-            IpcPacketBuffer._fromArray(header, bufferWriter, data);
-        }
-        else {
-            switch (typeof data) {
-                case 'object':
+        switch (typeof data) {
+            case 'object':
+                if (Buffer.isBuffer(data)) {
+                    IpcPacketBuffer._fromBuffer(header, bufferWriter, data);
+                }
+                else if (Array.isArray(data)) {
+                    IpcPacketBuffer._fromArray(header, bufferWriter, data);
+                }
+                else {
                     IpcPacketBuffer._fromObject(header, bufferWriter, data);
-                    break;
-                case 'string':
-                    IpcPacketBuffer._fromString(header, bufferWriter, data);
-                    break;
-                case 'number':
-                    IpcPacketBuffer._fromNumber(header, bufferWriter, data);
-                    break;
-                case 'boolean':
-                    IpcPacketBuffer._fromBoolean(header, bufferWriter, data);
-                    break;
-            }
+                }
+                break;
+            case 'string':
+                IpcPacketBuffer._fromString(header, bufferWriter, data);
+                break;
+            case 'number':
+                IpcPacketBuffer._fromNumber(header, bufferWriter, data);
+                break;
+            case 'boolean':
+                IpcPacketBuffer._fromBoolean(header, bufferWriter, data);
+                break;
         }
     }
 

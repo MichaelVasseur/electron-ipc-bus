@@ -58,7 +58,7 @@ export class SocketWriter implements Writer {
     }
 
     writeString(data: string, encoding?: string, len?: number): number {
-        if (len && (len < data.length)) {
+        if ((len != null) && (len < data.length)) {
             data = data.substring(0, len);
         }
         let buff = Buffer.from(data, encoding);
