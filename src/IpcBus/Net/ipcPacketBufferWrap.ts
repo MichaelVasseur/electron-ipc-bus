@@ -273,6 +273,7 @@ export class IpcPacketBufferWrap {
         }
         this.readHeader(new BufferReader(buffer, offset));
         if (this.isPartial()) {
+            // No hope, there is not enough buffers
             if (totalLength < this.headerSize) {
                 this._type = BufferType.HeaderPartial;
                 return;
