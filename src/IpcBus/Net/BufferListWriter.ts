@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
 import { Writer } from './writer';
 
-export class BufferCollectionWriter implements Writer {
+export class BufferListWriter implements Writer {
     private _length: number;
     private _buffers: Buffer[];
 

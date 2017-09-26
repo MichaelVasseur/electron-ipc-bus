@@ -1,4 +1,4 @@
-// import { Buffer } from 'buffer';
+import { Buffer } from 'buffer';
 import { Writer } from './writer';
 
 export class BufferWriter implements Writer {

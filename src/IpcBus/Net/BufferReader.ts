@@ -1,6 +1,7 @@
 // import { Buffer } from 'buffer';
+import { Reader } from './reader';
 
-export class BufferReader {
+export class BufferReader implements Reader {
     private _offset: number;
     private _buffer: Buffer;
 
@@ -25,9 +26,10 @@ export class BufferReader {
         return this._offset = offset;
     }
 
-    skip(offsetStep?: number) {
+    skip(offsetStep?: number): number {
         offsetStep = offsetStep || 1;
         this._offset += offsetStep;
+        return this.offset;
     }
 
     readByte(): number {

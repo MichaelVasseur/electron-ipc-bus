@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "start-sandboxed": "electron . --enable-sandbox",
-    "build": "npm run build-ipc1 && npm run build-bundle-preload",
+    "build": "npm run build-mklink && npm run build-bundle-preload",
     "build-ipc1": "npm install ../..",
     "build-mklink": "mklink /j node_modules\\electron-ipc-bus ..\\..\\..\\electron-ipc-bus",
     "build-ipc": "npm uninstall electron-ipc-bus && npm install ../..",

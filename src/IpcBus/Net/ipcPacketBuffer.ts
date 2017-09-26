@@ -3,8 +3,7 @@ import * as net from 'net';
 import { Buffer } from 'buffer';
 import { BufferReader } from './bufferReader';
 import { Writer } from './writer';
-// import { Writer } from './writer';
-import { BufferCollectionWriter } from './bufferCollectionWriter';
+import { BufferListWriter } from './bufferListWriter';
 import { SocketWriter } from './SocketWriter';
 import * as wrap from './ipcPacketBufferWrap';
 
@@ -16,9 +15,6 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     get buffer(): Buffer {
-        if (this._buffer === null) {
-            this._buffer = Buffer.alloc(this.packetSize);
-        }
         return this._buffer;
     }
 
@@ -31,7 +27,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromNumber(dataNumber: number): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromNumber(packet, bufferWriter, dataNumber);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -68,7 +64,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromBoolean(dataBoolean: boolean): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromBoolean(packet, bufferWriter, dataBoolean);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -83,7 +79,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromString(data: string, encoding?: string): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromString(packet, bufferWriter, data, encoding);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -99,7 +95,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromObject(dataObject: Object): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromObject(packet, bufferWriter, dataObject);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -117,7 +113,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromBuffer(data: Buffer): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromBuffer(packet, bufferWriter, data);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -140,7 +136,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromArray(args: any[]): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromArray(packet, bufferWriter, args);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -158,7 +154,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     // }
 
     private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
-        let bufferWriterArgs = new BufferCollectionWriter();
+        let bufferWriterArgs = new BufferListWriter();
         let headerArg = new wrap.IpcPacketBufferWrap();
         args.forEach((arg) => {
             IpcPacketBuffer._from(headerArg, bufferWriterArgs, arg);
@@ -176,7 +172,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static from(data: any): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._from(packet, bufferWriter, data);
         packet._buffer = bufferWriter.buffer;
         return packet;

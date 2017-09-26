@@ -1,5 +1,5 @@
-import { Buffer } from 'buffer';
-import { BufferReader } from './bufferReader';
+// import { Buffer } from 'buffer';
+import { Reader } from './reader';
 import { Writer } from './writer';
 
 const headerSeparator: number = '['.charCodeAt(0);
@@ -60,7 +60,7 @@ export class IpcPacketBufferWrap {
         return header;
     }
 
-    static fromBufferHeader(bufferReader: BufferReader) {
+    static fromBufferHeader(bufferReader: Reader) {
         let header = new IpcPacketBufferWrap();
         header.readHeader(bufferReader);
         return header;
@@ -71,6 +71,9 @@ export class IpcPacketBufferWrap {
     }
 
     set type(bufferType: BufferType) {
+        if (this._type === bufferType) {
+            return;
+        }
         this._type = bufferType;
         this._argsLen = 0;
         switch (this._type) {
@@ -115,20 +118,6 @@ export class IpcPacketBufferWrap {
 
     get packetSize(): number {
         return this._packetSize;
-    }
-
-    set packetSize(packetSize: number) {
-        if (this._packetSize === packetSize) {
-            return;
-        }
-        switch (this._type) {
-            case BufferType.Array:
-            case BufferType.Object:
-            case BufferType.String:
-            case BufferType.Buffer:
-                this.setPacketSize(packetSize);
-                break;
-        }
     }
 
     protected setPacketSize(packetSize: number) {
@@ -230,7 +219,7 @@ export class IpcPacketBufferWrap {
         return bufferWriter.length;
     }
 
-    readHeader(bufferReader: BufferReader): number {
+    readHeader(bufferReader: Reader): number {
         this._type = BufferType.HeaderUnknown;
         if (bufferReader.EOF) {
             return bufferReader.offset;
@@ -261,30 +250,6 @@ export class IpcPacketBufferWrap {
             }
         }
         return bufferReader.offset;
-    }
-
-    readHeaderFromBuffers(buffers: Buffer[], totalLength: number, offset: number): void {
-        let buffer = buffers[0];
-        const offsetHeaderLength = offset + MinHeaderLength;
-        // Buffer is too short for containing a header
-        if (buffer.length < offsetHeaderLength) {
-            // No hope, there is not enough buffers
-            if (totalLength < offsetHeaderLength) {
-                this._type = BufferType.HeaderUnknown;
-                return;
-            }
-            // Create a buffer with the minimum size
-            buffer = Buffer.concat(buffers, offsetHeaderLength);
-        }
-        this.readHeader(new BufferReader(buffer, offset));
-        if (this.isPartial()) {
-            // No hope, there is not enough buffers
-            if (totalLength < this.headerSize) {
-                 return;
-            }
-            buffer = Buffer.concat(buffers, this.headerSize);
-            this.readHeader(new BufferReader(buffer, offset));
-        }
     }
 
     writeFooter(bufferWriter: Writer): number {
