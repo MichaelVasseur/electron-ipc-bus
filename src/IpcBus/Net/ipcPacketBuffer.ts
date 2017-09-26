@@ -3,8 +3,7 @@ import * as net from 'net';
 import { Buffer } from 'buffer';
 import { BufferReader } from './bufferReader';
 import { Writer } from './writer';
-// import { Writer } from './writer';
-import { BufferCollectionWriter } from './bufferCollectionWriter';
+import { BufferListWriter } from './bufferListWriter';
 import { SocketWriter } from './SocketWriter';
 import * as wrap from './ipcPacketBufferWrap';
 
@@ -16,9 +15,6 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     get buffer(): Buffer {
-        if (this._buffer === null) {
-            this._buffer = Buffer.alloc(this.packetSize);
-        }
         return this._buffer;
     }
 
@@ -31,7 +27,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromNumber(dataNumber: number): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromNumber(packet, bufferWriter, dataNumber);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -68,7 +64,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromBoolean(dataBoolean: boolean): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromBoolean(packet, bufferWriter, dataBoolean);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -83,7 +79,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromString(data: string, encoding?: string): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromString(packet, bufferWriter, data, encoding);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -99,7 +95,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromObject(dataObject: Object): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromObject(packet, bufferWriter, dataObject);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -117,7 +113,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     static fromBuffer(data: Buffer): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromBuffer(packet, bufferWriter, data);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -131,40 +127,52 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         header.writeFooter(bufferWriter);
     }
 
-    static fromArrayToSocket(args: any[], socket: net.Socket): void {
+    static fromArrayToSocket(args: any[], socket: net.Socket): number {
         let header = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
         let bufferWriter = new SocketWriter(socket);
         IpcPacketBuffer._fromArray(header, bufferWriter, args);
+        return bufferWriter.length;
     }
 
     static fromArray(args: any[]): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._fromArray(packet, bufferWriter, args);
         packet._buffer = bufferWriter.buffer;
         return packet;
     }
 
+    // private static _fromArrayLen(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
+    //     header.type = wrap.BufferType.ArrayLen;
+    //     header.argsLen = args.length;
+    //     header.writeHeader(bufferWriter);
+    //     header.writeFooter(bufferWriter);
+    //     let headerArg = new wrap.IpcPacketBufferWrap();
+    //     args.forEach((arg) => {
+    //         IpcPacketBuffer._from(headerArg, bufferWriter, arg);
+    //     });
+    // }
+
     private static _fromArray(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, args: any[]): void {
-        let bufferWriterArgs = new BufferCollectionWriter();
-        let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
+        let bufferWriterArgs = new BufferListWriter();
+        let headerArg = new wrap.IpcPacketBufferWrap();
         args.forEach((arg) => {
             IpcPacketBuffer._from(headerArg, bufferWriterArgs, arg);
         });
 
         header.type = wrap.BufferType.Array;
         header.contentSize = bufferWriterArgs.length;
-
         header.writeHeader(bufferWriter);
         bufferWriterArgs.buffers.forEach((buffer) => {
             bufferWriter.writeBuffer(buffer);
         });
         header.writeFooter(bufferWriter);
+
     }
 
     static from(data: any): IpcPacketBuffer {
         let packet = new IpcPacketBuffer();
-        let bufferWriter = new BufferCollectionWriter();
+        let bufferWriter = new BufferListWriter();
         IpcPacketBuffer._from(packet, bufferWriter, data);
         packet._buffer = bufferWriter.buffer;
         return packet;
@@ -341,6 +349,28 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return arg;
     }
 
+    // private static _toArrayLenAt(index: number, header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any {
+    //     let argsLen = header.argsLen;
+    //     bufferReader.skip(header.footerSize);
+
+    //     if (index >= argsLen) {
+    //         return null;
+    //     }
+
+    //     let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
+    //     while (index > 0) {
+    //         headerArg.readHeader(bufferReader);
+    //         bufferReader.skip(headerArg.contentSize + header.footerSize);
+    //         --index;
+    //     }
+    //     let arg: any;
+    //     if (index === 0) {
+    //         headerArg.readHeader(bufferReader);
+    //         arg = IpcPacketBuffer._to(headerArg, bufferReader);
+    //     }
+    //     return arg;
+    // }
+
     toArray(): any[] {
         if (this.isArray() === false) {
             return null;
@@ -361,4 +391,19 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         bufferReader.skip(header.footerSize);
         return args;
     }
+
+    // private static _toArrayLen(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): any[] {
+    //     let argsLen = header.argsLen;
+    //     bufferReader.skip(header.footerSize);
+
+    //     let args = [];
+    //     let headerArg = wrap.IpcPacketBufferWrap.fromType(wrap.BufferType.HeaderNotValid);
+    //     while (argsLen > 0) {
+    //         headerArg.readHeader(bufferReader);
+    //         let arg = IpcPacketBuffer._to(headerArg, bufferReader);
+    //         args.push(arg);
+    //         --argsLen;
+    //     }
+    //     return args;
+    // }
 }

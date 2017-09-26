@@ -39,14 +39,14 @@
     "uuid": "3.0.1"
   },
   "devDependencies": {
-    "@types/uuid": "3.0.0",
     "@types/node": "^0.0.3",
+    "@types/uuid": "3.0.0",
     "del": "^2.2.2",
     "del-cli": "^0.2.1",
     "dts-bundle": "^0.6.1",
     "tslint": "^4.1.1",
     "tslint-microsoft-contrib": "^4.0.1",
-    "typescript": "^2.1.4"
+    "typescript": "^2.5.2"
   },
   "scripts": {
     "clean": "del-cli ./lib ./build ./dist",

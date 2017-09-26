@@ -69,8 +69,15 @@ export class IpcBusTransportNode extends IpcBusTransport {
                     // 2
                     let args = packet.toArray();
                     let ipcBusCommand: IpcBusCommand = args.shift();
+                    // console.log(`packet`);
+                    // console.log(JSON.stringify(ipcBusCommand, null, 4));
                     if (ipcBusCommand && ipcBusCommand.name) {
                         this._onEventReceived(ipcBusCommand, args);
+                    }
+                    else {
+                        console.log(JSON.stringify(ipcBusCommand, null, 4));
+                        console.log(args);
+                        throw "IpcBusTransportNode: Not valid packet !";
                     }
                 });
                 this._baseIpc.on('close', (conn: any) => {
@@ -102,7 +109,10 @@ export class IpcBusTransportNode extends IpcBusTransport {
             }
             let packet = IpcPacketBuffer.fromArray(args);
             this._busConn.write(packet.buffer);
-            // IpcPacketBuffer.fromArrayToSocket(args, this._busConn);
+            // let bytesWritten = packet.buffer.length;
+            // let bytesWritten = IpcPacketBuffer.fromArrayToSocket(args, this._busConn);
+            // console.log(`ipcBusCommand ${bytesWritten}`);
+            // console.log(JSON.stringify(ipcBusCommand, null, 4));
         }
     }
 }

@@ -5,31 +5,51 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Standard Test tr-apps",
+            "name": "Launch Sandbox Test tr-apps",
             "type": "node",
             "request": "launch",
+            "protocol": "legacy",
             "program": "${workspaceRoot}/examples/test-app/Main.js",
             "stopOnEntry": false,
             "args": [],
-            "cwd": "${workspaceRoot}/examples/test-app",
-//            "runtimeExecutable": "${workspaceRoot}\\node_modules\\tr-electron\\dist\\electron.exe",
-            "runtimeExecutable": "C:\\kobra-local\\desktopframework\\build\\node_modules\\tr-electron\\dist\\electron.exe",
+            "cwd": "${workspaceRoot}/examples/test-app/",
+            "runtimeExecutable": "${workspaceRoot}/examples/test-app/node_modules/electron/dist/electron.exe",
             "runtimeArgs": [
+                "--enable-sandbox",
                 "--process-per-site",
                 "--remote-debugging-port=8315"
             ],
             "env": {},
-            "externalConsole": false,
-            "sourceMaps": false,
-            "outDir": null
+            "console": "internalConsole",
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/**/*.js"
+            ]
         },
         {
-            "name": "Attach",
+            "name": "Launch Standard Test tr-apps",
             "type": "node",
-            "request": "attach",
-            "port": 5858,
-            "sourceMaps": false,
-            "outDir": null
+            "request": "launch",
+            "protocol": "legacy",
+            // "protocol": "inspector",
+            "program": "${workspaceRoot}/examples/test-app/Main.js",
+            "stopOnEntry": false,
+            "args": [],
+            "cwd": "${workspaceRoot}/examples/test-app/",
+            "runtimeExecutable": "${workspaceRoot}/examples/test-app/node_modules/electron/dist/electron.exe",
+            "runtimeArgs": [
+                "--process-per-site",
+                "--remote-debugging-port=8315"
+            ],
+            "env": {
+                "NODE_PRESERVE_SYMLINKS": "1",
+                "NODE_ENV": "development"
+            },
+            "console": "internalConsole",
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/**/*.js"
+            ]
         }
     ]
 }

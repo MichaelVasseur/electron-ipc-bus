@@ -3,7 +3,7 @@
 
 'use strict';
 
-console.log('Starting Node instance ...')
+// console.log('Starting Node instance ...')
 
 // Node
 const util = require('util');
@@ -19,11 +19,11 @@ const PerfTests = require('./PerfTests.js');
 const peerName = 'Node_' + process.pid;
 
 function onTopicMessage(ipcBusEvent, ipcContent) {
-   console.log('Node - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.name);
+   // console.log('Node - IPCBUS - ReceivedMessage - topic:' + ipcBusEvent.channel + 'from #' + ipcBusEvent.sender.name);
     if (ipcBusEvent.request) {
         var autoReply = ipcBusEvent.channel + ' - AutoReply from #' + ipcBusEvent.sender.name;
         ipcBusEvent.request.resolve(autoReply);
-        console.log(autoReply);
+        // console.log(autoReply);
     }
     var msgJSON = {
         action: 'receivedSend',
@@ -41,21 +41,21 @@ function doSubscribeTopic(msgJSON) {
 
 function doUnsubscribeTopic(msgJSON) {
     var topicName = msgJSON['topic'];
-    console.log('node - doUnsubscribeTopic:' + topicName);
+    // console.log('node - doUnsubscribeTopic:' + topicName);
     ipcBus.off(topicName, onTopicMessage);
     process.send(JSON.stringify(msgJSON));
 }
 
 function doSendOnTopic(msgJSON) {
     var args = msgJSON['args'];
-    console.log('node - doSendOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
+    // console.log('node - doSendOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
     ipcBus.send(args['topic'], args['msg']);
     process.send(JSON.stringify(msgJSON));
 }
 
 function doRequestOnTopic(msgJSON) {
     var args = msgJSON['args'];
-    console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
+    // console.log('node - doRequestOnTopic: topicName:' + args['topic'] + ' msg:' + args['msg']);
     ipcBus.request(2000, args['topic'], args['msg'])
         .then((requestPromiseResponse) => {
             msgJSON['action'] = 'receivedRequestThen';
@@ -72,15 +72,15 @@ function doRequestOnTopic(msgJSON) {
 
 function doInit(msgJSON) {
     var args = msgJSON['args'];
-    console.log('node - doInit: topicName:' + args);
+    // console.log('node - doInit: topicName:' + args);
 }
 
 function dispatchMessage(msg)
 {
-    console.log('node - receive message:' + msg);
+    // console.log('node - receive message:' + msg);
     if (isConnected == false)
     {
-        console.log('node - delay message:' + msg);
+        // console.log('node - delay message:' + msg);
         msgs.push(msg);
     }
     else
@@ -95,7 +95,7 @@ function dispatchMessage(msg)
             init : doInit
         };
 
-        console.log('node - execute message:' + msg);
+        // console.log('node - execute message:' + msg);
         var msgJSON = JSON.parse(msg);
         if (actionFcts.hasOwnProperty(msgJSON['action']))
         {
@@ -110,7 +110,7 @@ var perfTests;
 
 ipcBus.connect()
     .then(() => {
-        console.log('node - connect');
+        // console.log('node - connect');
         isConnected = true;
         for(var msg in msgs)
         {
