@@ -108,9 +108,10 @@ export class IpcBusTransportNode extends IpcBusTransport {
                 args = [ipcBusCommand];
             }
             let packet = IpcPacketBuffer.fromArray(args);
-            this._busConn.write(packet.buffer);
             // let bytesWritten = packet.buffer.length;
-            // let bytesWritten = IpcPacketBuffer.fromArrayToSocket(args, this._busConn);
+            this._busConn.write(packet.buffer);
+
+            // let bytesWritten = IpcPacketBuffer.fromToSocket(args, this._busConn);
             // console.log(`ipcBusCommand ${bytesWritten}`);
             // console.log(JSON.stringify(ipcBusCommand, null, 4));
         }

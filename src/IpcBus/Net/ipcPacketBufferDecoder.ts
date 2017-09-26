@@ -79,6 +79,7 @@ export class IpcPacketBufferDecoder extends EventEmitter {
             }
 
             let buffer = this._bufferListReader.readBuffer(packetSize);
+
             let packet = IpcPacketBuffer.fromPacketBuffer(this._header, buffer);
             packets.push(packet);
             this.emit('packet', packet);
