@@ -111,7 +111,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         let data = JSON.stringify(dataObject);
 
         header.type = wrap.BufferType.Object;
-        header.contentSize = data.length;
+        header.contentSize = Buffer.byteLength(data, 'utf8');
         header.writeHeader(bufferWriter);
         bufferWriter.writeString(data, 'utf8');
         header.writeFooter(bufferWriter);
