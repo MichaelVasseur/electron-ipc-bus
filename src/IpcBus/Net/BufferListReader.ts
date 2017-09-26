@@ -90,7 +90,7 @@ export class BufferListReader implements Reader {
 
     private _consolidate(newOffset: number): boolean {
         let bufferLength = this._curBuffer.length;
-        if (bufferLength > newOffset) {
+        if (bufferLength >= newOffset) {
             return true;
         }
         let buffers = [this._curBuffer];
@@ -98,11 +98,11 @@ export class BufferListReader implements Reader {
         for (; endBufferIndex < this._buffers.length; ++endBufferIndex) {
             buffers.push(this._buffers[endBufferIndex]);
             bufferLength += this._buffers[endBufferIndex].length;
-            if (bufferLength > newOffset) {
+            if (bufferLength >= newOffset) {
                 break;
             }
         }
-        if (bufferLength <= newOffset) {
+        if (bufferLength < newOffset) {
             return false;
         }
         this._curBuffer = this._buffers[this._curBufferIndex] = Buffer.concat(buffers, bufferLength);
