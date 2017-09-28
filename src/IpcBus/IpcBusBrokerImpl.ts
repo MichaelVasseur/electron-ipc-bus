@@ -165,12 +165,6 @@ export class IpcBusBrokerImpl implements IpcBusInterfaces.IpcBusBroker {
     }
 
     private _onData(packet: IpcPacketBuffer, socket: any, server: any): void {
-        // 1
-        // let ipcBusCommand: IpcBusCommand = IpcPacketBuffer.toObject(buffer);
-        // 2
-        // let args = IpcPacketBuffer.toArray(buffer);
-        // let ipcBusCommand: IpcBusCommand = args[0];
-        // 3
         let ipcBusCommand: IpcBusCommand = packet.toArrayAt(0);
         if (ipcBusCommand && ipcBusCommand.name) {
             switch (ipcBusCommand.name) {
