@@ -48,7 +48,6 @@ export class IpcPacketBufferWrap {
     protected _contentSize: number;
     protected _headerSize: number;
     protected _argsLen: number;
-    protected _partial: boolean;
 
     protected constructor() {
         this._type = BufferType.HeaderNotValid;
@@ -164,10 +163,6 @@ export class IpcPacketBufferWrap {
         return this._type === BufferType.HeaderUnknown;
     }
 
-    isPartial(): boolean {
-        return this._partial;
-    }
-
     isArray(): boolean {
         return this._type === BufferType.Array;
     }
@@ -221,22 +216,18 @@ export class IpcPacketBufferWrap {
 
     readHeader(bufferReader: Reader): number {
         this._type = BufferType.HeaderUnknown;
-        if (bufferReader.EOF) {
+        if (bufferReader.checkOffset(2) === false) {
             return bufferReader.offset;
         }
         if (bufferReader.readByte() !== headerSeparator) {
             this._type = BufferType.HeaderNotValid;
             return bufferReader.offset;
         }
-        if (bufferReader.EOF) {
-            return bufferReader.offset;
-        }
         this.type = bufferReader.readByte();
-        if (bufferReader.offset + (this._headerSize - 2) > bufferReader.length) {
-            this._partial = true;
+        if (bufferReader.checkOffset(this._headerSize - 2) === false) {
+            this._type = BufferType.HeaderUnknown;
         }
         else {
-            this._partial = false;
             switch (this.type) {
                 case BufferType.ArrayLen:
                     this._argsLen = bufferReader.readUInt32();

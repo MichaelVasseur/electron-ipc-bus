@@ -10,8 +10,8 @@ export class BufferReader implements Reader {
         this._offset = offset || 0;
     }
 
-    get EOF(): boolean {
-        return (this._offset >= this._buffer.length);
+    checkOffset(ext: number): boolean {
+        return (this._offset + ext < this._buffer.length);
     }
 
     get length(): number {

@@ -64,17 +64,18 @@ export class IpcPacketBufferDecoder extends EventEmitter {
             this._header.readHeader(this._bufferListReader);
             // if packet size error
             if (!this._header.isValid()) {
+                // Can we resynchronize with the next packet ?
                 this.emit('error', new Error('Get invalid packet header'));
                 break;
             }
             this._bufferListReader.seek(offset);
             // if not enough data accumulated for reading the header, exit
-            if (this._header.isPartial() || this._header.isUnknown()) {
+            if (this._header.isUnknown()) {
                 break;
             }
             let packetSize = this._header.packetSize;
             // if not enough data accumulated for reading the packet, exit
-            if (this._bufferListReader.length - this._bufferListReader.offset  < packetSize) {
+            if (this._bufferListReader.checkOffset(packetSize) === false) {
                 break;
             }
 
