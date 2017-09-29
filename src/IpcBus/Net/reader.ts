@@ -1,10 +1,10 @@
 // import { Buffer } from 'buffer';
 
 export interface Reader {
+    readonly EOF: boolean;
     readonly length: number;
     readonly offset: number;
 
-    checkOffset(ext: number): boolean;
     seek(offset: number): number;
     skip(offsetStep?: number): number;
     readByte(): number;

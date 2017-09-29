@@ -27,8 +27,8 @@ export class BufferListReader implements Reader {
         this._curBuffer = this._buffers[this._curBufferIndex];
     }
 
-    checkOffset(ext: number): boolean {
-        return (this._offset + ext < this._length);
+    get EOF(): boolean {
+        return (this._offset >= this._length);
     }
 
     get length(): number {
@@ -68,7 +68,7 @@ export class BufferListReader implements Reader {
     }
 
     reduce() {
-        if (this._offset >= this._length) {
+        if (this.EOF) {
             this._buffers = [];
             this._offset = 0;
             this._length = 0;
