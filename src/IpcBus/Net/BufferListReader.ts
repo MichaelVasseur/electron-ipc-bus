@@ -103,6 +103,7 @@ export class BufferListReader implements Reader {
             }
         }
         if (bufferLength < newOffset) {
+            // throw new RangeError('Index out of range');
             return false;
         }
         this._curBuffer = this._buffers[this._curBufferIndex] = Buffer.concat(buffers, bufferLength);
