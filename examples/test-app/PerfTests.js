@@ -26,7 +26,6 @@ var PerfTests = function _PerfTests(type, busPath) {
         var uuid = createUuid();
         var uuidPattern = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
         uuid = uuid + uuidPattern.substring(0, 30 - uuid.length)
-        var payload = allocateString(uuid, testParams.bufferSize);
 
         var msgTestStart = { 
             uuid: uuid,
@@ -37,30 +36,35 @@ var PerfTests = function _PerfTests(type, busPath) {
 
         var msgContent;
         if (testParams.typeArgs === 'string') {
-            msgContent = payload;
+            msgContent = allocateString(uuid, testParams.bufferSize);
         }
         else if (testParams.typeArgs === 'object') {
             msgContent = { 
                 uuid: uuid, 
-                payload: payload 
+                payload: allocateString(uuid, testParams.bufferSize)
             };
+        }
+        else if (testParams.typeArgs === 'buffer') {
+            msgContent = Buffer.alloc(Number(testParams.bufferSize));
+            msgContent.write(uuid, 0, uuid.length, 'utf8');
         }
         else if (testParams.typeArgs === 'args') {
             msgContent = [];
             msgContent.push({ 
                 uuid: uuid, 
-                payload: payload 
+                payload: allocateString(uuid, testParams.bufferSize / 2)
             });
             msgContent.push('string');
             msgContent.push(2.22);
             msgContent.push(true);
+            msgContent.push(Buffer.alloc(Number(testParams.bufferSize / 2)));
         }
 
         msgTestStart.timeStamp = Date.now();
         _ipcBus.send('test-performance-start', msgTestStart);
         if (testParams.typeArgs === 'args') {
             if (testParams.typeCommand == 'Request') {
-                _ipcBus.request.apply(_ipcBus, [2000, type].concat(msgContent))
+                _ipcBus.request.apply(_ipcBus, [2000, type, ...msgContent])
                 .then((ipcRequestResponse) => this.onIPCBus_TestPerformance(ipcRequestResponse.event, ipcRequestResponse.payload[0])) 
                 .catch();
             }
@@ -83,12 +87,26 @@ var PerfTests = function _PerfTests(type, busPath) {
     this.onIPCBus_TestPerformance = function _onIPCBus_TestPerformance(ipcBusEvent, msgContent) {
         var dateNow = Date.now();
         var uuid;
-        try {
-            uuid = msgContent.substring(0, 30);
+        switch (typeof msgContent) {
+            case 'object':
+                if (Buffer.isBuffer(msgContent)) {
+                    uuid = msgContent.toString('utf8', 0, 30);
+                }
+                // else if (Array.isArray(data)) {
+                // }
+                else {
+                    uuid = msgContent.uuid;
+                }
+                break;
+            case 'string':
+                uuid = msgContent.substring(0, 30);
+                break;
+            case 'number':
+                break;
+            case 'boolean':
+            break;
         }
-        catch(e) {
-            uuid = msgContent.uuid;
-        }
+            
         if (ipcBusEvent.request) {
             ipcBusEvent.request.resolve([msgContent]);
         }
