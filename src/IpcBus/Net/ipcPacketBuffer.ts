@@ -91,12 +91,17 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         return packet;
     }
 
+    private static _writeString(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: string, encoding?: string): void {
+        let buffer = Buffer.from(data, encoding);
+        header.contentSize = buffer.length;
+        header.writeHeader(bufferWriter);
+        bufferWriter.writeBuffer(buffer);
+        header.writeFooter(bufferWriter);
+    }
+
     private static _fromString(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, data: string, encoding?: string): void {
         header.type = wrap.BufferType.String;
-        header.contentSize = Buffer.byteLength(data, encoding);
-        header.writeHeader(bufferWriter);
-        bufferWriter.writeString(data, encoding);
-        header.writeFooter(bufferWriter);
+        IpcPacketBuffer._writeString(header, bufferWriter, data, encoding);
     }
 
     static fromObject(dataObject: Object): IpcPacketBuffer {
@@ -109,12 +114,8 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
 
     private static _fromObject(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, dataObject: Object): void {
         let data = JSON.stringify(dataObject);
-
         header.type = wrap.BufferType.Object;
-        header.contentSize = Buffer.byteLength(data, 'utf8');
-        header.writeHeader(bufferWriter);
-        bufferWriter.writeString(data, 'utf8');
-        header.writeFooter(bufferWriter);
+        IpcPacketBuffer._writeString(header, bufferWriter, data, 'utf8');
     }
 
     static fromBuffer(data: Buffer): IpcPacketBuffer {

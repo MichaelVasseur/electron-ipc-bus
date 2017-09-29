@@ -94,6 +94,7 @@ function doAutomaticTests(event) {
         for (let occ = 0; occ < 3; ++occ) {
             tests.push({ size: size, type: 'string' });
             tests.push({ size: size, type: 'object' });
+            tests.push({ size: size, type: 'buffer' });
             tests.push({ size: size, type: 'args' });
         }
     });
