@@ -77,8 +77,9 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     private static _fromBoolean(header: wrap.IpcPacketBufferWrap, bufferWriter: Writer, dataBoolean: boolean): void {
-        header.type = dataBoolean ? wrap.BufferType.BooleanTrue : wrap.BufferType.BooleanFalse;
+        header.type = wrap.BufferType.Boolean;
         header.writeHeader(bufferWriter);
+        bufferWriter.writeByte(dataBoolean ? 0xFF : 0x00);
         header.writeFooter(bufferWriter);
     }
 
@@ -242,8 +243,7 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
                 arg = IpcPacketBuffer._toNumber(header, bufferReader);
                 break;
             }
-            case wrap.BufferType.BooleanFalse:
-            case wrap.BufferType.BooleanTrue: {
+            case wrap.BufferType.Boolean: {
                 arg = IpcPacketBuffer._toBoolean(header, bufferReader);
                 break;
             }
@@ -252,29 +252,23 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
     }
 
     toBoolean(): boolean {
+        if (this.isBoolean() === false) {
+            return null;
+        }
         let bufferReader = new BufferReader(this._buffer, this.headerSize);
         return IpcPacketBuffer._toBoolean(this, bufferReader);
     }
 
     private static _toBoolean(header: wrap.IpcPacketBufferWrap, bufferReader: BufferReader): boolean {
-        let data: boolean;
-        switch (header.type) {
-            case wrap.BufferType.BooleanTrue:
-                data = true;
-                bufferReader.skip(header.footerSize);
-                break;
-            case wrap.BufferType.BooleanFalse:
-                data = false;
-                bufferReader.skip(header.footerSize);
-                break;
-            default:
-                data = null;
-                break;
-        }
+        let data: boolean = (bufferReader.readByte() === 0xFF);
+        bufferReader.skip(header.footerSize);
         return data;
     }
 
     toNumber(): number {
+        if (this.isNumber() === false) {
+            return null;
+        }
         let bufferReader = new BufferReader(this._buffer, this.headerSize);
         return IpcPacketBuffer._toNumber(this, bufferReader);
     }
@@ -284,20 +278,18 @@ export class IpcPacketBuffer extends wrap.IpcPacketBufferWrap {
         switch (header.type) {
             case wrap.BufferType.Double:
                 data = bufferReader.readDouble();
-                bufferReader.skip(header.footerSize);
                 break;
             case wrap.BufferType.NegativeInteger:
                 data = -bufferReader.readUInt32();
-                bufferReader.skip(header.footerSize);
                 break;
             case wrap.BufferType.PositiveInteger:
                 data = +bufferReader.readUInt32();
-                bufferReader.skip(header.footerSize);
                 break;
             default:
                 data = null;
                 break;
         }
+        bufferReader.skip(header.footerSize);
         return data;
     }
 
