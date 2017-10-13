@@ -1,3 +1,5 @@
+const isTypedArray = require('is-typedarray').strict
+
 var PerfTests = function _PerfTests(type, busPath) {
     const _ipcBusModule = require('electron-ipc-bus');
     var _ipcBus = _ipcBusModule.CreateIpcBusClient(busPath);
@@ -92,8 +94,11 @@ var PerfTests = function _PerfTests(type, busPath) {
                 if (Buffer.isBuffer(msgContent)) {
                     uuid = msgContent.toString('utf8', 0, 30);
                 }
-                // else if (Array.isArray(data)) {
-                // }
+                // in renderer process, Buffer = Uint8Array
+                else if (msgContent instanceof Uint8Array) {
+                    var buf = Buffer.from(msgContent.buffer)
+                    uuid = buf.toString('utf8', 0, 30);
+                }
                 else {
                     uuid = msgContent.uuid;
                 }
@@ -104,7 +109,7 @@ var PerfTests = function _PerfTests(type, busPath) {
             case 'number':
                 break;
             case 'boolean':
-            break;
+                break;
         }
             
         if (ipcBusEvent.request) {
