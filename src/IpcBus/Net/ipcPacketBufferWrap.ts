@@ -220,8 +220,8 @@ export class IpcPacketBufferWrap {
     }
 
     readHeader(bufferReader: Reader): number {
-        this._type = BufferType.HeaderNotComplete;
         if (bufferReader.EOF) {
+            this._type = BufferType.HeaderNotComplete;
             return bufferReader.offset;
         }
         if (bufferReader.readByte() !== headerSeparator) {
@@ -229,6 +229,7 @@ export class IpcPacketBufferWrap {
             return bufferReader.offset;
         }
         if (bufferReader.EOF) {
+            this._type = BufferType.HeaderNotComplete;
             return bufferReader.offset;
         }
         this.type = bufferReader.readByte();
