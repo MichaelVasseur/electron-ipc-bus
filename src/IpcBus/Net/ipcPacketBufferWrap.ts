@@ -26,8 +26,8 @@ export enum BufferType {
     String = 's'.charCodeAt(0),
     // 66
     Buffer = 'B'.charCodeAt(0),
-    // 98
-    Boolean = 'b'.charCodeAt(0),
+    BooleanTrue = 'T'.charCodeAt(0),
+    BooleanFalse = 'F'.charCodeAt(0),
     // 65
     Array = 'A'.charCodeAt(0),
     // 97
@@ -98,9 +98,10 @@ export class IpcPacketBufferWrap {
                 // Empty by default
                 this.setContentSize(0);
                 break;
-            case BufferType.Boolean:
-                this._headerSize = MinHeaderLength;
-                this.setContentSize(1);
+            case BufferType.BooleanTrue:
+            case BufferType.BooleanFalse:
+            this._headerSize = MinHeaderLength;
+                this.setContentSize(0);
                 break;
             default:
                 this._type = BufferType.HeaderNotValid;
@@ -200,7 +201,13 @@ export class IpcPacketBufferWrap {
     }
 
     isBoolean(): boolean {
-        return this._type === BufferType.Boolean;
+        switch (this._type) {
+            case BufferType.BooleanTrue:
+            case BufferType.BooleanFalse:
+                return true;
+            default:
+                return false;
+        }
     }
 
     writeHeader(bufferWriter: Writer): number {
