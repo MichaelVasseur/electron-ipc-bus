@@ -19,9 +19,7 @@ export enum BufferType {
     // 88
     HeaderNotValid = 'X'.charCodeAt(0),
     // 85
-    HeaderUnknown = 'U'.charCodeAt(0),
-    // 121
-    ContentPartial = 'y'.charCodeAt(0),
+    HeaderNotComplete = 'P'.charCodeAt(0),
     // 115
     String = 's'.charCodeAt(0),
     // 66
@@ -48,7 +46,6 @@ export class IpcPacketBufferWrap {
     protected _contentSize: number;
     protected _headerSize: number;
     protected _argsLen: number;
-    protected _partial: boolean;
 
     protected constructor() {
         this._type = BufferType.HeaderNotValid;
@@ -157,16 +154,12 @@ export class IpcPacketBufferWrap {
         return this._headerSize;
     }
 
-    isValid(): boolean {
-        return this._type !== BufferType.HeaderNotValid;
+    isNotValid(): boolean {
+        return this._type === BufferType.HeaderNotValid;
     }
 
-    isUnknown(): boolean {
-        return this._type === BufferType.HeaderUnknown;
-    }
-
-    isPartial(): boolean {
-        return this._partial;
+    isNotComplete(): boolean {
+        return this._type === BufferType.HeaderNotComplete;
     }
 
     isArray(): boolean {
@@ -227,7 +220,7 @@ export class IpcPacketBufferWrap {
     }
 
     readHeader(bufferReader: Reader): number {
-        this._type = BufferType.HeaderUnknown;
+        this._type = BufferType.HeaderNotComplete;
         if (bufferReader.EOF) {
             return bufferReader.offset;
         }
@@ -240,10 +233,9 @@ export class IpcPacketBufferWrap {
         }
         this.type = bufferReader.readByte();
         if (bufferReader.offset + (this._headerSize - 2) > bufferReader.length) {
-            this._partial = true;
+            this._type = BufferType.HeaderNotComplete;
         }
         else {
-            this._partial = false;
             switch (this.type) {
                 case BufferType.ArrayLen:
                     this._argsLen = bufferReader.readUInt32();
